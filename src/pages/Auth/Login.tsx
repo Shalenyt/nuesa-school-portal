@@ -1,0 +1,111 @@
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { BookOpen, Loader2 } from 'lucide-react';
+
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { signIn, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await signIn(email, password);
+
+    if (!error && profile) {
+      // Redirect based on role
+      switch (profile.role) {
+        case 'admin':
+          navigate('/admin/dashboard');
+          break;
+        case 'teacher':
+          navigate('/teacher/profile');
+          break;
+        case 'student':
+          navigate('/student/profile');
+          break;
+        default:
+          navigate('/');
+      }
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
+            <BookOpen className="h-8 w-8 text-primary-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Smart School Portal</h1>
+          <p className="text-gray-600 mt-2">Sign in to your account</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Welcome Back</CardTitle>
+            <CardDescription>Enter your credentials to access your account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="Enter your email"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="Enter your password"
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Sign In
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center space-y-2">
+              <Link 
+                to="/auth/forgot-password" 
+                className="text-sm text-primary hover:underline"
+              >
+                Forgot your password?
+              </Link>
+              
+              <div className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link to="/auth/apply" className="text-primary hover:underline">
+                  Apply here
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
