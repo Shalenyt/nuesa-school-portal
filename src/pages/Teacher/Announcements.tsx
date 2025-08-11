@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MessageSquare, Plus, Edit2, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function TeacherAnnouncements() {
+  const { profile } = useAuth();
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -66,7 +68,7 @@ export default function TeacherAnnouncements() {
         description: "Your announcement has been posted successfully.",
       });
 
-      setNewAnnouncement({ title: '', content: '', type: 'academic' });
+      setNewAnnouncement({ title: '', content: '', type: 'subject' });
       setIsCreating(false);
       fetchAnnouncements();
     } catch (error: any) {
