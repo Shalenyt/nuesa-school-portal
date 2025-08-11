@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { BookOpen, Loader2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Loader2 } from 'lucide-react';
+import oaustechLogo from '@/assets/oaustech-logo.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -41,14 +43,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
-            <BookOpen className="h-8 w-8 text-primary-foreground" />
+          <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4">
+            <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-16 w-16" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Smart School Portal</h1>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
+          <h1 className="text-3xl font-bold">OAUSTECH Portal</h1>
+          <p className="text-muted-foreground mt-2">Sign in to your account</p>
         </div>
 
         <Card>

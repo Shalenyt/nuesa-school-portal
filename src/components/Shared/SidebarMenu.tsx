@@ -33,7 +33,7 @@ import {
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Manage Users", url: "/admin/manage-users", icon: Users },
-  { title: "Analytics", url: "/admin/stats-analytics", icon: BarChart3 },
+  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Structure", url: "/admin/manage-structure", icon: Building2 },
   { title: "Announcements", url: "/admin/announcements", icon: MessageSquare },
   { title: "Courses", url: "/admin/courses", icon: BookOpen },

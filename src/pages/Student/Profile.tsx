@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { User, Mail, Settings, Camera, BookOpen, GraduationCap } from 'lucide-react';
+import { User, Mail, Settings, Camera, BookOpen } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -20,7 +19,7 @@ export default function StudentProfile() {
     address: '',
     student_id: ''
   });
-  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -32,30 +31,28 @@ export default function StudentProfile() {
         address: profile.address || '',
         student_id: profile.student_id || ''
       });
-      fetchEnrollments();
+      fetchCourses();
     }
   }, [profile, user]);
 
-  const fetchEnrollments = async () => {
+  const fetchCourses = async () => {
     try {
       const { data, error } = await supabase
         .from('student_enrollments')
         .select(`
-          *,
-          courses(
+          courses!inner(
             name,
-            description,
-            classes(name),
             subjects(name),
+            classes(name),
             profiles(full_name)
           )
         `)
         .eq('student_id', profile?.id);
 
       if (error) throw error;
-      setEnrollments(data || []);
+      setCourses(data || []);
     } catch (error) {
-      console.error('Error fetching enrollments:', error);
+      console.error('Error fetching courses:', error);
     }
   };
 
@@ -100,7 +97,7 @@ export default function StudentProfile() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Student Profile</h1>
           <p className="text-muted-foreground">
-            Manage your account information and view enrolled courses
+            Manage your personal information and view enrolled courses
           </p>
         </div>
 
@@ -193,39 +190,27 @@ export default function StudentProfile() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5" />
+              <BookOpen className="h-5 w-5" />
               Enrolled Courses
-              <Badge variant="secondary">{enrollments.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {enrollments.length > 0 ? (
+            {courses.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {enrollments.map((enrollment) => (
-                  <div key={enrollment.id} className="p-4 border rounded-lg">
-                    <div className="space-y-2">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <BookOpen className="h-4 w-4" />
-                        {enrollment.courses?.name}
-                      </h3>
-                      <div className="text-sm text-muted-foreground">
-                        <p>{enrollment.courses?.classes?.name} • {enrollment.courses?.subjects?.name}</p>
-                        <p>Teacher: {enrollment.courses?.profiles?.full_name}</p>
-                      </div>
-                      {enrollment.courses?.description && (
-                        <p className="text-sm">{enrollment.courses.description}</p>
-                      )}
-                      <div className="text-xs text-muted-foreground">
-                        Enrolled: {new Date(enrollment.enrolled_at).toLocaleDateString()}
-                      </div>
-                    </div>
+                {courses.map((enrollment, index) => (
+                  <div key={index} className="p-4 border rounded-lg">
+                    <h3 className="font-semibold">{enrollment.courses.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {enrollment.courses.classes?.name} • {enrollment.courses.subjects?.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Teacher: {enrollment.courses.profiles?.full_name}
+                    </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">
-                You are not enrolled in any courses yet.
-              </p>
+              <p className="text-muted-foreground">No courses enrolled yet.</p>
             )}
           </CardContent>
         </Card>

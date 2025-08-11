@@ -1,11 +1,36 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useNavigate } from 'react-router-dom';
+import oaustechLogo from '@/assets/oaustech-logo.png';
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen flex items-center justify-center bg-background relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
+      <div className="text-center space-y-6">
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-16 w-16" />
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            OAUSTECH Portal
+          </h1>
+        </div>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Welcome to the OAUSTECH School Management Portal. Access your academic information, 
+          manage courses, and stay connected with the university community.
+        </p>
+        <div className="flex gap-4 justify-center mt-8">
+          <Button onClick={() => navigate('/auth/login')} size="lg">
+            Login to Portal
+          </Button>
+          <Button onClick={() => navigate('/auth/apply')} variant="outline" size="lg">
+            Apply for Account
+          </Button>
+        </div>
       </div>
     </div>
   );
