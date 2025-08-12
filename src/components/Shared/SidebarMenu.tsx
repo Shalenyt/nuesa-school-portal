@@ -94,13 +94,13 @@ export function SidebarMenu() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                    <SidebarMenuButton asChild>
-                    <NavLink 
+                     <NavLink 
                         to={item.url} 
                          className={({ isActive }) =>
                           `flex items-center gap-2 w-full transition-all duration-200 rounded-md px-3 py-2 border ${
                             isActive 
-                              ? "bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-primary font-medium shadow-sm" 
-                              : "bg-sidebar-background text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium"
+                              ? "bg-primary text-primary-foreground border-primary font-medium shadow-sm" 
+                              : "bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground font-medium"
                           }`
                          }
                     >
