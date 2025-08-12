@@ -56,13 +56,16 @@ export default function StudentViewMaterials() {
       }
 
       // Get materials for those courses
-      const { data: materialsData } = await supabase
+      console.log('Fetching materials for course IDs:', courseListData.course_ids);
+      const { data: materialsData, error: materialsError } = await supabase
         .from('materials')
         .select(`
           *,
           courses(name)
         `)
         .in('course_id', courseListData.course_ids);
+
+      console.log('Materials query result:', materialsData, 'Error:', materialsError);
 
       const allMaterials = materialsData?.map(material => ({
         ...material,

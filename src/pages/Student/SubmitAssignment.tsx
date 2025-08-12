@@ -62,13 +62,16 @@ export default function StudentSubmitAssignment() {
       }
 
       // Get assignments for those courses
-      const { data: assignmentsData } = await supabase
+      console.log('Fetching assignments for course IDs:', courseListData.course_ids);
+      const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('assignments')
         .select(`
           *,
           courses(name, subject_id, class_id)
         `)
         .in('course_id', courseListData.course_ids);
+
+      console.log('Assignments query result:', assignmentsData, 'Error:', assignmentsError);
 
       const allAssignments = assignmentsData?.map(assignment => ({
         ...assignment,
