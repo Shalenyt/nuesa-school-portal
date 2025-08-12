@@ -23,29 +23,55 @@ export default function StudentSubmitAssignment() {
 
   const fetchAssignments = async () => {
     try {
-      const { data: enrollments } = await supabase
-        .from('student_enrollments')
-        .select(`
-          course_id,
-          courses(
-            id,
-            name,
-            assignments(*)
-          )
-        `)
-        .eq('student_id', (await supabase.auth.getUser()).data.user?.id);
+      const { data: user } = await supabase.auth.getUser();
+      const userId = user.user?.id;
 
-      const allAssignments: any[] = [];
-      enrollments?.forEach((enrollment: any) => {
-        if (enrollment.courses?.assignments) {
-          enrollment.courses.assignments.forEach((assignment: any) => {
-            allAssignments.push({
-              ...assignment,
-              courseName: enrollment.courses.name
-            });
-          });
-        }
-      });
+      if (!userId) {
+        setAssignments([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get user profile to check department and level
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('department_id, level_id')
+        .eq('id', userId)
+        .single();
+
+      if (!profile?.department_id || !profile?.level_id) {
+        setAssignments([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get courses from course lists based on student's department and level
+      const { data: courseListData } = await supabase
+        .from('course_lists')
+        .select('course_ids')
+        .eq('class_id', profile.level_id)
+        .eq('subject_id', profile.department_id)
+        .single();
+
+      if (!courseListData?.course_ids) {
+        setAssignments([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get assignments for those courses
+      const { data: assignmentsData } = await supabase
+        .from('assignments')
+        .select(`
+          *,
+          courses(name)
+        `)
+        .in('course_id', courseListData.course_ids);
+
+      const allAssignments = assignmentsData?.map(assignment => ({
+        ...assignment,
+        courseName: assignment.courses?.name
+      })) || [];
 
       setAssignments(allAssignments);
     } catch (error) {
@@ -226,7 +252,7 @@ export default function StudentSubmitAssignment() {
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold">No assignments available</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  No assignments have been posted yet.
+                  Please update your department and level in your profile, or no assignments have been posted yet.
                 </p>
               </div>
             ) : (

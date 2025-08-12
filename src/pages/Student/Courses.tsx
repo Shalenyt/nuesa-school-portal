@@ -24,38 +24,58 @@ export default function StudentCourses() {
         return;
       }
 
-      // Get student enrollments and related course data
-      const { data: enrollments } = await supabase
-        .from('student_enrollments')
-        .select(`
-          course_id,
-          courses(
-            id,
-            name,
-            description,
-            classes(name),
-            subjects(name, code),
-            profiles(full_name)
-          )
-        `)
-        .eq('student_id', userId);
+      // Get user profile to check department and level
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('department_id, level_id')
+        .eq('id', userId)
+        .single();
 
-      if (!enrollments) {
+      if (!profile?.department_id || !profile?.level_id) {
         setCourses([]);
         setLoading(false);
         return;
       }
 
-      // Extract courses from enrollments
-      const coursesData = enrollments
-        .map(enrollment => enrollment.courses)
-        .filter(course => course !== null)
-        .sort((a, b) => {
-          // Sort by name
-          return (a.name || '').localeCompare(b.name || '');
-        });
+      // Get courses from course lists based on student's department and level
+      const { data: courseListData } = await supabase
+        .from('course_lists')
+        .select('course_ids')
+        .eq('class_id', profile.level_id)
+        .eq('subject_id', profile.department_id)
+        .single();
 
-      setCourses(coursesData);
+      if (!courseListData?.course_ids) {
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get course details
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select(`
+          id,
+          name,
+          description,
+          classes(name),
+          subjects(name, code),
+          profiles(full_name)
+        `)
+        .in('id', courseListData.course_ids);
+
+      if (!coursesData) {
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+
+      // Sort courses by name
+      const sortedCourses = coursesData.sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '')
+      );
+
+      setCourses(sortedCourses);
     } catch (error) {
       console.error('Error fetching courses:', error);
     } finally {
@@ -80,9 +100,9 @@ export default function StudentCourses() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <BookOpen className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-2 text-sm font-semibold text-foreground">No courses enrolled</h3>
+                <h3 className="mt-2 text-sm font-semibold text-foreground">No courses available</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  You are not enrolled in any courses yet. Contact your administrator for enrollment.
+                  Please update your department and level in your profile to see available courses.
                 </p>
               </div>
             </CardContent>

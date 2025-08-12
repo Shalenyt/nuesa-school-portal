@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User, Mail, Settings, Camera, BookOpen } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 
 export default function StudentProfile() {
   const { profile, user } = useAuth();
@@ -18,42 +20,114 @@ export default function StudentProfile() {
     email: '',
     phone: '',
     address: '',
-    student_id: ''
+    student_id: '',
+    department_id: '',
+    level_id: ''
   });
   const [courses, setCourses] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    fetchClassesAndSubjects();
     if (profile) {
       setFormData({
         full_name: profile.full_name || '',
         email: user?.email || '',
         phone: profile.phone || '',
         address: profile.address || '',
-        student_id: profile.student_id || ''
+        student_id: profile.student_id || '',
+        department_id: profile.department_id || '',
+        level_id: profile.level_id || ''
       });
       fetchCourses();
     }
   }, [profile, user]);
 
+  const fetchClassesAndSubjects = async () => {
+    try {
+      const [classesData, subjectsData] = await Promise.all([
+        supabase.from('classes').select('*').order('name'),
+        supabase.from('subjects').select('*').order('name')
+      ]);
+      
+      if (classesData.data) setClasses(classesData.data);
+      if (subjectsData.data) setSubjects(subjectsData.data);
+    } catch (error) {
+      console.error('Error fetching classes and subjects:', error);
+    }
+  };
+
   const fetchCourses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('student_enrollments')
-        .select(`
-          courses!inner(
-            name,
-            subjects(name),
-            classes(name),
-            profiles(full_name)
-          )
-        `)
-        .eq('student_id', profile?.id);
+      // First check if student has department and level set
+      if (!profile?.department_id || !profile?.level_id) {
+        setCourses([]);
+        return;
+      }
 
-      if (error) throw error;
-      setCourses(data || []);
+      // Get courses from course lists based on student's department and level
+      const { data: courseListData, error: courseListError } = await supabase
+        .from('course_lists')
+        .select('course_ids')
+        .eq('class_id', profile.level_id)
+        .eq('subject_id', profile.department_id)
+        .single();
+
+      if (courseListError || !courseListData?.course_ids) {
+        setCourses([]);
+        return;
+      }
+
+      // Get course details
+      const { data: coursesData, error: coursesError } = await supabase
+        .from('courses')
+        .select(`
+          id,
+          name,
+          description,
+          semester,
+          credit_unit,
+          subjects(name),
+          classes(name),
+          profiles(full_name)
+        `)
+        .in('id', courseListData.course_ids);
+
+      if (coursesError) throw coursesError;
+      setCourses(coursesData || []);
+
+      // Auto-enroll student in these courses if not already enrolled
+      await autoEnrollStudent(courseListData.course_ids);
     } catch (error) {
       console.error('Error fetching courses:', error);
+    }
+  };
+
+  const autoEnrollStudent = async (courseIds: string[]) => {
+    try {
+      // Check which courses student is not enrolled in
+      const { data: existingEnrollments } = await supabase
+        .from('student_enrollments')
+        .select('course_id')
+        .eq('student_id', profile?.id);
+
+      const enrolledCourseIds = existingEnrollments?.map(e => e.course_id) || [];
+      const newCourseIds = courseIds.filter(id => !enrolledCourseIds.includes(id));
+
+      if (newCourseIds.length > 0) {
+        const enrollments = newCourseIds.map(courseId => ({
+          student_id: profile?.id,
+          course_id: courseId
+        }));
+
+        await supabase
+          .from('student_enrollments')
+          .insert(enrollments);
+      }
+    } catch (error) {
+      console.error('Error auto-enrolling student:', error);
     }
   };
 
@@ -67,7 +141,9 @@ export default function StudentProfile() {
         .update({
           full_name: formData.full_name,
           phone: formData.phone,
-          address: formData.address
+          address: formData.address,
+          department_id: formData.department_id || null,
+          level_id: formData.level_id || null
         })
         .eq('id', profile?.id);
 
@@ -77,6 +153,9 @@ export default function StudentProfile() {
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
+      
+      // Refetch courses after updating department/level
+      await fetchCourses();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -111,18 +190,12 @@ export default function StudentProfile() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src="" alt="Profile" />
-                  <AvatarFallback className="text-lg">
-                    {profile?.full_name?.charAt(0)?.toUpperCase() || 'S'}
-                  </AvatarFallback>
-                </Avatar>
-                <Button variant="outline" size="sm">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Change Photo
-                </Button>
-              </div>
+              <PhotoUpload 
+                currentPhotoUrl={profile?.profile_photo_url || ''}
+                onPhotoUpdated={(newUrl) => {
+                  // Photo will be updated in the profile via PhotoUpload component
+                }}
+              />
             </CardContent>
           </Card>
 
@@ -172,6 +245,40 @@ export default function StudentProfile() {
                     />
                   </div>
                 </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="level">Level</Label>
+                    <Select
+                      value={formData.level_id}
+                      onValueChange={(value) => handleInputChange('level_id', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {classes.map((cls) => (
+                          <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Select
+                      value={formData.department_id}
+                      onValueChange={(value) => handleInputChange('department_id', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="address">Address</Label>
                   <Input
@@ -198,20 +305,32 @@ export default function StudentProfile() {
           <CardContent>
             {courses.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {courses.map((enrollment, index) => (
+                {courses.map((course, index) => (
                   <div key={index} className="p-4 border rounded-lg">
-                    <h3 className="font-semibold">{enrollment.courses.name}</h3>
+                    <h3 className="font-semibold">{course.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {enrollment.courses.classes?.name} • {enrollment.courses.subjects?.name}
+                      {course.classes?.name} • {course.subjects?.name}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Teacher: {enrollment.courses.profiles?.full_name}
+                      Teacher: {course.profiles?.full_name}
                     </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {course.semester} Semester • {course.credit_unit} units
+                    </p>
+                    {course.description && (
+                      <p className="text-xs text-muted-foreground mt-2">{course.description}</p>
+                    )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground">No courses enrolled yet.</p>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  {!formData.department_id || !formData.level_id 
+                    ? "Please select your department and level to see your courses." 
+                    : "No courses available for your department and level yet."}
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

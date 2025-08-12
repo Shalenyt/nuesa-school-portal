@@ -16,30 +16,55 @@ export default function StudentViewMaterials() {
 
   const fetchMaterials = async () => {
     try {
-      // Get enrolled courses and their materials
-      const { data: enrollments } = await supabase
-        .from('student_enrollments')
-        .select(`
-          course_id,
-          courses(
-            id,
-            name,
-            materials(*)
-          )
-        `)
-        .eq('student_id', (await supabase.auth.getUser()).data.user?.id);
+      const { data: user } = await supabase.auth.getUser();
+      const userId = user.user?.id;
 
-      const allMaterials: any[] = [];
-      enrollments?.forEach((enrollment: any) => {
-        if (enrollment.courses?.materials) {
-          enrollment.courses.materials.forEach((material: any) => {
-            allMaterials.push({
-              ...material,
-              courseName: enrollment.courses.name
-            });
-          });
-        }
-      });
+      if (!userId) {
+        setMaterials([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get user profile to check department and level
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('department_id, level_id')
+        .eq('id', userId)
+        .single();
+
+      if (!profile?.department_id || !profile?.level_id) {
+        setMaterials([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get courses from course lists based on student's department and level
+      const { data: courseListData } = await supabase
+        .from('course_lists')
+        .select('course_ids')
+        .eq('class_id', profile.level_id)
+        .eq('subject_id', profile.department_id)
+        .single();
+
+      if (!courseListData?.course_ids) {
+        setMaterials([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get materials for those courses
+      const { data: materialsData } = await supabase
+        .from('materials')
+        .select(`
+          *,
+          courses(name)
+        `)
+        .in('course_id', courseListData.course_ids);
+
+      const allMaterials = materialsData?.map(material => ({
+        ...material,
+        courseName: material.courses?.name
+      })) || [];
 
       setMaterials(allMaterials);
     } catch (error) {
@@ -82,7 +107,7 @@ export default function StudentViewMaterials() {
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold text-foreground">No materials available</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  No course materials have been uploaded yet.
+                  Please update your department and level in your profile, or no materials have been uploaded yet.
                 </p>
               </div>
             </CardContent>

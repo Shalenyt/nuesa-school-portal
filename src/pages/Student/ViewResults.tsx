@@ -15,6 +15,43 @@ export default function StudentViewResults() {
 
   const fetchResults = async () => {
     try {
+      const { data: user } = await supabase.auth.getUser();
+      const userId = user.user?.id;
+
+      if (!userId) {
+        setResults([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get user profile to check department and level
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('department_id, level_id')
+        .eq('id', userId)
+        .single();
+
+      if (!profile?.department_id || !profile?.level_id) {
+        setResults([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get courses from course lists based on student's department and level
+      const { data: courseListData } = await supabase
+        .from('course_lists')
+        .select('course_ids')
+        .eq('class_id', profile.level_id)
+        .eq('subject_id', profile.department_id)
+        .single();
+
+      if (!courseListData?.course_ids) {
+        setResults([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get assignment submissions for those courses
       const { data: submissions } = await supabase
         .from('assignment_submissions')
         .select(`
@@ -22,16 +59,18 @@ export default function StudentViewResults() {
           feedback,
           graded_at,
           submitted_at,
-          assignments(
+          assignments!inner(
             title,
             max_points,
+            course_id,
             courses(
               name,
               subjects(name)
             )
           )
         `)
-        .eq('student_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('student_id', userId)
+        .in('assignments.course_id', courseListData.course_ids)
         .not('grade', 'is', null);
 
       setResults(submissions || []);
@@ -77,7 +116,7 @@ export default function StudentViewResults() {
                 <Trophy className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold text-foreground">No results available</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Your assignment results will appear here once graded.
+                  Please update your department and level in your profile, or no results are available yet.
                 </p>
               </div>
             </CardContent>

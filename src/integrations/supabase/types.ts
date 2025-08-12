@@ -415,9 +415,11 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          department_id: string | null
           email: string
           full_name: string
           id: string
+          level_id: string | null
           phone: string | null
           profile_photo_url: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -429,9 +431,11 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          department_id?: string | null
           email: string
           full_name: string
           id: string
+          level_id?: string | null
           phone?: string | null
           profile_photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -443,9 +447,11 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          department_id?: string | null
           email?: string
           full_name?: string
           id?: string
+          level_id?: string | null
           phone?: string | null
           profile_photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -454,7 +460,22 @@ export type Database = {
           student_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       school_settings: {
         Row: {
