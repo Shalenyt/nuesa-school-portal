@@ -21,6 +21,7 @@ import AdminAnnouncements from "./pages/Admin/Announcements";
 import AdminCourses from "./pages/Admin/Courses";
 import CourseLists from "./pages/Admin/CourseLists";
 import AdminProfile from "./pages/Admin/Profile";
+import UserManagement from "./pages/Admin/UserManagement";
 
 // Teacher pages
 import TeacherProfile from "./pages/Teacher/Profile";
@@ -101,6 +102,11 @@ const App = () => (
               <Route path="/admin/profile" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/users" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <UserManagement />
                 </ProtectedRoute>
               } />
               

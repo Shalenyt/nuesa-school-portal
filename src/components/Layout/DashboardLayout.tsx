@@ -2,7 +2,9 @@ import { ReactNode } from 'react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarMenu } from '@/components/Shared/SidebarMenu';
 import { useAuth } from '@/hooks/useAuth';
+import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LogOut } from 'lucide-react';
 import oaustechLogo from '@/assets/oaustech-logo.png';
@@ -13,6 +15,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { signOut, profile } = useAuth();
+  const { settings } = useSchoolSettings();
 
   return (
     <SidebarProvider>
@@ -25,11 +28,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarTrigger />
               
               <div className="flex items-center gap-2 ml-4">
-                <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-8 w-8" />
-                <h1 className="font-semibold text-lg">OAUSTECH Portal</h1>
+                <img 
+                  src={settings?.logo_url || oaustechLogo} 
+                  alt="School Logo" 
+                  className="h-8 w-8 object-contain" 
+                />
+                <h1 className="font-semibold text-lg">{settings?.school_name || 'OAUSTECH Portal'}</h1>
               </div>
               
               <div className="ml-auto flex items-center gap-4">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile?.profile_photo_url} />
+                  <AvatarFallback>
+                    {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="text-sm">
                   <span className="text-muted-foreground">Welcome,</span>{' '}
                   <span className="font-medium">{profile?.full_name}</span>

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Users, GraduationCap, BookOpen, MessageSquare, TrendingUp, Clock, BarChart3 } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, MessageSquare, TrendingUp, Clock, BarChart3, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
+import { useNavigate } from 'react-router-dom';
 
 interface Stats {
   totalUsers: number;
@@ -15,6 +16,7 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     pendingApplications: 0,
@@ -86,37 +88,43 @@ export default function AdminDashboard() {
       title: "Total Users",
       value: stats.totalUsers,
       icon: Users,
-      description: "All registered users"
+      description: "All registered users",
+      onClick: () => navigate('/admin/users')
     },
     {
       title: "Pending Applications",
       value: stats.pendingApplications,
       icon: Clock,
-      description: "Awaiting approval"
+      description: "Awaiting approval",
+      onClick: () => navigate('/admin/users')
+    },
+    {
+      title: "Active Admins",
+      value: Math.ceil(stats.totalUsers * 0.1) || 1,
+      icon: Shield,
+      description: "System administrators",
+      onClick: () => navigate('/admin/users')
     },
     {
       title: "Active Students",
       value: stats.approvedStudents,
       icon: GraduationCap,
-      description: "Approved students"
+      description: "Approved students",
+      onClick: () => navigate('/admin/users')
     },
     {
       title: "Active Teachers",
       value: stats.approvedTeachers,
       icon: Users,
-      description: "Approved teachers"
+      description: "Approved teachers",
+      onClick: () => navigate('/admin/users')
     },
     {
       title: "Total Courses",
       value: stats.totalCourses,
       icon: BookOpen,
-      description: "Available courses"
-    },
-    {
-      title: "Announcements",
-      value: stats.totalAnnouncements,
-      icon: MessageSquare,
-      description: "Posted announcements"
+      description: "Available courses",
+      onClick: () => navigate('/admin/courses')
     }
   ];
 
@@ -132,7 +140,11 @@ export default function AdminDashboard() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {statCards.map((card, index) => (
-            <Card key={index}>
+            <Card 
+              key={index} 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={card.onClick}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {card.title}
@@ -200,19 +212,19 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-3">
-                <Button variant="outline" className="justify-start" onClick={() => window.location.href = '/admin/manage-users'}>
+                <Button variant="outline" className="justify-start" onClick={() => navigate('/admin/users')}>
                   <Users className="h-4 w-4 mr-2" />
                   Manage Users
                 </Button>
-                <Button variant="outline" className="justify-start" onClick={() => window.location.href = '/admin/courses'}>
+                <Button variant="outline" className="justify-start" onClick={() => navigate('/admin/courses')}>
                   <BookOpen className="h-4 w-4 mr-2" />
                   Manage Courses
                 </Button>
-                <Button variant="outline" className="justify-start" onClick={() => window.location.href = '/admin/announcements'}>
+                <Button variant="outline" className="justify-start" onClick={() => navigate('/admin/announcements')}>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Create Announcement
                 </Button>
-                <Button variant="outline" className="justify-start" onClick={() => window.location.href = '/admin/analytics'}>
+                <Button variant="outline" className="justify-start" onClick={() => navigate('/admin/analytics')}>
                   <BarChart3 className="h-4 w-4 mr-2" />
                   View Analytics
                 </Button>

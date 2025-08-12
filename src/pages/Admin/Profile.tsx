@@ -9,10 +9,14 @@ import { User, Mail, Settings, Camera } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { PhotoUpload } from '@/components/Shared/PhotoUpload';
-import { toast } from '@/hooks/use-toast';
+import { SchoolLogoUpload } from '@/components/Shared/SchoolLogoUpload';
+import { useSchoolSettings } from '@/hooks/useSchoolSettings';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminProfile() {
   const { profile, user } = useAuth();
+  const { toast } = useToast();
+  const { settings, refetch: refetchSettings } = useSchoolSettings();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -80,20 +84,37 @@ export default function AdminProfile() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Profile Picture
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <PhotoUpload 
-                currentPhotoUrl={profilePhotoUrl}
-                onPhotoUpdated={(newUrl) => setProfilePhotoUrl(newUrl)}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Profile Picture
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <PhotoUpload 
+                  currentPhotoUrl={profilePhotoUrl}
+                  onPhotoUpdated={(newUrl) => setProfilePhotoUrl(newUrl)}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  School Logo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SchoolLogoUpload 
+                  currentLogoUrl={settings?.logo_url}
+                  onLogoUpdated={refetchSettings}
+                />
+              </CardContent>
+            </Card>
+          </div>
 
           <Card className="md:col-span-2">
             <CardHeader>
