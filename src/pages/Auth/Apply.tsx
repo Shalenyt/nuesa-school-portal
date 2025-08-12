@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { BookOpen, Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { supabase } from '@/integrations/supabase/client';
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
 export default function Apply() {
@@ -18,10 +19,34 @@ export default function Apply() {
     confirmPassword: '',
     role: '',
     studentId: '',
-    staffId: ''
+    staffId: '',
+    classId: '',
+    subjectId: ''
   });
   const [loading, setLoading] = useState(false);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const { signUp } = useAuth();
+
+  useEffect(() => {
+    if (formData.role === 'student') {
+      fetchClassesAndSubjects();
+    }
+  }, [formData.role]);
+
+  const fetchClassesAndSubjects = async () => {
+    try {
+      const [classesResponse, subjectsResponse] = await Promise.all([
+        supabase.from('classes').select('*').order('name'),
+        supabase.from('subjects').select('*').order('name')
+      ]);
+
+      if (classesResponse.data) setClasses(classesResponse.data);
+      if (subjectsResponse.data) setSubjects(subjectsResponse.data);
+    } catch (error) {
+      console.error('Error fetching classes and subjects:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,16 +137,50 @@ export default function Apply() {
               </div>
 
               {formData.role === 'student' && (
-                <div className="space-y-2">
-                  <Label htmlFor="studentId">Student ID</Label>
-                  <Input
-                    id="studentId"
-                    value={formData.studentId}
-                    onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                    required
-                    placeholder="Enter your student ID"
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="studentId">Student ID</Label>
+                    <Input
+                      id="studentId"
+                      value={formData.studentId}
+                      onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                      required
+                      placeholder="Enter your student ID"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="classId">Level</Label>
+                    <Select onValueChange={(value) => setFormData({ ...formData, classId: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {classes.map((cls) => (
+                          <SelectItem key={cls.id} value={cls.id}>
+                            {cls.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="subjectId">Department</Label>
+                    <Select onValueChange={(value) => setFormData({ ...formData, subjectId: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.id}>
+                            {subject.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
 
               {formData.role && formData.role !== 'student' && (
