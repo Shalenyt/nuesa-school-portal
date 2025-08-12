@@ -44,7 +44,7 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
       // Update school settings - use the first row's ID if it exists
       const { data: existingSettings } = await (supabase as any)
         .from('school_settings')
-        .select('id')
+        .select('*')
         .limit(1);
 
       if (existingSettings && existingSettings.length > 0) {
@@ -59,7 +59,12 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
       } else {
         const { error: insertError } = await (supabase as any)
           .from('school_settings')
-          .insert({ logo_url: data.publicUrl });
+          .insert({ 
+            logo_url: data.publicUrl,
+            school_name: 'OAUSTECH Portal',
+            portal_name: 'OAUSTECH Portal',
+            theme_color: '#ef4444'
+          });
 
         if (insertError) {
           throw insertError;

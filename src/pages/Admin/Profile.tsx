@@ -109,6 +109,8 @@ export default function AdminProfile() {
           school_name: settings?.school_name || 'OAUSTECH Portal',
           logo_url: settings?.logo_url,
           theme_color: settings?.theme_color || '#ef4444'
+        }, {
+          onConflict: 'id'
         });
 
       if (error) throw error;
@@ -119,7 +121,7 @@ export default function AdminProfile() {
       });
       
       setPortalNameEdit(false);
-      refetchSettings();
+      await refetchSettings();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -278,71 +280,73 @@ export default function AdminProfile() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Edit className="h-5 w-5" />
-                  Portal Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="portal_name">Portal Name</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="portal_name"
-                      value={portalName}
-                      onChange={(e) => setPortalName(e.target.value)}
-                      disabled={!portalNameEdit}
-                      className={!portalNameEdit ? "bg-muted" : ""}
-                    />
-                    <Button
-                      onClick={handlePortalNameToggle}
-                      variant="outline"
-                      disabled={loading}
-                    >
-                      {portalNameEdit ? 'Update' : 'Edit'}
-                    </Button>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Edit className="h-5 w-5" />
+                    Portal Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="portal_name">Portal Name</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="portal_name"
+                        value={portalName}
+                        onChange={(e) => setPortalName(e.target.value)}
+                        disabled={!portalNameEdit}
+                        className={!portalNameEdit ? "bg-muted" : ""}
+                      />
+                      <Button
+                        onClick={handlePortalNameToggle}
+                        variant="outline"
+                        disabled={loading}
+                      >
+                        {portalNameEdit ? 'Update' : 'Edit'}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  Theme Color
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Current Theme Color</Label>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-8 h-8 rounded border border-border"
-                      style={{ backgroundColor: selectedThemeColor }}
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      {selectedThemeColor}
-                    </span>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette className="h-5 w-5" />
+                    Theme Color
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Current Theme Color</Label>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-8 h-8 rounded border border-border"
+                        style={{ backgroundColor: settings?.theme_color || '#ef4444' }}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {settings?.theme_color || '#ef4444'}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                
-                <ColorPicker
-                  currentColor={selectedThemeColor}
-                  onColorChange={handleThemeColorChange}
-                />
-                
-                <Button
-                  onClick={updateThemeColor}
-                  disabled={!hasColorChanged || loading}
-                  className={`w-full ${!hasColorChanged ? 'opacity-50' : ''}`}
-                >
-                  {loading ? 'Updating...' : 'Update Color'}
-                </Button>
-              </CardContent>
-            </Card>
+                  
+                  <ColorPicker
+                    currentColor={settings?.theme_color || '#ef4444'}
+                    onColorChange={handleThemeColorChange}
+                  />
+                  
+                  <Button
+                    onClick={updateThemeColor}
+                    disabled={!hasColorChanged || loading}
+                    className={`w-full ${!hasColorChanged ? 'opacity-50' : ''}`}
+                  >
+                    {loading ? 'Updating...' : 'Update Color'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

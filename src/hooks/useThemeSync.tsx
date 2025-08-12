@@ -55,6 +55,9 @@ export function useThemeSync() {
       // Update secondary colors to complement the primary
       root.style.setProperty('--secondary-foreground', hsl);
       
+      // Update destructive colors to use theme color
+      root.style.setProperty('--destructive', hsl);
+      
       // Update sidebar colors
       root.style.setProperty('--sidebar-primary', hsl);
       root.style.setProperty('--sidebar-ring', hsl);

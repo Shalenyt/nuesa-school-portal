@@ -98,8 +98,8 @@ export function SidebarMenu() {
                        to={item.url} 
                        className={({ isActive }) =>
                          isActive 
-                           ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
-                           : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                           ? "bg-primary text-primary-foreground font-medium rounded-md px-3 py-2 transition-colors" 
+                           : "text-sidebar-foreground hover:bg-primary/10 hover:text-primary rounded-md px-3 py-2 transition-colors border border-transparent hover:border-primary/20"
                        }
                     >
                       <item.icon className="h-4 w-4" />
