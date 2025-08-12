@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +15,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, profile } = useAuth();
+  const { settings } = useSchoolSettings();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,10 +53,14 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4">
-            <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-16 w-16" />
+            <img 
+              src={settings?.logo_url || oaustechLogo} 
+              alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
+              className="h-16 w-16 object-contain" 
+            />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            OAUSTECH Portal
+            {settings?.school_name || 'OAUSTECH Portal'}
           </h1>
           <p className="text-muted-foreground mt-2">Sign in to your account</p>
         </div>

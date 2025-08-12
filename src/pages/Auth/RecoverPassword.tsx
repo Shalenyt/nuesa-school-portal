@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +15,7 @@ export default function RecoverPassword() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const { resetPassword } = useAuth();
+  const { settings } = useSchoolSettings();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,9 +40,13 @@ export default function RecoverPassword() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-12 w-12" />
+              <img 
+                src={settings?.logo_url || oaustechLogo} 
+                alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
+                className="h-12 w-12 object-contain" 
+              />
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                OAUSTECH Portal
+                {settings?.school_name || 'OAUSTECH Portal'}
               </h1>
             </div>
           </div>
@@ -82,9 +88,13 @@ export default function RecoverPassword() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-12 w-12" />
+            <img 
+              src={settings?.logo_url || oaustechLogo} 
+              alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
+              className="h-12 w-12 object-contain" 
+            />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              OAUSTECH Portal
+              {settings?.school_name || 'OAUSTECH Portal'}
             </h1>
           </div>
           <p className="text-muted-foreground mt-2">Reset your password</p>
