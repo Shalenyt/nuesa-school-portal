@@ -64,7 +64,7 @@ export default function StudentSubmitAssignment() {
         .from('assignments')
         .select(`
           *,
-          courses(name)
+          courses(name, subject_id, class_id)
         `)
         .in('course_id', courseListData.course_ids);
 
