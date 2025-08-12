@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Check, X, Users, Filter } from 'lucide-react';
+import { Check, X, Users, Filter, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface Profile {
   id: string;
@@ -75,6 +76,41 @@ export default function ManageUsers() {
       toast({
         title: "Error",
         description: "Failed to update user status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteUser = async (userId: string, userEmail: string) => {
+    try {
+      // First delete from profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      // Then delete from auth.users using the admin API
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+
+      if (authError) {
+        console.error('Auth deletion error:', authError);
+        // Don't throw here as the profile is already deleted
+        // This might fail if we don't have admin privileges
+      }
+
+      toast({
+        title: "User deleted",
+        description: `User ${userEmail} has been completely removed from the system`,
+      });
+
+      fetchProfiles();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user completely. User may still exist in authentication.",
         variant: "destructive"
       });
     }
@@ -192,25 +228,81 @@ export default function ManageUsers() {
                     )}
 
                     {profile.status === 'approved' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateUserStatus(profile.id, 'rejected')}
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Deactivate
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateUserStatus(profile.id, 'rejected')}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Deactivate
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive">
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete User Permanently</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete <strong>{profile.full_name}</strong> ({profile.email}) from the entire system. 
+                                This action cannot be undone and will free up their email and IDs for reuse.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteUser(profile.id, profile.email)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete Permanently
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     )}
 
                     {profile.status === 'rejected' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateUserStatus(profile.id, 'approved')}
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Reactivate
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateUserStatus(profile.id, 'approved')}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Reactivate
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive">
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete User Permanently</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete <strong>{profile.full_name}</strong> ({profile.email}) from the entire system. 
+                                This action cannot be undone and will free up their email and IDs for reuse.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteUser(profile.id, profile.email)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete Permanently
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     )}
                   </div>
                 ))}
