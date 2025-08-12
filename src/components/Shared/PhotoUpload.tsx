@@ -26,7 +26,7 @@ export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProp
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile?.id}.${fileExt}`;
-      const filePath = `profile-photos/${fileName}`;
+      const filePath = `${profile?.id}/${fileName}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
