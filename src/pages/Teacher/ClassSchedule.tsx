@@ -62,7 +62,7 @@ export default function TeacherClassSchedule() {
         .from('timetable')
         .select(`
           *,
-          courses(
+          courses!inner(
             name,
             classes(name),
             subjects(name),

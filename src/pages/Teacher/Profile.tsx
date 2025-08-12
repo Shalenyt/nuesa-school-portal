@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Settings, Camera, BookOpen } from 'lucide-react';
+import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -64,7 +65,8 @@ export default function TeacherProfile() {
         .update({
           full_name: formData.full_name,
           phone: formData.phone,
-          address: formData.address
+          address: formData.address,
+          staff_id: formData.staff_id
         })
         .eq('id', profile?.id);
 
@@ -83,6 +85,10 @@ export default function TeacherProfile() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePhotoUpdated = (newUrl: string) => {
+    // Photo update is handled by the PhotoUpload component
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -108,18 +114,10 @@ export default function TeacherProfile() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src="" alt="Profile" />
-                  <AvatarFallback className="text-lg">
-                    {profile?.full_name?.charAt(0)?.toUpperCase() || 'T'}
-                  </AvatarFallback>
-                </Avatar>
-                <Button variant="outline" size="sm">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Change Photo
-                </Button>
-              </div>
+              <PhotoUpload 
+                currentPhotoUrl={profile?.profile_photo_url}
+                onPhotoUpdated={handlePhotoUpdated}
+              />
             </CardContent>
           </Card>
 
@@ -146,8 +144,8 @@ export default function TeacherProfile() {
                     <Input
                       id="staff_id"
                       value={formData.staff_id}
-                      disabled
-                      className="bg-muted"
+                      onChange={(e) => handleInputChange('staff_id', e.target.value)}
+                      placeholder="Enter staff ID"
                     />
                   </div>
                   <div className="space-y-2">

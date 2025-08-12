@@ -108,7 +108,7 @@ export function NotificationContent() {
       // Fetch announcements
       const { data: announcements } = await supabase
         .from('announcements')
-        .select('*')
+        .select('*, profiles(full_name, role)')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -116,7 +116,7 @@ export function NotificationContent() {
         allNotifications.push({
           id: `announcement-${announcement.id}`,
           type: 'announcement',
-          title: 'New Announcement',
+          title: `New Announcement ${announcement.profiles?.role === 'admin' ? '(Admin)' : '(Teacher)'}`,
           message: announcement.title,
           created_at: announcement.created_at,
           read: false

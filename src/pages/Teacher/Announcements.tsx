@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Plus, Edit2, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +31,7 @@ export default function TeacherAnnouncements() {
     try {
       const { data, error } = await supabase
         .from('announcements')
-        .select('*, profiles(full_name)')
+        .select('*, profiles(full_name, role)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -149,13 +150,18 @@ export default function TeacherAnnouncements() {
                       {announcement.title}
                     </CardTitle>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        announcement.type === 'urgent' ? 'bg-red-100 text-red-800' :
-                        announcement.type === 'academic' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <Badge variant={
+                        announcement.type === 'urgent' ? 'destructive' :
+                        announcement.type === 'academic' ? 'default' :
+                        'secondary'
+                      }>
                         {announcement.type.charAt(0).toUpperCase() + announcement.type.slice(1)}
-                      </span>
+                      </Badge>
+                      {announcement.profiles?.role && (
+                        <Badge variant={announcement.profiles.role === 'admin' ? 'default' : 'outline'}>
+                          {announcement.profiles.role === 'admin' ? 'Admin' : 'Teacher'}
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         by {announcement.profiles?.full_name} • {new Date(announcement.created_at).toLocaleDateString()}
                       </span>
