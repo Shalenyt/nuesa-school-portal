@@ -106,25 +106,26 @@ export default function AdminProfile() {
     setLoading(true);
     try {
       if (settings?.id) {
-        // Update existing settings
+        // Update existing settings - only portal name and school name
         const { error } = await supabase
           .from('school_settings')
           .update({
-            portal_name: portalName.trim()
+            portal_name: portalName.trim(),
+            school_name: portalName.trim()
           })
           .eq('id', settings.id);
 
         if (error) throw error;
       } else {
-        // Create new settings
+        // Create new settings - preserve existing theme color and logo
         const { error } = await supabase
           .from('school_settings')
           .insert({
             id: crypto.randomUUID(),
             portal_name: portalName.trim(),
             school_name: portalName.trim(),
-            logo_url: null,
-            theme_color: selectedThemeColor
+            logo_url: settings?.logo_url || null,
+            theme_color: settings?.theme_color || '#ef4444'
           });
 
         if (error) throw error;
@@ -310,7 +311,7 @@ export default function AdminProfile() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Edit className="h-5 w-5" />
-                    Portal Settings
+                    Rename Portal
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -329,7 +330,7 @@ export default function AdminProfile() {
                         variant="outline"
                         disabled={loading}
                       >
-                        {portalNameEdit ? 'Update' : 'Edit'}
+                        {portalNameEdit ? 'Rename' : 'Edit'}
                       </Button>
                     </div>
                   </div>

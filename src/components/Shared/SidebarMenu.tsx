@@ -96,13 +96,13 @@ export function SidebarMenu() {
                    <SidebarMenuButton asChild>
                      <NavLink 
                         to={item.url} 
-                        className={({ isActive }) =>
+                         className={({ isActive }) =>
                           `flex items-center gap-2 w-full transition-all duration-200 ${
                             isActive 
                               ? "bg-primary text-primary-foreground font-medium rounded-md px-3 py-2 shadow-sm border border-primary" 
-                              : "bg-muted/50 text-foreground hover:bg-primary/90 hover:text-primary-foreground rounded-md px-3 py-2 border border-border hover:border-primary hover:shadow-md font-medium"
+                              : "bg-primary text-primary-foreground hover:bg-primary/80 rounded-md px-3 py-2 border border-primary hover:shadow-md font-medium"
                           }`
-                        }
+                         }
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
