@@ -39,12 +39,14 @@ export default function StudentTimetable() {
       }
 
       // Get courses from course lists based on student's department and level
-      const { data: courseListData } = await supabase
+      const { data: courseListData, error: courseListError } = await supabase
         .from('course_lists')
-        .select('course_ids')
+        .select('course_ids')  
         .eq('class_id', profile.level_id)
         .eq('subject_id', profile.department_id)
         .maybeSingle();
+
+      console.log('Course list data:', courseListData, 'Error:', courseListError);
 
       if (!courseListData?.course_ids || courseListData.course_ids.length === 0) {
         setTimetable([]);

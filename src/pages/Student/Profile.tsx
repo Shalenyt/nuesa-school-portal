@@ -73,7 +73,7 @@ export default function StudentProfile() {
         .select('course_ids')
         .eq('class_id', profile.level_id)
         .eq('subject_id', profile.department_id)
-        .single();
+        .maybeSingle();
 
       if (courseListError || !courseListData?.course_ids) {
         setCourses([]);
