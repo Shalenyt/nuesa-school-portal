@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { BookOpen, Loader2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import oaustechLogo from '@/assets/oaustech-logo.png';
 
 export default function Apply() {
   const [formData, setFormData] = useState({
@@ -47,14 +49,20 @@ export default function Apply() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background relative p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
-            <BookOpen className="h-8 w-8 text-primary-foreground" />
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-12 w-12" />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              OAUSTECH Portal
+            </h1>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Smart School Portal</h1>
-          <p className="text-gray-600 mt-2">Apply for access to the portal</p>
+          <p className="text-muted-foreground mt-2">Apply for access to the portal</p>
         </div>
 
         <Card>

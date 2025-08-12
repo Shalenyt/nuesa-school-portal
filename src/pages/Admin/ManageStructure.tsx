@@ -140,63 +140,25 @@ export default function ManageStructure() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Structure</h1>
-          <p className="text-muted-foreground">
-            Manage classes and subjects in the school
-          </p>
-        </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Manage Structure</h1>
+            <p className="text-muted-foreground">
+              Manage departments and levels for the school
+            </p>
+          </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Classes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter class name"
-                  value={newClassName}
-                  onChange={(e) => setNewClassName(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addClass()}
-                />
-                <Button onClick={addClass}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                {classes.map((cls) => (
-                  <div key={cls.id} className="flex items-center justify-between p-2 border rounded">
-                    <span>{cls.name}</span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteClass(cls.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                Subjects
+                Departments
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <Input
-                  placeholder="Enter subject name"
+                  placeholder="Enter department name"
                   value={newSubjectName}
                   onChange={(e) => setNewSubjectName(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addSubject()}
@@ -215,6 +177,44 @@ export default function ManageStructure() {
                       variant="destructive"
                       size="sm"
                       onClick={() => deleteSubject(subject.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Levels
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter level name (e.g., 200 Level)"
+                  value={newClassName}
+                  onChange={(e) => setNewClassName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addClass()}
+                />
+                <Button onClick={addClass}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {classes.map((cls) => (
+                  <div key={cls.id} className="flex items-center justify-between p-2 border rounded">
+                    <span>{cls.name}</span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteClass(cls.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

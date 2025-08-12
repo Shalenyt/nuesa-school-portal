@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Users, GraduationCap, BookOpen, MessageSquare, TrendingUp, Clock } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, MessageSquare, TrendingUp, Clock, BarChart3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 
 interface Stats {
@@ -156,10 +157,39 @@ export default function AdminDashboard() {
               <CardTitle>Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  System activity and logs will appear here
-                </p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <div>
+                      <p className="font-medium">New student application</p>
+                      <p className="text-sm text-muted-foreground">John Doe applied for admission</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground">2 hours ago</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-accent rounded-full"></div>
+                    <div>
+                      <p className="font-medium">Course materials uploaded</p>
+                      <p className="text-sm text-muted-foreground">Dr. Smith uploaded new materials</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground">5 hours ago</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-destructive rounded-full"></div>
+                    <div>
+                      <p className="font-medium">System backup completed</p>
+                      <p className="text-sm text-muted-foreground">Daily backup finished successfully</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground">1 day ago</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -169,10 +199,23 @@ export default function AdminDashboard() {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Manage users, approve applications, and system settings
-                </p>
+              <div className="grid gap-3">
+                <Button variant="outline" className="justify-start" onClick={() => window.location.href = '/admin/manage-users'}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Manage Users
+                </Button>
+                <Button variant="outline" className="justify-start" onClick={() => window.location.href = '/admin/courses'}>
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Manage Courses
+                </Button>
+                <Button variant="outline" className="justify-start" onClick={() => window.location.href = '/admin/announcements'}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Create Announcement
+                </Button>
+                <Button variant="outline" className="justify-start" onClick={() => window.location.href = '/admin/analytics'}>
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Analytics
+                </Button>
               </div>
             </CardContent>
           </Card>

@@ -31,6 +31,12 @@ import ViewStudents from "./pages/Teacher/ViewStudents";
 
 // Student pages
 import StudentProfile from "./pages/Student/Profile";
+import StudentViewMaterials from "./pages/Student/ViewMaterials";
+import StudentSubmitAssignment from "./pages/Student/SubmitAssignment";
+import StudentTimetable from "./pages/Student/Timetable";
+import StudentCourses from "./pages/Student/Courses";
+import StudentViewResults from "./pages/Student/ViewResults";
+import StudentNotifications from "./pages/Student/Notifications";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -126,6 +132,36 @@ const App = () => (
               <Route path="/student/profile" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/view-materials" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentViewMaterials />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/submit-assignment" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentSubmitAssignment />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/timetable" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentTimetable />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/courses" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentCourses />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/view-results" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentViewResults />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/notifications" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentNotifications />
                 </ProtectedRoute>
               } />
               

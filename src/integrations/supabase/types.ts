@@ -212,7 +212,9 @@ export type Database = {
           academic_year: string | null
           class_id: string
           created_at: string
+          description: string | null
           id: string
+          name: string | null
           semester: string | null
           subject_id: string
           teacher_id: string | null
@@ -222,7 +224,9 @@ export type Database = {
           academic_year?: string | null
           class_id: string
           created_at?: string
+          description?: string | null
           id?: string
+          name?: string | null
           semester?: string | null
           subject_id: string
           teacher_id?: string | null
@@ -232,7 +236,9 @@ export type Database = {
           academic_year?: string | null
           class_id?: string
           created_at?: string
+          description?: string | null
           id?: string
+          name?: string | null
           semester?: string | null
           subject_id?: string
           teacher_id?: string | null
