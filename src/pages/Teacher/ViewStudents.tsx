@@ -12,8 +12,12 @@ export default function ViewStudents() {
   const { profile } = useAuth();
   const [students, setStudents] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('all');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedLevel, setSelectedLevel] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +38,15 @@ export default function ViewStudents() {
 
       if (coursesError) throw coursesError;
       setCourses(coursesData || []);
+
+      // Fetch all departments and levels for filtering
+      const [{ data: departmentsData }, { data: levelsData }] = await Promise.all([
+        supabase.from('subjects').select('id, name'),
+        supabase.from('classes').select('id, name, grade_level')
+      ]);
+      
+      setDepartments(departmentsData || []);
+      setLevels(levelsData || []);
 
       // Fetch students based on course lists that match teacher's courses
       const courseIds = coursesData?.map(course => course.id) || [];
@@ -113,7 +126,13 @@ export default function ViewStudents() {
     const matchesCourse = selectedCourse === 'all' || 
                          student.courses?.some((course: any) => course.id === selectedCourse);
     
-    return matchesSearch && matchesCourse;
+    const matchesDepartment = selectedDepartment === 'all' || 
+                             student.department_id === selectedDepartment;
+    
+    const matchesLevel = selectedLevel === 'all' || 
+                        student.level_id === selectedLevel;
+    
+    return matchesSearch && matchesCourse && matchesDepartment && matchesLevel;
   });
 
   // Group students by course for better organization
@@ -148,7 +167,7 @@ export default function ViewStudents() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -167,6 +186,30 @@ export default function ViewStudents() {
                 {courses.map((course) => (
                   <option key={course.id} value={course.id}>
                     {course.name} ({course.classes?.name} - {course.subjects?.name})
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className="px-3 py-2 border rounded-md bg-background"
+              >
+                <option value="all">All Departments</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedLevel}
+                onChange={(e) => setSelectedLevel(e.target.value)}
+                className="px-3 py-2 border rounded-md bg-background"
+              >
+                <option value="all">All Levels</option>
+                {levels.map((level) => (
+                  <option key={level.id} value={level.id}>
+                    {level.name} (Grade {level.grade_level})
                   </option>
                 ))}
               </select>
