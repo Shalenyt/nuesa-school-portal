@@ -23,7 +23,8 @@ export default function AdminCourses() {
     subject_id: '',
     teacher_id: '',
     semester: '',
-    credit_unit: 0
+    academic_year: new Date().getFullYear().toString(),
+    credit_unit: 1
   });
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export default function AdminCourses() {
           subject_id: newCourse.subject_id,
           teacher_id: newCourse.teacher_id,
           semester: newCourse.semester,
+          academic_year: newCourse.academic_year,
           credit_unit: newCourse.credit_unit
         }]);
 
@@ -85,7 +87,7 @@ export default function AdminCourses() {
         description: "New course has been created successfully.",
       });
 
-      setNewCourse({ name: '', description: '', class_id: '', subject_id: '', teacher_id: '', semester: '', credit_unit: 0 });
+      setNewCourse({ name: '', description: '', class_id: '', subject_id: '', teacher_id: '', semester: '', academic_year: new Date().getFullYear().toString(), credit_unit: 1 });
       setIsCreating(false);
       fetchData();
     } catch (error: any) {

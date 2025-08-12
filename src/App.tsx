@@ -19,6 +19,7 @@ import Analytics from "./pages/Admin/Analytics";
 import ManageStructure from "./pages/Admin/ManageStructure";
 import AdminAnnouncements from "./pages/Admin/Announcements";
 import AdminCourses from "./pages/Admin/Courses";
+import CourseLists from "./pages/Admin/CourseLists";
 import AdminProfile from "./pages/Admin/Profile";
 
 // Teacher pages
@@ -90,6 +91,11 @@ const App = () => (
               <Route path="/admin/courses" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminCourses />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/course-lists" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <CourseLists />
                 </ProtectedRoute>
               } />
               <Route path="/admin/profile" element={
