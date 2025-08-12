@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Upload, File, Plus, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function UploadMaterials() {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const [courses, setCourses] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -236,7 +237,7 @@ export default function UploadMaterials() {
                       {material.title}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {material.courses?.name} • {material.material_type.charAt(0).toUpperCase() + material.material_type.slice(1)}
+                      {material.courses?.name} • {material.material_type ? material.material_type.charAt(0).toUpperCase() + material.material_type.slice(1) : 'Unknown'}
                     </p>
                   </div>
                   <Button
