@@ -35,13 +35,35 @@ export function useThemeSync() {
 
       // Apply the theme color as primary
       const hsl = hexToHsl(settings.theme_color);
-      document.documentElement.style.setProperty('--primary', hsl);
+      const root = document.documentElement;
       
-      // Create lighter/darker variants
-      const [hue, saturation] = hsl.split(' ');
-      document.documentElement.style.setProperty('--primary-foreground', '0 0% 98%');
-      document.documentElement.style.setProperty('--accent', `${hue} ${saturation} 95%`);
-      document.documentElement.style.setProperty('--accent-foreground', hsl);
+      // Set primary colors for both light and dark mode
+      root.style.setProperty('--primary', hsl);
+      root.style.setProperty('--ring', hsl);
+      
+      // Extract HSL values for calculations
+      const [hue, saturation, lightness] = hsl.split(' ');
+      const h = parseInt(hue);
+      const s = parseInt(saturation);
+      const l = parseInt(lightness);
+      
+      // Create semantic variants
+      root.style.setProperty('--primary-foreground', '0 0% 98%');
+      root.style.setProperty('--accent', `${h} ${Math.max(s - 60, 10)}% ${Math.min(l + 40, 96)}%`);
+      root.style.setProperty('--accent-foreground', hsl);
+      
+      // Update secondary colors to complement the primary
+      root.style.setProperty('--secondary-foreground', hsl);
+      
+      // Update sidebar colors
+      root.style.setProperty('--sidebar-primary', hsl);
+      root.style.setProperty('--sidebar-ring', hsl);
+      root.style.setProperty('--sidebar-accent-foreground', hsl);
+      
+      // Force a repaint to apply changes immediately
+      document.body.style.display = 'none';
+      document.body.offsetHeight; // Trigger reflow
+      document.body.style.display = '';
     }
   }, [settings?.theme_color]);
 }
