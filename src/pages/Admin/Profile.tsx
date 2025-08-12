@@ -106,18 +106,19 @@ export default function AdminProfile() {
     setLoading(true);
     try {
       if (settings?.id) {
-        // Update existing settings - only portal name and school name
+        // Update existing settings - ONLY portal name and school name, preserve everything else
         const { error } = await supabase
           .from('school_settings')
           .update({
             portal_name: portalName.trim(),
             school_name: portalName.trim()
+            // Explicitly NOT updating logo_url or theme_color
           })
           .eq('id', settings.id);
 
         if (error) throw error;
       } else {
-        // Create new settings - preserve existing theme color and logo
+        // Create new settings - use current values for theme and logo
         const { error } = await supabase
           .from('school_settings')
           .insert({
@@ -125,7 +126,7 @@ export default function AdminProfile() {
             portal_name: portalName.trim(),
             school_name: portalName.trim(),
             logo_url: settings?.logo_url || null,
-            theme_color: settings?.theme_color || '#ef4444'
+            theme_color: selectedThemeColor || '#ef4444'
           });
 
         if (error) throw error;
@@ -347,21 +348,21 @@ export default function AdminProfile() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Current Theme Color</Label>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-8 h-8 rounded border border-border"
-                        style={{ backgroundColor: settings?.theme_color || '#ef4444' }}
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {settings?.theme_color || '#ef4444'}
-                      </span>
-                    </div>
+                     <div className="flex items-center gap-2">
+                       <div
+                         className="w-8 h-8 rounded border border-border"
+                         style={{ backgroundColor: selectedThemeColor }}
+                       />
+                       <span className="text-sm text-muted-foreground">
+                         {selectedThemeColor}
+                       </span>
+                     </div>
                   </div>
                   
-                  <ColorPicker
-                    currentColor={settings?.theme_color || '#ef4444'}
-                    onColorChange={handleThemeColorChange}
-                  />
+                   <ColorPicker
+                     currentColor={selectedThemeColor}
+                     onColorChange={handleThemeColorChange}
+                   />
                   
                   <Button
                     onClick={updateThemeColor}

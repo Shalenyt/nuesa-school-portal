@@ -99,8 +99,8 @@ export function SidebarMenu() {
                          className={({ isActive }) =>
                           `flex items-center gap-2 w-full transition-all duration-200 ${
                             isActive 
-                              ? "bg-primary text-primary-foreground font-medium rounded-md px-3 py-2 shadow-sm border border-primary" 
-                              : "bg-primary text-primary-foreground hover:bg-primary/80 rounded-md px-3 py-2 border border-primary hover:shadow-md font-medium"
+                              ? "bg-primary text-white font-medium rounded-md px-3 py-2 shadow-sm border border-primary" 
+                              : "bg-primary text-white hover:bg-primary/90 rounded-md px-3 py-2 border border-primary hover:shadow-md font-medium"
                           }`
                          }
                     >
