@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Clock, MapPin, Plus, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const DAYS_OF_WEEK = [
   { value: 1, label: 'Monday' },
@@ -21,6 +21,7 @@ const DAYS_OF_WEEK = [
 
 export default function TeacherClassSchedule() {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);

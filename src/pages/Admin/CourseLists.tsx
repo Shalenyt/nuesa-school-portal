@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, BookOpen, FileText } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CourseLists() {
   const [courseLists, setCourseLists] = useState<any[]>([]);
@@ -15,6 +15,7 @@ export default function CourseLists() {
   const [isCreating, setIsCreating] = useState(false);
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchData();
