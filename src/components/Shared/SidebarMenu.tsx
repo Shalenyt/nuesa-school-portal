@@ -97,10 +97,10 @@ export function SidebarMenu() {
                       <NavLink 
                          to={item.url} 
                           className={({ isActive }) =>
-                           `flex items-center gap-2 w-full transition-all duration-200 rounded-md px-3 py-2 border ${
+                           `flex items-center gap-2 w-full rounded-md px-3 py-2 ${
                              isActive 
-                               ? "bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-primary font-medium shadow-sm" 
-                               : "bg-sidebar-background text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium"
+                               ? "bg-primary text-primary-foreground font-medium" 
+                               : "bg-primary/80 text-primary-foreground font-medium"
                            }`
                           }
                     >
