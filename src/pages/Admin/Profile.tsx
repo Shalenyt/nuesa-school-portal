@@ -106,27 +106,26 @@ export default function AdminProfile() {
     setLoading(true);
     try {
       if (settings?.id) {
-        // Update existing settings - ONLY portal name and school name, preserve everything else
+        // Update existing settings - ONLY portal name and school name, DON'T touch other fields
         const { error } = await supabase
           .from('school_settings')
           .update({
             portal_name: portalName.trim(),
             school_name: portalName.trim()
-            // Explicitly NOT updating logo_url or theme_color
           })
           .eq('id', settings.id);
 
         if (error) throw error;
       } else {
-        // Create new settings - use current values for theme and logo
+        // Create new settings - keep existing values separate
         const { error } = await supabase
           .from('school_settings')
           .insert({
             id: crypto.randomUUID(),
             portal_name: portalName.trim(),
             school_name: portalName.trim(),
-            logo_url: settings?.logo_url || null,
-            theme_color: selectedThemeColor || '#ef4444'
+            logo_url: null,
+            theme_color: '#ef4444'
           });
 
         if (error) throw error;
