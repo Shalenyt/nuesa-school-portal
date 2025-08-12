@@ -12,6 +12,7 @@ import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 import { SchoolLogoUpload } from '@/components/Shared/SchoolLogoUpload';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { useToast } from '@/hooks/use-toast';
+import { useThemeSync } from '@/hooks/useThemeSync';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Edit, Palette } from 'lucide-react';
 
@@ -19,6 +20,9 @@ export default function AdminProfile() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
   const { settings, refetch: refetchSettings } = useSchoolSettings();
+  
+  // Initialize theme sync
+  useThemeSync();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -106,7 +110,7 @@ export default function AdminProfile() {
         const { error } = await supabase
           .from('school_settings')
           .update({
-            portal_name: portalName
+            portal_name: portalName.trim()
           })
           .eq('id', settings.id);
 
@@ -117,10 +121,10 @@ export default function AdminProfile() {
           .from('school_settings')
           .insert({
             id: crypto.randomUUID(),
-            portal_name: portalName,
-            school_name: 'OAUSTECH Portal',
+            portal_name: portalName.trim(),
+            school_name: portalName.trim(),
             logo_url: null,
-            theme_color: '#ef4444'
+            theme_color: selectedThemeColor
           });
 
         if (error) throw error;
