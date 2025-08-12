@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function StudentProfile() {
   const { profile, user } = useAuth();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
