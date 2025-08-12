@@ -22,21 +22,28 @@ export function useSchoolSettings() {
       const { data, error } = await (supabase as any)
         .from('school_settings')
         .select('*')
-        .limit(1);
+        .single();
 
       if (error) {
-        throw error;
-      }
+        // If no record exists, create default one
+        if (error.code === 'PGRST116') {
+          const { data: newData, error: insertError } = await (supabase as any)
+            .from('school_settings')
+            .insert({
+              school_name: 'OAUSTECH Portal',
+              portal_name: 'OAUSTECH Portal',
+              theme_color: '#ef4444'
+            })
+            .select()
+            .single();
 
-      if (data && data.length > 0) {
-        setSettings(data[0]);
+          if (insertError) throw insertError;
+          setSettings(newData);
+        } else {
+          throw error;
+        }
       } else {
-        setSettings({ 
-          id: '', 
-          school_name: 'OAUSTECH Portal',
-          portal_name: 'OAUSTECH Portal',
-          theme_color: '#ef4444'
-        });
+        setSettings(data);
       }
     } catch (error) {
       console.error('Error fetching school settings:', error);
