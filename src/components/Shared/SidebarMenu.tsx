@@ -37,6 +37,7 @@ const adminMenuItems = [
   { title: "Structure", url: "/admin/manage-structure", icon: Building2 },
   { title: "Announcements", url: "/admin/announcements", icon: MessageSquare },
   { title: "Courses", url: "/admin/courses", icon: BookOpen },
+  { title: "Course Lists", url: "/admin/course-lists", icon: FileText },
   { title: "Profile", url: "/admin/profile", icon: Settings }
 ];
 
@@ -97,8 +98,8 @@ export function SidebarMenu() {
                       to={item.url} 
                       className={({ isActive }) =>
                         isActive 
-                          ? "bg-primary text-primary-foreground font-medium" 
-                          : "text-primary hover:bg-primary/10 hover:text-primary"
+                          ? "bg-destructive text-destructive-foreground font-medium" 
+                          : "text-foreground hover:bg-destructive/10 hover:text-destructive"
                       }
                     >
                       <item.icon className="h-4 w-4" />
