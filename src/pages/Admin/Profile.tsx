@@ -106,7 +106,7 @@ export default function AdminProfile() {
     setLoading(true);
     try {
       if (settings?.id) {
-        // Update existing settings - ONLY portal name and school name, DON'T touch other fields
+        // Update existing settings - ONLY portal name and school name
         const { error } = await supabase
           .from('school_settings')
           .update({
@@ -117,15 +117,12 @@ export default function AdminProfile() {
 
         if (error) throw error;
       } else {
-        // Create new settings - keep existing values separate
+        // Create new settings with only portal/school name, preserve defaults for other fields
         const { error } = await supabase
           .from('school_settings')
           .insert({
-            id: crypto.randomUUID(),
             portal_name: portalName.trim(),
-            school_name: portalName.trim(),
-            logo_url: null,
-            theme_color: '#ef4444'
+            school_name: portalName.trim()
           });
 
         if (error) throw error;
@@ -158,7 +155,7 @@ export default function AdminProfile() {
     setLoading(true);
     try {
       if (settings?.id) {
-        // Update existing settings
+        // Update existing settings - ONLY theme color
         const { error } = await supabase
           .from('school_settings')
           .update({
@@ -168,15 +165,11 @@ export default function AdminProfile() {
 
         if (error) throw error;
       } else {
-        // Create new settings
+        // Create new settings with only theme color
         const { error } = await supabase
           .from('school_settings')
           .insert({
-            id: crypto.randomUUID(),
-            theme_color: selectedThemeColor,
-            school_name: 'OAUSTECH Portal',
-            portal_name: 'OAUSTECH Portal',
-            logo_url: null
+            theme_color: selectedThemeColor
           });
 
         if (error) throw error;
