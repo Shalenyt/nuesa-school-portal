@@ -184,11 +184,34 @@ export default function TeacherClassSchedule() {
   };
 
   const deleteSchedule = async (id: string) => {
+    console.log('Attempting to delete schedule with ID:', id);
+    
     try {
-      const { error } = await supabase
+      // First check if the schedule exists and belongs to this teacher
+      const { data: scheduleCheck, error: checkError } = await supabase
+        .from('timetable')
+        .select(`
+          *,
+          courses!inner(teacher_id)
+        `)
+        .eq('id', id)
+        .eq('courses.teacher_id', profile?.id)
+        .single();
+
+      console.log('Schedule check result:', scheduleCheck, checkError);
+
+      if (checkError) {
+        console.error('Error checking schedule:', checkError);
+        throw new Error('Schedule not found or you do not have permission to delete it');
+      }
+
+      const { data, error } = await supabase
         .from('timetable')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
+
+      console.log('Delete result:', data, error);
 
       if (error) throw error;
 
@@ -199,6 +222,7 @@ export default function TeacherClassSchedule() {
 
       fetchSchedules();
     } catch (error: any) {
+      console.error('Delete schedule error:', error);
       toast({
         title: "Error",
         description: error.message,

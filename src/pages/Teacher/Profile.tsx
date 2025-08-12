@@ -65,8 +65,7 @@ export default function TeacherProfile() {
         .update({
           full_name: formData.full_name,
           phone: formData.phone,
-          address: formData.address,
-          staff_id: formData.staff_id
+          address: formData.address
         })
         .eq('id', profile?.id);
 
@@ -144,8 +143,9 @@ export default function TeacherProfile() {
                     <Input
                       id="staff_id"
                       value={formData.staff_id}
-                      onChange={(e) => handleInputChange('staff_id', e.target.value)}
-                      placeholder="Enter staff ID"
+                      disabled
+                      className="bg-muted"
+                      placeholder="Will be assigned after approval"
                     />
                   </div>
                   <div className="space-y-2">
