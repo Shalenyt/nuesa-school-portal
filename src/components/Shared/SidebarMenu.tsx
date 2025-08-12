@@ -10,12 +10,9 @@ import {
   MessageSquare,
   Upload,
   GraduationCap,
-  Eye,
   Calendar,
   Bell,
   ClipboardList,
-  Download,
-  PieChart,
   Building2
 } from 'lucide-react';
 import {
@@ -27,8 +24,10 @@ import {
   SidebarMenu as SidebarMenuPrimitive,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
+
+// Example theme color (replace with value from settings or context)
+import { useTheme } from '@/hooks/useTheme'; // hypothetical hook
 
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
@@ -65,6 +64,7 @@ const studentMenuItems = [
 export function SidebarMenu() {
   const { profile } = useAuth();
   const location = useLocation();
+  const { themeColor } = useTheme(); // returns something like "#FF0000" or "red"
 
   const getMenuItems = () => {
     switch (profile?.role) {
@@ -93,16 +93,19 @@ export function SidebarMenu() {
             <SidebarMenuPrimitive>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                   <SidebarMenuButton asChild>
-                     <NavLink 
-                        to={item.url} 
-                         className={({ isActive }) =>
-                          `flex items-center gap-2 w-full transition-all duration-200 ${
-                            isActive 
-                              ? "bg-primary text-white font-medium rounded-md px-3 py-2 shadow-sm" 
-                              : "bg-primary/80 text-white hover:bg-primary rounded-md px-3 py-2 hover:shadow-md font-medium"
-                          }`
-                         }
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) =>
+                        `flex items-center gap-2 w-full rounded-md px-3 py-2 font-medium transition-all duration-200 shadow-sm ${
+                          isActive 
+                            ? "text-white" 
+                            : "text-white hover:opacity-90"
+                        }`
+                      }
+                      style={{
+                        backgroundColor: themeColor, // apply current theme color
+                      }}
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
