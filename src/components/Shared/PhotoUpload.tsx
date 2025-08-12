@@ -13,7 +13,7 @@ interface PhotoUploadProps {
 
 export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
-  const { profile } = useAuth();
+  const { profile, refetchProfile } = useAuth();
 
   const uploadPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -53,6 +53,7 @@ export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProp
       }
 
       onPhotoUpdated(data.publicUrl);
+      refetchProfile(); // Refresh profile data to update header avatar
       
       toast({
         title: "Photo updated",

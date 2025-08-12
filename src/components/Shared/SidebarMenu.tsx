@@ -94,13 +94,13 @@ export function SidebarMenu() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) =>
-                        isActive 
-                          ? "bg-destructive text-destructive-foreground font-medium" 
-                          : "text-foreground hover:bg-destructive/10 hover:text-destructive"
-                      }
+                     <NavLink 
+                       to={item.url} 
+                       className={({ isActive }) =>
+                         isActive 
+                           ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
+                           : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                       }
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>

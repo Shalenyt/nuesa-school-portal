@@ -12,6 +12,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  refetchProfile: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -139,6 +140,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const refetchProfile = async () => {
+    if (user) {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (!error) {
+        setProfile(profileData);
+      }
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -148,7 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signOut,
-      resetPassword
+      resetPassword,
+      refetchProfile
     }}>
       {children}
     </AuthContext.Provider>
