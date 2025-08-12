@@ -58,6 +58,10 @@ export default function ManageUsers() {
 
   const updateUserStatus = async (userId: string, status: 'pending' | 'approved' | 'rejected') => {
     try {
+      // Find the user to get their email and name for notification
+      const user = profiles.find(p => p.id === userId);
+      if (!user) throw new Error('User not found');
+
       const { error } = await supabase
         .from('profiles')
         .update({ status })
@@ -65,9 +69,27 @@ export default function ManageUsers() {
 
       if (error) throw error;
 
+      // Send notification email based on status
+      if (status === 'approved' || status === 'rejected') {
+        try {
+          await supabase.functions.invoke('send-notification-email', {
+            body: {
+              to: user.email,
+              name: user.full_name,
+              type: status,
+              role: user.role
+            }
+          });
+          console.log(`${status} notification email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error('Failed to send notification email:', emailError);
+          // Don't fail the status update if email fails
+        }
+      }
+
       toast({
         title: "Success",
-        description: `User ${status} successfully`,
+        description: `User ${status} successfully${status === 'approved' || status === 'rejected' ? ' and notification email sent' : ''}`,
       });
 
       fetchProfiles();
@@ -229,14 +251,29 @@ export default function ManageUsers() {
 
                     {profile.status === 'approved' && (
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateUserStatus(profile.id, 'rejected')}
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Deactivate
-                        </Button>
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={async () => {
+                             try {
+                               await supabase.functions.invoke('send-notification-email', {
+                                 body: {
+                                   to: profile.email,
+                                   name: profile.full_name,
+                                   type: 'suspended',
+                                   role: profile.role
+                                 }
+                               });
+                               updateUserStatus(profile.id, 'rejected');
+                             } catch (error) {
+                               console.error('Failed to send suspension email:', error);
+                               updateUserStatus(profile.id, 'rejected'); // Still deactivate even if email fails
+                             }
+                           }}
+                         >
+                           <X className="h-4 w-4 mr-1" />
+                           Deactivate
+                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button size="sm" variant="destructive">
