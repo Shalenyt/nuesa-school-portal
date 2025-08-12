@@ -242,7 +242,7 @@ export default function UploadMaterials() {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => deleteMaterial(material.id, material.file_path)}
+                    onClick={() => deleteMaterial(material.id, material.file_url)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

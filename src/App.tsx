@@ -26,6 +26,8 @@ import TeacherProfile from "./pages/Teacher/Profile";
 import TeacherAnnouncements from "./pages/Teacher/Announcements";
 import TeacherCourses from "./pages/Teacher/Courses";
 import UploadMaterials from "./pages/Teacher/UploadMaterials";
+import TeacherAssignments from "./pages/Teacher/Assignments";
+import TeacherClassSchedule from "./pages/Teacher/ClassSchedule";
 import GradeAssignments from "./pages/Teacher/GradeAssignments";
 import ViewStudents from "./pages/Teacher/ViewStudents";
 
@@ -115,6 +117,16 @@ const App = () => (
               <Route path="/teacher/upload-materials" element={
                 <ProtectedRoute allowedRoles={['teacher']}>
                   <UploadMaterials />
+                </ProtectedRoute>
+              } />
+              <Route path="/teacher/assignments" element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <TeacherAssignments />
+                </ProtectedRoute>
+              } />
+              <Route path="/teacher/class-schedule" element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <TeacherClassSchedule />
                 </ProtectedRoute>
               } />
               <Route path="/teacher/grade-assignments" element={

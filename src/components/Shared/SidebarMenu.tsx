@@ -43,6 +43,8 @@ const adminMenuItems = [
 const teacherMenuItems = [
   { title: "Profile", url: "/teacher/profile", icon: LayoutDashboard },
   { title: "Upload Materials", url: "/teacher/upload-materials", icon: Upload },
+  { title: "Assignments", url: "/teacher/assignments", icon: ClipboardList },
+  { title: "Class Schedule", url: "/teacher/class-schedule", icon: Calendar },
   { title: "Grade Assignments", url: "/teacher/grade-assignments", icon: ClipboardList },
   { title: "View Students", url: "/teacher/view-students", icon: Users },
   { title: "Announcements", url: "/teacher/announcements", icon: MessageSquare },
