@@ -23,7 +23,7 @@ export default function CourseLists() {
   const fetchData = async () => {
     try {
       const [courseListsData, classesData, subjectsData, coursesData] = await Promise.all([
-        supabase.from('course_lists').select(`
+        (supabase as any).from('course_lists').select(`
           *,
           classes(name),
           subjects(name)
@@ -83,7 +83,7 @@ export default function CourseLists() {
     }
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('course_lists')
         .insert([{
           class_id: selectedClass,
