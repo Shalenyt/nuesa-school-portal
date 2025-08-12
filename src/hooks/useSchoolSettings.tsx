@@ -20,15 +20,20 @@ export function useSchoolSettings() {
       const { data, error } = await (supabase as any)
         .from('school_settings')
         .select('*')
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
-      setSettings(data || { id: '', school_name: 'OAUSTECH Portal' });
+      if (data && data.length > 0) {
+        setSettings(data[0]);
+      } else {
+        setSettings({ id: '', school_name: 'OAUSTECH Portal' });
+      }
     } catch (error) {
       console.error('Error fetching school settings:', error);
+      setSettings({ id: '', school_name: 'OAUSTECH Portal' });
     } finally {
       setLoading(false);
     }

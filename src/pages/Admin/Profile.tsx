@@ -110,7 +110,7 @@ export default function AdminProfile() {
               <CardContent className="space-y-4">
                 <SchoolLogoUpload 
                   currentLogoUrl={settings?.logo_url}
-                  onLogoUpdated={refetchSettings}
+                  onLogoUpdated={() => refetchSettings()}
                 />
               </CardContent>
             </Card>

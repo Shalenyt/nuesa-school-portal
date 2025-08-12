@@ -41,13 +41,29 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
         .from('school-assets')
         .getPublicUrl(filePath);
 
-      // Update school settings
-      const { error: updateError } = await (supabase as any)
+      // Update school settings - use the first row's ID if it exists
+      const { data: existingSettings } = await (supabase as any)
         .from('school_settings')
-        .upsert({ logo_url: data.publicUrl });
+        .select('id')
+        .limit(1);
 
-      if (updateError) {
-        throw updateError;
+      if (existingSettings && existingSettings.length > 0) {
+        const { error: updateError } = await (supabase as any)
+          .from('school_settings')
+          .update({ logo_url: data.publicUrl })
+          .eq('id', existingSettings[0].id);
+
+        if (updateError) {
+          throw updateError;
+        }
+      } else {
+        const { error: insertError } = await (supabase as any)
+          .from('school_settings')
+          .insert({ logo_url: data.publicUrl });
+
+        if (insertError) {
+          throw insertError;
+        }
       }
 
       onLogoUpdated(data.publicUrl);
