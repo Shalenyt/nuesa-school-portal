@@ -15,22 +15,56 @@ export default function StudentCourses() {
 
   const fetchCourses = async () => {
     try {
-      const { data: enrollments } = await supabase
-        .from('student_enrollments')
-        .select(`
-          enrolled_at,
-          courses(
-            id,
-            name,
-            description,
-            classes(name),
-            subjects(name, code),
-            profiles(full_name)
-          )
-        `)
-        .eq('student_id', (await supabase.auth.getUser()).data.user?.id);
+      const { data: user } = await supabase.auth.getUser();
+      const userId = user.user?.id;
 
-      setCourses(enrollments || []);
+      // First get user's profile to find their class and subject
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, class_id, subject_id')
+        .eq('id', userId)
+        .single();
+
+      if (!profile || !profile.class_id || !profile.subject_id) {
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get course lists for this student's level and department
+      const { data: courseLists } = await supabase
+        .from('course_lists')
+        .select('course_ids')
+        .eq('class_id', profile.class_id)
+        .eq('subject_id', profile.subject_id);
+
+      if (!courseLists || courseLists.length === 0) {
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get all course IDs from course lists
+      const allCourseIds = courseLists.flatMap(list => list.course_ids || []);
+
+      // Fetch courses based on the course list
+      const { data: coursesData } = await supabase
+        .from('courses')
+        .select(`
+          id,
+          name,
+          description,
+          semester,
+          credit_unit,
+          classes(name),
+          subjects(name, code),
+          profiles(full_name)
+        `)
+        .in('id', allCourseIds)
+        .order('semester')
+        .order('name');
+
+      setCourses(coursesData || []);
     } catch (error) {
       console.error('Error fetching courses:', error);
     } finally {
@@ -64,57 +98,54 @@ export default function StudentCourses() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {courses.map((enrollment) => {
-              const course = enrollment.courses;
-              return (
-                <Card key={course.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="flex items-center gap-2">
-                        <BookOpen className="h-5 w-5" />
-                        {course.name}
-                      </CardTitle>
-                      <Badge variant="outline">Enrolled</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {course.description && (
-                      <p className="text-sm text-muted-foreground">
-                        {course.description}
-                      </p>
+            {courses.map((course) => (
+              <Card key={course.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5" />
+                      {course.name}
+                    </CardTitle>
+                    <Badge variant="outline">{course.semester} Semester</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {course.description && (
+                    <p className="text-sm text-muted-foreground">
+                      {course.description}
+                    </p>
+                  )}
+                  
+                  <div className="space-y-2">
+                    {course.subjects && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <GraduationCap className="h-4 w-4" />
+                        <span>{course.subjects.name} ({course.subjects.code})</span>
+                      </div>
                     )}
                     
-                    <div className="space-y-2">
-                      {course.subjects && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <GraduationCap className="h-4 w-4" />
-                          <span>{course.subjects.name} ({course.subjects.code})</span>
-                        </div>
-                      )}
-                      
-                      {course.classes && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Users className="h-4 w-4" />
-                          <span>{course.classes.name}</span>
-                        </div>
-                      )}
-                      
-                      {course.profiles && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Users className="h-4 w-4" />
-                          <span>Instructor: {course.profiles.full_name}</span>
-                        </div>
-                      )}
-                      
+                    {course.classes && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Users className="h-4 w-4" />
+                        <span>{course.classes.name}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users className="h-4 w-4" />
+                      <span>Instructor: {course.profiles?.full_name || 'Pending'}</span>
+                    </div>
+                    
+                    {course.credit_unit && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        <span>Enrolled: {new Date(enrollment.enrolled_at).toLocaleDateString()}</span>
+                        <span>{course.credit_unit} Credit Units</span>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </div>

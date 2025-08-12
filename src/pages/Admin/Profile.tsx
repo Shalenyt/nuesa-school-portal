@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Settings, Camera } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
+import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 import { toast } from '@/hooks/use-toast';
 
 export default function AdminProfile() {
@@ -19,6 +20,7 @@ export default function AdminProfile() {
     address: ''
   });
   const [loading, setLoading] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(profile?.profile_photo_url || '');
 
   useEffect(() => {
     if (profile) {
@@ -28,6 +30,7 @@ export default function AdminProfile() {
         phone: profile.phone || '',
         address: profile.address || ''
       });
+      setProfilePhotoUrl(profile.profile_photo_url || '');
     }
   }, [profile, user]);
 
@@ -85,18 +88,10 @@ export default function AdminProfile() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src="" alt="Profile" />
-                  <AvatarFallback className="text-lg">
-                    {profile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-                  </AvatarFallback>
-                </Avatar>
-                <Button variant="outline" size="sm">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Change Photo
-                </Button>
-              </div>
+              <PhotoUpload 
+                currentPhotoUrl={profilePhotoUrl}
+                onPhotoUpdated={(newUrl) => setProfilePhotoUrl(newUrl)}
+              />
             </CardContent>
           </Card>
 
@@ -129,11 +124,12 @@ export default function AdminProfile() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="staff_id">Staff ID</Label>
                     <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      id="staff_id"
+                      value={profile?.staff_id || 'Not Set'}
+                      disabled
+                      className="bg-muted"
                     />
                   </div>
                   <div className="space-y-2">
