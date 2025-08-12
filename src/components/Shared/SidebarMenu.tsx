@@ -100,7 +100,7 @@ export function SidebarMenu() {
                            `flex items-center gap-2 w-full transition-all duration-200 rounded-md px-3 py-2 border ${
                              isActive 
                                ? "bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-primary font-medium shadow-sm" 
-                               : "bg-sidebar-background text-primary border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium"
+                               : "bg-sidebar-background text-sidebar-foreground border-sidebar-border hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-medium"
                            }`
                           }
                     >
