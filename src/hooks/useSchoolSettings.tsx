@@ -5,6 +5,8 @@ interface SchoolSettings {
   id: string;
   logo_url?: string;
   school_name: string;
+  portal_name?: string;
+  theme_color?: string;
 }
 
 export function useSchoolSettings() {
@@ -29,11 +31,21 @@ export function useSchoolSettings() {
       if (data && data.length > 0) {
         setSettings(data[0]);
       } else {
-        setSettings({ id: '', school_name: 'OAUSTECH Portal' });
+        setSettings({ 
+          id: '', 
+          school_name: 'OAUSTECH Portal',
+          portal_name: 'OAUSTECH Portal',
+          theme_color: '#ef4444'
+        });
       }
     } catch (error) {
       console.error('Error fetching school settings:', error);
-      setSettings({ id: '', school_name: 'OAUSTECH Portal' });
+      setSettings({ 
+        id: '', 
+        school_name: 'OAUSTECH Portal',
+        portal_name: 'OAUSTECH Portal',
+        theme_color: '#ef4444'
+      });
     } finally {
       setLoading(false);
     }

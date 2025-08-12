@@ -2,11 +2,13 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useNavigate } from 'react-router-dom';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
+import { useThemeSync } from '@/hooks/useThemeSync';
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
 const Index = () => {
   const navigate = useNavigate();
   const { settings: schoolSettings } = useSchoolSettings();
+  useThemeSync(); // Apply theme colors
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative">
@@ -22,11 +24,11 @@ const Index = () => {
             className="h-16 w-16" 
           />
           <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {schoolSettings?.school_name || 'OAUSTECH Portal'}
+            {schoolSettings?.portal_name || schoolSettings?.school_name || 'OAUSTECH Portal'}
           </h1>
         </div>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Welcome to the {schoolSettings?.school_name || 'OAUSTECH'} School Management Portal. Access your academic information, 
+          Welcome to the {schoolSettings?.portal_name || schoolSettings?.school_name || 'OAUSTECH'} School Management Portal. Access your academic information, 
           manage courses, and stay connected with the university community.
         </p>
         <div className="flex gap-4 justify-center mt-8">

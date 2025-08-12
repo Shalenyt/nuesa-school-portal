@@ -207,11 +207,54 @@ export type Database = {
         }
         Relationships: []
       }
+      course_lists: {
+        Row: {
+          class_id: string
+          course_ids: string[] | null
+          created_at: string
+          id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          course_ids?: string[] | null
+          created_at?: string
+          id?: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          course_ids?: string[] | null
+          created_at?: string
+          id?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_lists_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_lists_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           academic_year: string | null
           class_id: string
           created_at: string
+          credit_unit: number | null
           description: string | null
           id: string
           name: string | null
@@ -224,6 +267,7 @@ export type Database = {
           academic_year?: string | null
           class_id: string
           created_at?: string
+          credit_unit?: number | null
           description?: string | null
           id?: string
           name?: string | null
@@ -236,6 +280,7 @@ export type Database = {
           academic_year?: string | null
           class_id?: string
           created_at?: string
+          credit_unit?: number | null
           description?: string | null
           id?: string
           name?: string | null
@@ -368,10 +413,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           created_at: string
           email: string
           full_name: string
           id: string
+          phone: string | null
           profile_photo_url: string | null
           role: Database["public"]["Enums"]["user_role"]
           staff_id: string | null
@@ -380,10 +427,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           email: string
           full_name: string
           id: string
+          phone?: string | null
           profile_photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           staff_id?: string | null
@@ -392,16 +441,48 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          phone?: string | null
           profile_photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           staff_id?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           student_id?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      school_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          portal_name: string | null
+          school_name: string | null
+          theme_color: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          portal_name?: string | null
+          school_name?: string | null
+          theme_color?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          portal_name?: string | null
+          school_name?: string | null
+          theme_color?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -514,6 +595,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_notification: {
+        Args: {
+          user_id_param: string
+          title_param: string
+          message_param: string
+          type_param?: string
+          related_id_param?: string
+        }
+        Returns: string
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
@@ -528,7 +619,13 @@ export type Database = {
       }
     }
     Enums: {
-      announcement_type: "global" | "class" | "subject"
+      announcement_type:
+        | "global"
+        | "class"
+        | "subject"
+        | "academic"
+        | "general"
+        | "urgent"
       application_status: "pending" | "approved" | "rejected"
       user_role: "admin" | "teacher" | "student"
     }
@@ -658,7 +755,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      announcement_type: ["global", "class", "subject"],
+      announcement_type: [
+        "global",
+        "class",
+        "subject",
+        "academic",
+        "general",
+        "urgent",
+      ],
       application_status: ["pending", "approved", "rejected"],
       user_role: ["admin", "teacher", "student"],
     },
