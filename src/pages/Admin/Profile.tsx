@@ -101,19 +101,30 @@ export default function AdminProfile() {
   const updatePortalName = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('school_settings')
-        .upsert({
-          id: settings?.id || crypto.randomUUID(),
-          portal_name: portalName,
-          school_name: settings?.school_name || 'OAUSTECH Portal',
-          logo_url: settings?.logo_url,
-          theme_color: settings?.theme_color || '#ef4444'
-        }, {
-          onConflict: 'id'
-        });
+      if (settings?.id) {
+        // Update existing settings
+        const { error } = await supabase
+          .from('school_settings')
+          .update({
+            portal_name: portalName
+          })
+          .eq('id', settings.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new settings
+        const { error } = await supabase
+          .from('school_settings')
+          .insert({
+            id: crypto.randomUUID(),
+            portal_name: portalName,
+            school_name: 'OAUSTECH Portal',
+            logo_url: null,
+            theme_color: '#ef4444'
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Portal name updated",
@@ -141,17 +152,30 @@ export default function AdminProfile() {
   const updateThemeColor = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('school_settings')
-        .upsert({
-          id: settings?.id || crypto.randomUUID(),
-          theme_color: selectedThemeColor,
-          school_name: settings?.school_name || 'OAUSTECH Portal',
-          portal_name: settings?.portal_name || 'OAUSTECH Portal',
-          logo_url: settings?.logo_url
-        });
+      if (settings?.id) {
+        // Update existing settings
+        const { error } = await supabase
+          .from('school_settings')
+          .update({
+            theme_color: selectedThemeColor
+          })
+          .eq('id', settings.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new settings
+        const { error } = await supabase
+          .from('school_settings')
+          .insert({
+            id: crypto.randomUUID(),
+            theme_color: selectedThemeColor,
+            school_name: 'OAUSTECH Portal',
+            portal_name: 'OAUSTECH Portal',
+            logo_url: null
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Theme color updated",
@@ -159,10 +183,7 @@ export default function AdminProfile() {
       });
       
       setHasColorChanged(false);
-      refetchSettings();
-      
-      // Trigger a reload or force re-render to apply changes immediately
-      window.location.reload();
+      await refetchSettings();
     } catch (error: any) {
       toast({
         title: "Error",
