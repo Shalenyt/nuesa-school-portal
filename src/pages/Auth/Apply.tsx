@@ -28,21 +28,37 @@ export default function Apply() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const { signUp } = useAuth();
 
+  // Fetch classes and subjects on component mount
+  useEffect(() => {
+    fetchClassesAndSubjects();
+  }, []);
+
   useEffect(() => {
     if (formData.role === 'student') {
-      fetchClassesAndSubjects();
+      console.log('Student role selected, classes:', classes.length, 'subjects:', subjects.length);
     }
-  }, [formData.role]);
+  }, [formData.role, classes, subjects]);
 
   const fetchClassesAndSubjects = async () => {
     try {
+      console.log('Fetching classes and subjects...');
+      
       const [classesResponse, subjectsResponse] = await Promise.all([
         supabase.from('classes').select('*').order('name'),
         supabase.from('subjects').select('*').order('name')
       ]);
 
-      if (classesResponse.data) setClasses(classesResponse.data);
-      if (subjectsResponse.data) setSubjects(subjectsResponse.data);
+      console.log('Classes response:', classesResponse);
+      console.log('Subjects response:', subjectsResponse);
+
+      if (classesResponse.data) {
+        setClasses(classesResponse.data);
+        console.log('Classes set:', classesResponse.data);
+      }
+      if (subjectsResponse.data) {
+        setSubjects(subjectsResponse.data);
+        console.log('Subjects set:', subjectsResponse.data);
+      }
     } catch (error) {
       console.error('Error fetching classes and subjects:', error);
     }
