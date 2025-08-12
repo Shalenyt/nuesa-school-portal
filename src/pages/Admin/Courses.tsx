@@ -21,7 +21,9 @@ export default function AdminCourses() {
     description: '',
     class_id: '',
     subject_id: '',
-    teacher_id: ''
+    teacher_id: '',
+    semester: '',
+    credit_unit: 0
   });
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function AdminCourses() {
   };
 
   const createCourse = async () => {
-    if (!newCourse.name.trim() || !newCourse.class_id || !newCourse.subject_id || !newCourse.teacher_id) {
+    if (!newCourse.name.trim() || !newCourse.description.trim() || !newCourse.class_id || !newCourse.subject_id || !newCourse.teacher_id || !newCourse.semester || !newCourse.credit_unit) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -71,7 +73,9 @@ export default function AdminCourses() {
           description: newCourse.description.trim(),
           class_id: newCourse.class_id,
           subject_id: newCourse.subject_id,
-          teacher_id: newCourse.teacher_id
+          teacher_id: newCourse.teacher_id,
+          semester: newCourse.semester,
+          credit_unit: newCourse.credit_unit
         }]);
 
       if (error) throw error;
@@ -81,7 +85,7 @@ export default function AdminCourses() {
         description: "New course has been created successfully.",
       });
 
-      setNewCourse({ name: '', description: '', class_id: '', subject_id: '', teacher_id: '' });
+      setNewCourse({ name: '', description: '', class_id: '', subject_id: '', teacher_id: '', semester: '', credit_unit: 0 });
       setIsCreating(false);
       fetchData();
     } catch (error: any) {
@@ -140,36 +144,23 @@ export default function AdminCourses() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
-                placeholder="Course name"
+                placeholder="Course Code (e.g., MTH 101)"
                 value={newCourse.name}
                 onChange={(e) => setNewCourse(prev => ({ ...prev, name: e.target.value }))}
               />
               <Textarea
-                placeholder="Course description (optional)"
+                placeholder="Course Title"
                 value={newCourse.description}
                 onChange={(e) => setNewCourse(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
               />
-              <div className="grid gap-4 md:grid-cols-3">
-                <Select
-                  value={newCourse.class_id}
-                  onValueChange={(value) => setNewCourse(prev => ({ ...prev, class_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid gap-4 md:grid-cols-2">
                 <Select
                   value={newCourse.subject_id}
                   onValueChange={(value) => setNewCourse(prev => ({ ...prev, subject_id: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
+                    <SelectValue placeholder="Select Department" />
                   </SelectTrigger>
                   <SelectContent>
                     {subjects.map((subject) => (
@@ -177,6 +168,41 @@ export default function AdminCourses() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Select
+                  value={newCourse.class_id}
+                  onValueChange={(value) => setNewCourse(prev => ({ ...prev, class_id: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                <Select
+                  value={newCourse.semester || ''}
+                  onValueChange={(value) => setNewCourse(prev => ({ ...prev, semester: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FIRST">FIRST</SelectItem>
+                    <SelectItem value="SECOND">SECOND</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Credit Unit"
+                  type="number"
+                  min="1"
+                  max="6"
+                  value={newCourse.credit_unit || ''}
+                  onChange={(e) => setNewCourse(prev => ({ ...prev, credit_unit: parseInt(e.target.value) }))}
+                />
                 <Select
                   value={newCourse.teacher_id}
                   onValueChange={(value) => setNewCourse(prev => ({ ...prev, teacher_id: value }))}

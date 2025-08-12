@@ -96,7 +96,7 @@ export function SidebarMenu() {
                       className={({ isActive }) =>
                         isActive 
                           ? "bg-primary text-primary-foreground font-medium" 
-                          : "hover:bg-accent hover:text-accent-foreground"
+                          : "text-primary hover:bg-primary/10 hover:text-primary"
                       }
                     >
                       <item.icon className="h-4 w-4" />

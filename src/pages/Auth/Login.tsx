@@ -53,7 +53,9 @@ export default function Login() {
           <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4">
             <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-16 w-16" />
           </div>
-          <h1 className="text-3xl font-bold">OAUSTECH Portal</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-secondary bg-clip-text text-transparent">
+            OAUSTECH Portal
+          </h1>
           <p className="text-muted-foreground mt-2">Sign in to your account</p>
         </div>
 
