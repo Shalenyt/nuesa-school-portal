@@ -7,18 +7,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageSquare, Plus, Edit2, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function TeacherAnnouncements() {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: '',
     content: '',
-    type: 'subject' as 'global' | 'class' | 'subject'
+    type: 'global' as any // Using any to match the actual DB enum
   });
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function TeacherAnnouncements() {
         description: "Your announcement has been posted successfully.",
       });
 
-      setNewAnnouncement({ title: '', content: '', type: 'subject' });
+      setNewAnnouncement({ title: '', content: '', type: 'global' });
       setIsCreating(false);
       fetchAnnouncements();
     } catch (error: any) {
@@ -121,6 +122,9 @@ export default function TeacherAnnouncements() {
                   <SelectValue placeholder="Select announcement type" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="global">Global</SelectItem>
+                  <SelectItem value="class">Class</SelectItem>
+                  <SelectItem value="subject">Subject</SelectItem>
                   <SelectItem value="academic">Academic</SelectItem>
                   <SelectItem value="general">General</SelectItem>
                   <SelectItem value="urgent">Urgent</SelectItem>
