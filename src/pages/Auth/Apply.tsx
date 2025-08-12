@@ -63,14 +63,20 @@ export default function Apply() {
 
     setLoading(true);
 
-    await signUp(formData.email, formData.password, {
-      fullName: formData.fullName,
-      role: formData.role,
-      studentId: formData.role === 'student' ? formData.studentId : null,
-      staffId: formData.role !== 'student' ? formData.staffId : null
-    });
-
-    setLoading(false);
+    try {
+      await signUp(formData.email, formData.password, {
+        fullName: formData.fullName,
+        role: formData.role,
+        studentId: formData.role === 'student' ? formData.studentId : null,
+        staffId: formData.role !== 'student' ? formData.staffId : null,
+        classId: formData.role === 'student' ? formData.classId : null,
+        subjectId: formData.role === 'student' ? formData.subjectId : null
+      });
+    } catch (error) {
+      console.error('Application error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

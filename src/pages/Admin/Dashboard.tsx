@@ -5,6 +5,7 @@ import { Users, GraduationCap, BookOpen, MessageSquare, TrendingUp, Clock, BarCh
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
+import { RecentActivities } from '@/components/Admin/RecentActivities';
 
 interface Stats {
   totalUsers: number;
@@ -164,47 +165,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <div>
-                      <p className="font-medium">New student application</p>
-                      <p className="text-sm text-muted-foreground">John Doe applied for admission</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">2 hours ago</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-accent rounded-full"></div>
-                    <div>
-                      <p className="font-medium">Course materials uploaded</p>
-                      <p className="text-sm text-muted-foreground">Dr. Smith uploaded new materials</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">5 hours ago</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-destructive rounded-full"></div>
-                    <div>
-                      <p className="font-medium">System backup completed</p>
-                      <p className="text-sm text-muted-foreground">Daily backup finished successfully</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">1 day ago</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <RecentActivities />
 
           <Card>
             <CardHeader>
