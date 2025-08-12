@@ -1,10 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useNavigate } from 'react-router-dom';
+import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { settings: schoolSettings } = useSchoolSettings();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative">
@@ -14,13 +16,17 @@ const Index = () => {
       
       <div className="text-center space-y-6">
         <div className="flex items-center justify-center gap-3 mb-8">
-          <img src={oaustechLogo} alt="OAUSTECH Logo" className="h-16 w-16" />
+          <img 
+            src={schoolSettings?.logo_url || oaustechLogo} 
+            alt={`${schoolSettings?.school_name || 'OAUSTECH'} Logo`} 
+            className="h-16 w-16" 
+          />
           <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            OAUSTECH Portal
+            {schoolSettings?.school_name || 'OAUSTECH Portal'}
           </h1>
         </div>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Welcome to the OAUSTECH School Management Portal. Access your academic information, 
+          Welcome to the {schoolSettings?.school_name || 'OAUSTECH'} School Management Portal. Access your academic information, 
           manage courses, and stay connected with the university community.
         </p>
         <div className="flex gap-4 justify-center mt-8">
