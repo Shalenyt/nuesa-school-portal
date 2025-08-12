@@ -27,7 +27,7 @@ export default function ViewStudents() {
         .from('courses')
         .select(`
           *,
-          classes(name),
+          classes(name, grade_level),
           subjects(name)
         `)
         .eq('teacher_id', profile?.id);
@@ -35,34 +35,69 @@ export default function ViewStudents() {
       if (coursesError) throw coursesError;
       setCourses(coursesData || []);
 
-      // Fetch students enrolled in teacher's courses
+      // Fetch students based on course lists that match teacher's courses
       const courseIds = coursesData?.map(course => course.id) || [];
       
       if (courseIds.length > 0) {
-        const { data: studentsData, error: studentsError } = await supabase
-          .from('student_enrollments')
+        // Get all course lists that contain these course IDs
+        const { data: courseListsData, error: courseListsError } = await supabase
+          .from('course_lists')
           .select(`
             *,
-            profiles(
+            classes(name, grade_level),
+            subjects(name)
+          `);
+
+        if (courseListsError) throw courseListsError;
+
+        // Filter course lists that have courses taught by this teacher
+        const relevantCourseLists = courseListsData?.filter(courseList => 
+          courseList.course_ids?.some((id: string) => courseIds.includes(id))
+        ) || [];
+
+        if (relevantCourseLists.length > 0) {
+          // Get students from these course lists
+          const classIds = relevantCourseLists.map(cl => cl.class_id);
+          const subjectIds = relevantCourseLists.map(cl => cl.subject_id);
+
+          const { data: studentsData, error: studentsError } = await supabase
+            .from('profiles')
+            .select(`
               id,
               full_name,
               student_id,
               email,
               phone,
-              status
-            ),
-            courses(
-              id,
-              name,
-              classes(name),
-              subjects(name)
-            )
-          `)
-          .in('course_id', courseIds)
-          .eq('profiles.status', 'approved');
+              status,
+              level_id,
+              department_id,
+              classes:level_id(name, grade_level),
+              subjects:department_id(name)
+            `)
+            .eq('role', 'student')
+            .eq('status', 'approved')
+            .in('level_id', classIds)
+            .in('department_id', subjectIds);
 
-        if (studentsError) throw studentsError;
-        setStudents(studentsData || []);
+          if (studentsError) throw studentsError;
+
+          // Map students to courses they're enrolled in
+          const studentsWithCourses = studentsData?.map(student => {
+            const studentCourseList = relevantCourseLists.find(cl => 
+              cl.class_id === student.level_id && cl.subject_id === student.department_id
+            );
+            const studentCourses = coursesData?.filter(course => 
+              studentCourseList?.course_ids?.includes(course.id)
+            ) || [];
+
+            return {
+              ...student,
+              courses: studentCourses
+            };
+          }) || [];
+
+          setStudents(studentsWithCourses);
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -71,28 +106,27 @@ export default function ViewStudents() {
     }
   };
 
-  const filteredStudents = students.filter(enrollment => {
-    const student = enrollment.profiles;
-    const course = enrollment.courses;
-    
+  const filteredStudents = students.filter(student => {
     const matchesSearch = student?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student?.student_id?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCourse = selectedCourse === 'all' || course?.id === selectedCourse;
+    const matchesCourse = selectedCourse === 'all' || 
+                         student.courses?.some((course: any) => course.id === selectedCourse);
     
     return matchesSearch && matchesCourse;
   });
 
   // Group students by course for better organization
-  const studentsByCourse = filteredStudents.reduce((acc, enrollment) => {
-    const courseId = enrollment.courses?.id;
-    if (!acc[courseId]) {
-      acc[courseId] = {
-        course: enrollment.courses,
-        students: []
-      };
-    }
-    acc[courseId].students.push(enrollment.profiles);
+  const studentsByCourse = filteredStudents.reduce((acc, student) => {
+    student.courses?.forEach((course: any) => {
+      if (!acc[course.id]) {
+        acc[course.id] = {
+          course: course,
+          students: []
+        };
+      }
+      acc[course.id].students.push(student);
+    });
     return acc;
   }, {} as any);
 
@@ -150,7 +184,7 @@ export default function ViewStudents() {
                   <Badge variant="secondary">{courseGroup.students.length} students</Badge>
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {courseGroup.course?.classes?.name} • {courseGroup.course?.subjects?.name}
+                  {courseGroup.course?.classes?.name} (Grade {courseGroup.course?.classes?.grade_level}) • {courseGroup.course?.subjects?.name}
                 </p>
               </CardHeader>
               <CardContent>
@@ -167,6 +201,9 @@ export default function ViewStudents() {
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium truncate">{student.full_name}</h3>
                           <p className="text-sm text-muted-foreground">ID: {student.student_id}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {student.classes?.name} (Grade {student.classes?.grade_level}) • {student.subjects?.name}
+                          </p>
                           {student.email && (
                             <div className="flex items-center gap-1 mt-1">
                               <Mail className="h-3 w-3" />

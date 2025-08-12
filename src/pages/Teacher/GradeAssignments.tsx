@@ -5,13 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ClipboardList, Download, Eye, CheckCircle } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ClipboardList, Download, Eye, CheckCircle, ArrowLeft, User } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 
 export default function GradeAssignments() {
   const { profile } = useAuth();
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [gradeForm, setGradeForm] = useState({
@@ -20,36 +23,51 @@ export default function GradeAssignments() {
   });
   const [loading, setLoading] = useState(true);
   const [grading, setGrading] = useState(false);
+  const [view, setView] = useState<'assignments' | 'submissions' | 'grading'>('assignments');
 
   useEffect(() => {
-    fetchSubmissions();
+    fetchAssignments();
   }, [profile]);
 
-  const fetchSubmissions = async () => {
+  const fetchAssignments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('assignments')
+        .select(`
+          *,
+          courses(
+            name,
+            classes(name),
+            subjects(name)
+          )
+        `)
+        .eq('courses.teacher_id', profile?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAssignments(data || []);
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSubmissions = async (assignmentId: string) => {
     try {
       const { data, error } = await supabase
         .from('assignment_submissions')
         .select(`
           *,
-          assignments(
-            title,
-            courses(
-              name,
-              classes(name),
-              subjects(name)
-            )
-          ),
-          profiles(full_name, student_id)
+          profiles(full_name, student_id, profile_photo_url)
         `)
-        .eq('assignments.courses.teacher_id', profile?.id)
+        .eq('assignment_id', assignmentId)
         .order('submitted_at', { ascending: false });
 
       if (error) throw error;
       setSubmissions(data || []);
     } catch (error) {
       console.error('Error fetching submissions:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -63,16 +81,28 @@ export default function GradeAssignments() {
       return;
     }
 
+    const maxPoints = selectedAssignment?.max_points || 100;
+    const grade = parseFloat(gradeForm.grade);
+    
+    if (grade > maxPoints) {
+      toast({
+        title: "Error",
+        description: `Grade cannot exceed ${maxPoints} points.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setGrading(true);
 
     try {
       const { error } = await supabase
         .from('assignment_submissions')
         .update({
-          grade: parseFloat(gradeForm.grade),
+          grade: grade,
           feedback: gradeForm.feedback,
           graded_at: new Date().toISOString(),
-          status: 'graded'
+          graded_by: profile?.id
         })
         .eq('id', selectedSubmission.id);
 
@@ -83,9 +113,10 @@ export default function GradeAssignments() {
         description: "Grade has been submitted successfully.",
       });
 
+      setView('submissions');
       setSelectedSubmission(null);
       setGradeForm({ grade: '', feedback: '' });
-      fetchSubmissions();
+      fetchSubmissions(selectedAssignment.id);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -95,6 +126,21 @@ export default function GradeAssignments() {
     } finally {
       setGrading(false);
     }
+  };
+
+  const handleAssignmentSelect = (assignment: any) => {
+    setSelectedAssignment(assignment);
+    setView('submissions');
+    fetchSubmissions(assignment.id);
+  };
+
+  const handleSubmissionSelect = (submission: any) => {
+    setSelectedSubmission(submission);
+    setGradeForm({
+      grade: submission.grade?.toString() || '',
+      feedback: submission.feedback || ''
+    });
+    setView('grading');
   };
 
   const downloadSubmission = async (filePath: string, fileName: string) => {
@@ -125,102 +171,190 @@ export default function GradeAssignments() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Grade Assignments</h1>
-          <p className="text-muted-foreground">
-            Review and grade student submissions
-          </p>
+        <div className="flex items-center gap-4">
+          {view !== 'assignments' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (view === 'grading') {
+                  setView('submissions');
+                  setSelectedSubmission(null);
+                } else {
+                  setView('assignments');
+                  setSelectedAssignment(null);
+                  setSubmissions([]);
+                }
+              }}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Grade Assignments</h1>
+            <p className="text-muted-foreground">
+              {view === 'assignments' && 'Select an assignment to view submissions'}
+              {view === 'submissions' && `Submissions for "${selectedAssignment?.title}"`}
+              {view === 'grading' && 'Grade student submission'}
+            </p>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5" />
-                Submissions ({submissions.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 max-h-96 overflow-y-auto">
-              {submissions.map((submission) => (
-                <div
-                  key={submission.id}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedSubmission?.id === submission.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                  }`}
-                  onClick={() => setSelectedSubmission(submission)}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium">{submission.assignments?.title}</h3>
-                    <Badge variant={submission.status === 'graded' ? 'default' : 'secondary'}>
-                      {submission.status}
-                    </Badge>
+        {view === 'assignments' && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {assignments.map((assignment) => (
+              <Card
+                key={assignment.id}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleAssignmentSelect(assignment)}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5" />
+                    {assignment.title}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {assignment.courses?.name} • {assignment.courses?.classes?.name}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm">{assignment.description}</p>
+                    <div className="flex justify-between items-center">
+                      <Badge variant="outline">
+                        Max: {assignment.max_points || 100} pts
+                      </Badge>
+                      {assignment.due_date && (
+                        <p className="text-xs text-muted-foreground">
+                          Due: {new Date(assignment.due_date).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Student: {submission.profiles?.full_name} ({submission.profiles?.student_id})
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Course: {submission.assignments?.courses?.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Submitted: {new Date(submission.submitted_at).toLocaleString()}
-                  </p>
-                  {submission.grade && (
-                    <p className="text-sm font-medium text-green-600 mt-1">
-                      Grade: {submission.grade}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-          {selectedSubmission && (
+        {view === 'submissions' && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {submissions.map((submission) => (
+              <Card
+                key={submission.id}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleSubmissionSelect(submission)}
+              >
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={submission.profiles?.profile_photo_url} />
+                      <AvatarFallback>
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-medium">{submission.profiles?.full_name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        ID: {submission.profiles?.student_id}
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Badge variant={submission.grade ? 'default' : 'secondary'}>
+                        {submission.grade ? `${submission.grade}/${selectedAssignment?.max_points || 100}` : 'Not graded'}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(submission.submitted_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {submission.file_name && (
+                      <p className="text-sm text-muted-foreground truncate">
+                        📎 {submission.file_name}
+                      </p>
+                    )}
+                    {submission.submission_text && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {submission.submission_text}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {submissions.length === 0 && (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No submissions yet for this assignment.</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {view === 'grading' && selectedSubmission && (
+          <div className="max-w-4xl mx-auto">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Eye className="h-5 w-5" />
                   Grade Submission
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-medium mb-2">{selectedSubmission.assignments?.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Student: {selectedSubmission.profiles?.full_name}
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Submitted: {new Date(selectedSubmission.submitted_at).toLocaleString()}
-                  </p>
-                  
-                  {selectedSubmission.file_path && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadSubmission(selectedSubmission.file_path, selectedSubmission.file_name)}
-                      className="mb-4"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Submission
-                    </Button>
-                  )}
-
-                  {selectedSubmission.content && (
-                    <div className="mb-4">
-                      <label className="text-sm font-medium">Submission Content:</label>
-                      <div className="mt-1 p-3 bg-muted rounded border">
-                        <p className="text-sm whitespace-pre-wrap">{selectedSubmission.content}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage src={selectedSubmission.profiles?.profile_photo_url} />
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
-                    <label className="text-sm font-medium">Grade (0-100)</label>
+                    <h3 className="font-medium">{selectedSubmission.profiles?.full_name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      ID: {selectedSubmission.profiles?.student_id} • 
+                      Submitted: {new Date(selectedSubmission.submitted_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {selectedSubmission.file_url && (
+                  <div>
+                    <label className="text-sm font-medium">Submitted File:</label>
+                    <div className="mt-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => downloadSubmission(selectedSubmission.file_url, selectedSubmission.file_name)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download {selectedSubmission.file_name}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {selectedSubmission.submission_text && (
+                  <div>
+                    <label className="text-sm font-medium">Submission Text:</label>
+                    <div className="mt-2 p-4 bg-muted rounded-lg border">
+                      <p className="text-sm whitespace-pre-wrap">{selectedSubmission.submission_text}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium">
+                      Grade (0-{selectedAssignment?.max_points || 100})
+                    </label>
                     <Input
                       type="number"
                       min="0"
-                      max="100"
+                      max={selectedAssignment?.max_points || 100}
                       placeholder="Enter grade"
                       value={gradeForm.grade}
                       onChange={(e) => setGradeForm(prev => ({ ...prev, grade: e.target.value }))}
@@ -232,18 +366,28 @@ export default function GradeAssignments() {
                       placeholder="Enter feedback for the student"
                       value={gradeForm.feedback}
                       onChange={(e) => setGradeForm(prev => ({ ...prev, feedback: e.target.value }))}
-                      rows={4}
+                      rows={3}
                     />
                   </div>
-                  <Button onClick={gradeSubmission} disabled={grading} className="w-full">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    {grading ? 'Submitting Grade...' : 'Submit Grade'}
-                  </Button>
                 </div>
+
+                <Button onClick={gradeSubmission} disabled={grading} className="w-full">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  {grading ? 'Submitting Grade...' : 'Submit Grade'}
+                </Button>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </div>
+        )}
+
+        {assignments.length === 0 && view === 'assignments' && !loading && (
+          <Card>
+            <CardContent className="text-center py-8">
+              <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No assignments found.</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
