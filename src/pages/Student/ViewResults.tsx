@@ -29,7 +29,7 @@ export default function StudentViewResults() {
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (!profile?.department_id || !profile?.level_id) {
         setResults([]);
@@ -43,9 +43,9 @@ export default function StudentViewResults() {
         .select('course_ids')
         .eq('class_id', profile.level_id)
         .eq('subject_id', profile.department_id)
-        .single();
+        .maybeSingle();
 
-      if (!courseListData?.course_ids) {
+      if (!courseListData?.course_ids || courseListData.course_ids.length === 0) {
         setResults([]);
         setLoading(false);
         return;

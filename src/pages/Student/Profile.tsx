@@ -141,9 +141,7 @@ export default function StudentProfile() {
         .update({
           full_name: formData.full_name,
           phone: formData.phone,
-          address: formData.address,
-          department_id: formData.department_id || null,
-          level_id: formData.level_id || null
+          address: formData.address
         })
         .eq('id', profile?.id);
 
@@ -248,35 +246,27 @@ export default function StudentProfile() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="level">Level</Label>
-                    <Select
-                      value={formData.level_id}
-                      onValueChange={(value) => handleInputChange('level_id', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="level"
+                      value={classes.find(cls => cls.id === formData.level_id)?.name || 'Not set'}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Level is set from your application and cannot be changed here.
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="department">Department</Label>
-                    <Select
-                      value={formData.department_id}
-                      onValueChange={(value) => handleInputChange('department_id', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {subjects.map((subject) => (
-                          <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="department"
+                      value={subjects.find(subject => subject.id === formData.department_id)?.name || 'Not set'}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Department is set from your application and cannot be changed here.
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-2">

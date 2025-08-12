@@ -37,7 +37,7 @@ export default function StudentSubmitAssignment() {
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (!profile?.department_id || !profile?.level_id) {
         setAssignments([]);
@@ -51,9 +51,9 @@ export default function StudentSubmitAssignment() {
         .select('course_ids')
         .eq('class_id', profile.level_id)
         .eq('subject_id', profile.department_id)
-        .single();
+        .maybeSingle();
 
-      if (!courseListData?.course_ids) {
+      if (!courseListData?.course_ids || courseListData.course_ids.length === 0) {
         setAssignments([]);
         setLoading(false);
         return;
