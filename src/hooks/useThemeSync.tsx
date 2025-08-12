@@ -55,8 +55,9 @@ export function useThemeSync() {
       // Update secondary colors to complement the primary
       root.style.setProperty('--secondary-foreground', hsl);
       
-      // Update destructive colors to use current theme with red hue for better UX
-      root.style.setProperty('--destructive', `0 ${Math.max(s - 20, 40)}% ${Math.min(l + 10, 65)}%`);
+      // Update destructive colors to use current theme color instead of red
+      root.style.setProperty('--destructive', `${h} ${Math.max(s - 10, 50)}% ${Math.min(l + 5, 60)}%`);
+      root.style.setProperty('--destructive-foreground', '0 0% 98%');
       
       // Update sidebar colors
       root.style.setProperty('--sidebar-primary', hsl);
