@@ -56,13 +56,16 @@ export function useThemeSync() {
       root.style.setProperty('--secondary-foreground', hsl);
       
       // Update destructive colors to use current theme color instead of red
-      root.style.setProperty('--destructive', `${h} ${Math.max(s - 10, 50)}% ${Math.min(l + 5, 60)}%`);
+      root.style.setProperty('--destructive', hsl);
       root.style.setProperty('--destructive-foreground', '0 0% 98%');
+      
+      // Force update sidebar colors to ensure proper text visibility
+      root.style.setProperty('--sidebar-foreground', '240 5.9% 10%');
       
       // Update sidebar colors
       root.style.setProperty('--sidebar-primary', hsl);
       root.style.setProperty('--sidebar-ring', hsl);
-      root.style.setProperty('--sidebar-accent-foreground', hsl);
+      root.style.setProperty('--sidebar-accent-foreground', '240 5.9% 10%');
       
       // Force a repaint to apply changes immediately
       document.body.style.display = 'none';
