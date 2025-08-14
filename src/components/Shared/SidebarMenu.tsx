@@ -92,20 +92,24 @@ export function SidebarMenu() {
           <SidebarGroupContent>
             <SidebarMenuPrimitive>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                 <SidebarMenuItem key={item.title}>
                    <SidebarMenuButton asChild>
                       <NavLink 
                          to={item.url} 
                           className={({ isActive }) =>
-                           `flex items-center gap-2 w-full transition-all duration-200 rounded-md px-3 py-2 border ${
+                           `flex items-center gap-3 w-full transition-all duration-300 rounded-lg px-3 py-2.5 group ${
                              isActive 
-                               ? "bg-sidebar-primary text-sidebar-primary-foreground border-sidebar-primary font-medium shadow-sm" 
-                               : "bg-sidebar-background text-sidebar-foreground border-sidebar-border hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-medium"
+                               ? "bg-primary/10 text-primary border-l-4 border-primary font-semibold shadow-sm" 
+                               : "text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium border-l-4 border-transparent hover:border-primary/30"
                            }`
                           }
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className={`h-5 w-5 transition-all duration-300 ${
+                        location.pathname === item.url 
+                          ? "text-primary" 
+                          : "text-muted-foreground group-hover:text-primary"
+                      }`} />
+                      <span className="transition-all duration-300">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
