@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { BookOpen, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { BookOpen, Loader2, ArrowLeft, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from '@/hooks/use-toast';
 import oaustechLogo from '@/assets/oaustech-logo.png';
@@ -19,6 +20,8 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [sessionEstablished, setSessionEstablished] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { settings } = useSchoolSettings();
@@ -45,6 +48,7 @@ export default function ResetPassword() {
           
           if (error) throw error;
           setSessionEstablished(true);
+          setUser(data.user);
         } catch (error: any) {
           console.error('Session establishment failed:', error);
           toast({
@@ -52,7 +56,7 @@ export default function ResetPassword() {
             description: "This password reset link is invalid or has expired. Please request a new one.",
             variant: "destructive"
           });
-          navigate('/auth/forgot-password');
+          navigate('/auth/recover-password');
         }
       } else if (tokenHash && type === 'recovery') {
         // Handle recovery token from email link
@@ -64,6 +68,7 @@ export default function ResetPassword() {
           
           if (error) throw error;
           setSessionEstablished(true);
+          setUser(data.user);
         } catch (error: any) {
           console.error('Token verification failed:', error);
           toast({
@@ -71,17 +76,17 @@ export default function ResetPassword() {
             description: "This password reset link is invalid or has expired. Please request a new one.",
             variant: "destructive"
           });
-          navigate('/auth/forgot-password');
+          navigate('/auth/recover-password');
         }
-      } else {
-        // No valid parameters found
-        toast({
-          title: "Invalid reset link",
-          description: "This password reset link is invalid or has expired. Please request a new one.",
-          variant: "destructive"
-        });
-        navigate('/auth/forgot-password');
-      }
+        } else {
+          // No valid parameters found
+          toast({
+            title: "Invalid reset link",
+            description: "This password reset link is invalid or has expired. Please request a new one.",
+            variant: "destructive"
+          });
+          navigate('/auth/recover-password');
+        }
     };
 
     establishSession();
@@ -117,6 +122,25 @@ export default function ResetPassword() {
       return;
     }
 
+    // Check if user is trying to use the same password
+    try {
+      const { error: testError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: password
+      });
+      
+      if (!testError) {
+        toast({
+          title: "Invalid password",
+          description: "You cannot use your current password. Please choose a different password.",
+          variant: "destructive"
+        });
+        return;
+      }
+    } catch (error) {
+      // This is expected if the password is different, continue with reset
+    }
+
     setLoading(true);
 
     try {
@@ -126,14 +150,8 @@ export default function ResetPassword() {
 
       if (error) throw error;
 
-      toast({
-        title: "Password updated successfully",
-        description: "Your password has been reset. You can now sign in with your new password.",
-      });
-
-      // Sign out to ensure clean state and redirect to login
-      await supabase.auth.signOut();
-      navigate('/auth/login');
+      // Show success popup
+      setShowSuccessDialog(true);
     } catch (error: any) {
       console.error('Password update error:', error);
       toast({
@@ -144,6 +162,12 @@ export default function ResetPassword() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSuccessOk = async () => {
+    // Sign out to ensure clean state and redirect to homepage
+    await supabase.auth.signOut();
+    navigate('/');
   };
 
   // Show loading state while establishing session
@@ -256,7 +280,7 @@ export default function ResetPassword() {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Update Password
+                Change Password
               </Button>
             </form>
 
@@ -272,6 +296,26 @@ export default function ResetPassword() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-center mb-4">
+              <CheckCircle className="h-12 w-12 text-green-500" />
+            </div>
+            <DialogTitle className="text-center">Password Changed Successfully</DialogTitle>
+            <DialogDescription className="text-center">
+              Your password has been updated successfully. You can now sign in with your new password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center mt-6">
+            <Button onClick={handleSuccessOk} className="w-full">
+              Okay
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
