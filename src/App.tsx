@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import Login from "./pages/Auth/Login";
 import Apply from "./pages/Auth/Apply";
 import RecoverPassword from "./pages/Auth/RecoverPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 import Success from "./pages/Auth/Success";
 
 // Admin pages
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/apply" element={<Apply />} />
               <Route path="/auth/forgot-password" element={<RecoverPassword />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="/auth/success" element={<Success />} />
               
               {/* Admin Routes */}
