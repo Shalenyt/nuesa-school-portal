@@ -18,6 +18,7 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [sessionEstablished, setSessionEstablished] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { settings } = useSchoolSettings();
@@ -25,23 +26,78 @@ export default function ResetPassword() {
   // Initialize theme sync
   useThemeSync();
 
-  // Check if we have the required tokens
+  // Check if we have the required tokens and establish session
   useEffect(() => {
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
-    if (!accessToken || !refreshToken) {
-      toast({
-        title: "Invalid reset link",
-        description: "This password reset link is invalid or has expired.",
-        variant: "destructive"
-      });
-      navigate('/auth/forgot-password');
-    }
+    const establishSession = async () => {
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+      const tokenHash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
+      
+      // Handle different types of reset links
+      if (accessToken && refreshToken) {
+        // Handle session tokens from email link
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (error) throw error;
+          setSessionEstablished(true);
+        } catch (error: any) {
+          console.error('Session establishment failed:', error);
+          toast({
+            title: "Invalid reset link",
+            description: "This password reset link is invalid or has expired. Please request a new one.",
+            variant: "destructive"
+          });
+          navigate('/auth/forgot-password');
+        }
+      } else if (tokenHash && type === 'recovery') {
+        // Handle recovery token from email link
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: 'recovery',
+          });
+          
+          if (error) throw error;
+          setSessionEstablished(true);
+        } catch (error: any) {
+          console.error('Token verification failed:', error);
+          toast({
+            title: "Invalid reset link",
+            description: "This password reset link is invalid or has expired. Please request a new one.",
+            variant: "destructive"
+          });
+          navigate('/auth/forgot-password');
+        }
+      } else {
+        // No valid parameters found
+        toast({
+          title: "Invalid reset link",
+          description: "This password reset link is invalid or has expired. Please request a new one.",
+          variant: "destructive"
+        });
+        navigate('/auth/forgot-password');
+      }
+    };
+
+    establishSession();
   }, [searchParams, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!sessionEstablished) {
+      toast({
+        title: "Session not established",
+        description: "Please use a valid password reset link.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (password !== confirmPassword) {
       toast({
@@ -75,18 +131,42 @@ export default function ResetPassword() {
         description: "Your password has been reset. You can now sign in with your new password.",
       });
 
-      // Redirect to login page
+      // Sign out to ensure clean state and redirect to login
+      await supabase.auth.signOut();
       navigate('/auth/login');
     } catch (error: any) {
+      console.error('Password update error:', error);
       toast({
         title: "Password reset failed",
-        description: error.message || "There was an error updating your password.",
+        description: error.message || "There was an error updating your password. Please try again.",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
+
+  // Show loading state while establishing session
+  if (!sessionEstablished) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background relative p-4">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        
+        <div className="w-full max-w-md">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                <p className="text-muted-foreground">Verifying reset link...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative p-4">
