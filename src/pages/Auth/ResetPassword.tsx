@@ -58,7 +58,7 @@ export default function ResetPassword() {
             description: "This password reset link is invalid or has expired. Please request a new one.",
             variant: "destructive"
           });
-          navigate('/auth/recover-password');
+          navigate('/auth/forgot-password');
         }
         } else if (tokenHash && type === 'recovery') {
         // Handle recovery token from email link
@@ -81,7 +81,7 @@ export default function ResetPassword() {
             description: "This password reset link is invalid or has expired. Please request a new one.",
             variant: "destructive"
           });
-          navigate('/auth/recover-password');
+          navigate('/auth/forgot-password');
         }
         } else {
           // No valid parameters found
@@ -90,7 +90,7 @@ export default function ResetPassword() {
             description: "This password reset link is invalid or has expired. Please request a new one.",
             variant: "destructive"
           });
-          navigate('/auth/recover-password');
+          navigate('/auth/forgot-password');
         }
     };
 

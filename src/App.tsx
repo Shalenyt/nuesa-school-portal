@@ -63,7 +63,8 @@ const App = () => (
               {/* Auth Routes */}
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/apply" element={<Apply />} />
-              <Route path="/auth/recover-password" element={<RecoverPassword />} />
+              <Route path="/auth/forgot-password" element={<RecoverPassword />} />
+              <Route path="/auth/recover-password" element={<Navigate to="/auth/forgot-password" replace />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="/auth/success" element={<Success />} />
               
