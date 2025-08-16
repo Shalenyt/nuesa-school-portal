@@ -37,6 +37,8 @@ export default function ResetPassword() {
       const tokenHash = searchParams.get('token_hash');
       const type = searchParams.get('type');
       
+      console.log('URL params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, tokenHash: !!tokenHash, type });
+      
       // Handle different types of reset links
       if (accessToken && refreshToken) {
         // Handle session tokens from email link
@@ -58,13 +60,16 @@ export default function ResetPassword() {
           });
           navigate('/auth/recover-password');
         }
-      } else if (tokenHash && type === 'recovery') {
+        } else if (tokenHash && type === 'recovery') {
         // Handle recovery token from email link
         try {
+          console.log('Verifying OTP with token_hash:', tokenHash);
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: 'recovery',
           });
+          
+          console.log('OTP verification result:', { data: !!data, error });
           
           if (error) throw error;
           setSessionEstablished(true);

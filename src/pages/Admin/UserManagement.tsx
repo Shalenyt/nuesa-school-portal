@@ -78,12 +78,35 @@ export default function UserManagement() {
 
   const updateUserStatus = async (userId: string, status: string) => {
     try {
+      // Get user details first
+      const { data: userProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const { error } = await supabase
         .from('profiles')
         .update({ status: status as any })
         .eq('id', userId);
 
       if (error) throw error;
+
+      // Send email notification
+      try {
+        await supabase.functions.invoke('send-notification-email', {
+          body: {
+            to: userProfile.email,
+            name: userProfile.full_name,
+            type: status,
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send notification email:', emailError);
+        // Don't fail the whole operation if email fails
+      }
 
       toast({
         title: "User status updated",
@@ -102,12 +125,36 @@ export default function UserManagement() {
 
   const promoteToAdmin = async (userId: string) => {
     try {
+      // Get user details first
+      const { data: userProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const { error } = await supabase
         .from('profiles')
         .update({ role: 'admin' as any })
         .eq('id', userId);
 
       if (error) throw error;
+
+      // Send email notification
+      try {
+        await supabase.functions.invoke('send-notification-email', {
+          body: {
+            to: userProfile.email,
+            name: userProfile.full_name,
+            type: 'promoted',
+            role: 'admin'
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send notification email:', emailError);
+        // Don't fail the whole operation if email fails
+      }
 
       toast({
         title: "User promoted",
