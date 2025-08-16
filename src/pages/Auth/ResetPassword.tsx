@@ -60,38 +60,20 @@ export default function ResetPassword() {
           });
           navigate('/auth/forgot-password');
         }
-        } else if (tokenHash && type === 'recovery') {
-        // Handle recovery token from email link
-        try {
-          console.log('Verifying OTP with token_hash:', tokenHash);
-          const { data, error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: 'recovery',
-          });
-          
-          console.log('OTP verification result:', { data: !!data, error });
-          
-          if (error) throw error;
-          setSessionEstablished(true);
-          setUser(data.user);
-        } catch (error: any) {
-          console.error('Token verification failed:', error);
-          toast({
-            title: "Invalid reset link",
-            description: "This password reset link is invalid or has expired. Please request a new one.",
-            variant: "destructive"
-          });
-          navigate('/auth/forgot-password');
-        }
-        } else {
-          // No valid parameters found
-          toast({
-            title: "Invalid reset link",
-            description: "This password reset link is invalid or has expired. Please request a new one.",
-            variant: "destructive"
-          });
-          navigate('/auth/forgot-password');
-        }
+      } else if (tokenHash && type === 'recovery') {
+        // For recovery tokens, just validate the presence and set session as established
+        // The actual token verification will happen during password update
+        setSessionEstablished(true);
+        // We'll verify the token when updating the password
+      } else {
+        // No valid parameters found
+        toast({
+          title: "Invalid reset link",
+          description: "This password reset link is invalid or has expired. Please request a new one.",
+          variant: "destructive"
+        });
+        navigate('/auth/forgot-password');
+      }
     };
 
     establishSession();
@@ -149,11 +131,32 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
+      const tokenHash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
+      
+      if (tokenHash && type === 'recovery') {
+        // Use verifyOtp for recovery tokens
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery',
+        });
+        
+        if (error) throw error;
+        
+        // Now update the password
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: password
+        });
+        
+        if (updateError) throw updateError;
+      } else {
+        // For session-based resets, just update the password
+        const { error } = await supabase.auth.updateUser({
+          password: password
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      }
 
       // Show success popup
       setShowSuccessDialog(true);
