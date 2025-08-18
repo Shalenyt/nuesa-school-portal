@@ -12,7 +12,7 @@ const corsHeaders = {
 interface NotificationEmailRequest {
   to: string;
   name: string;
-  type: 'approved' | 'rejected' | 'suspended' | 'promoted';
+  type: 'approved' | 'rejected' | 'suspended' | 'promoted' | 'deleted';
   role?: string;
 }
 
@@ -115,6 +115,28 @@ const handler = async (req: Request): Promise<Response> => {
             </ul>
             <p>Log in to your account to explore your new features and responsibilities.</p>
             <p>Congratulations once again on this achievement!</p>
+            <p>Best regards,<br>OAUSTECH Portal Team</p>
+          </div>
+        `;
+        break;
+
+      case 'deleted':
+        subject = "Account Deletion Notice";
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #dc2626; text-align: center;">Account Deletion Notice</h1>
+            <p>Dear ${name},</p>
+            <p>This is to inform you that your account has been <strong>permanently deleted</strong> from the OAUSTECH Portal.</p>
+            <div style="background: #fef2f2; border: 1px solid #dc2626; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; color: #991b1b;">⚠️ All your data and access have been permanently removed from the system.</p>
+            </div>
+            <p><strong>What this means:</strong></p>
+            <ul>
+              <li>Your account and all associated data have been permanently deleted</li>
+              <li>You no longer have access to the portal</li>
+              <li>This email address can now be used to create a new account if needed</li>
+            </ul>
+            <p>If you believe this was done in error or need to create a new account, please contact the administration office.</p>
             <p>Best regards,<br>OAUSTECH Portal Team</p>
           </div>
         `;

@@ -248,7 +248,7 @@ export default function StudentProfile() {
                     <Label htmlFor="level">Level</Label>
                     <Input
                       id="level"
-                      value={classes.find(cls => cls.id === formData.level_id)?.name || 'Not set'}
+                      value={classes.find(cls => cls.id === profile?.level_id)?.name || 'Not set'}
                       disabled
                       className="bg-muted"
                     />
@@ -260,7 +260,7 @@ export default function StudentProfile() {
                     <Label htmlFor="department">Department</Label>
                     <Input
                       id="department"
-                      value={subjects.find(subject => subject.id === formData.department_id)?.name || 'Not set'}
+                      value={subjects.find(subject => subject.id === profile?.department_id)?.name || 'Not set'}
                       disabled
                       className="bg-muted"
                     />

@@ -18,7 +18,8 @@ import {
   UserX, 
   Shield, 
   ShieldOff,
-  Crown 
+  Crown,
+  Trash2 
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -183,6 +184,62 @@ export default function UserManagement() {
       toast({
         title: "User demoted",
         description: "User has been demoted to teacher",
+      });
+
+      fetchProfiles();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    try {
+      // Get user details first for email notification
+      const { data: userProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Send email notification before deletion
+      try {
+        await supabase.functions.invoke('send-notification-email', {
+          body: {
+            to: userProfile.email,
+            name: userProfile.full_name,
+            type: 'deleted',
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send notification email:', emailError);
+        // Continue with deletion even if email fails
+      }
+
+      // Delete from profiles table first (will trigger cascade)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      // Delete from auth.users using the admin API
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (authError) {
+        console.error('Failed to delete from auth.users:', authError);
+        // Don't fail the operation as profile is already deleted
+      }
+
+      toast({
+        title: "User deleted",
+        description: "User has been permanently deleted from the system",
       });
 
       fetchProfiles();
@@ -362,6 +419,19 @@ export default function UserManagement() {
                           Demote from Admin
                         </Button>
                       )}
+                      
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to permanently delete ${profile.full_name}? This action cannot be undone.`)) {
+                            deleteUser(profile.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 ))}
