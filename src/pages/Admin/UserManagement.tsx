@@ -32,7 +32,11 @@ interface Profile {
   status: string;
   student_id?: string;
   staff_id?: string;
+  level_id?: string;
+  department_id?: string;
   created_at: string;
+  departments?: { name: string };
+  levels?: { name: string };
 }
 
 export default function UserManagement() {
@@ -51,7 +55,11 @@ export default function UserManagement() {
       setLoading(true);
       let query = supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          departments:subjects!profiles_department_id_fkey(name),
+          levels:classes!profiles_level_id_fkey(name)
+        `)
         .order('created_at', { ascending: false });
 
       if (filter !== 'all') {
@@ -198,55 +206,41 @@ export default function UserManagement() {
 
   const deleteUser = async (userId: string) => {
     try {
-      // Get user details first for email notification
-      const { data: userProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('full_name, email')
-        .eq('id', userId)
-        .single();
+      console.log('Attempting to delete user:', userId);
+      
+      // Use Supabase admin API to delete from auth.users table
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (error) {
+        console.error('Error deleting user from auth:', error);
+        throw error;
+      }
 
-      if (fetchError) throw fetchError;
-
-      // Send email notification before deletion
+      // Send deletion notification
       try {
         await supabase.functions.invoke('send-notification-email', {
           body: {
-            to: userProfile.email,
-            name: userProfile.full_name,
-            type: 'deleted',
+            type: 'user_deleted',
+            user_id: userId,
+            user_email: profiles.find(u => u.id === userId)?.email || 'Unknown'
           }
         });
       } catch (emailError) {
-        console.error('Failed to send notification email:', emailError);
-        // Continue with deletion even if email fails
-      }
-
-      // Delete from profiles table first (will trigger cascade)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
-
-      // Delete from auth.users using the admin API
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      
-      if (authError) {
-        console.error('Failed to delete from auth.users:', authError);
-        // Don't fail the operation as profile is already deleted
+        console.error('Failed to send deletion notification:', emailError);
+        // Don't fail the deletion if email fails
       }
 
       toast({
         title: "User deleted",
-        description: "User has been permanently deleted from the system",
+        description: "User has been permanently deleted from the system.",
       });
 
       fetchProfiles();
     } catch (error: any) {
+      console.error('Delete user error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to delete user",
         variant: "destructive"
       });
     }
@@ -344,15 +338,17 @@ export default function UserManagement() {
                           {profile.status}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{profile.email}</p>
-                      <div className="flex gap-2 text-xs text-muted-foreground">
-                        {profile.student_id && (
-                          <span>Student ID: {profile.student_id}</span>
-                        )}
-                        {profile.staff_id && (
-                          <span>Staff ID: {profile.staff_id}</span>
-                        )}
-                      </div>
+                       <p className="text-sm text-muted-foreground">
+                         {profile.email} • ID: {profile.role === 'student' 
+                           ? (profile.student_id || profile.id.slice(-8)) 
+                           : (profile.staff_id || profile.id.slice(-8))}
+                       </p>
+                       {profile.level_id && profile.department_id && (
+                         <p className="text-xs text-muted-foreground">
+                           Department: {profile.departments?.name || 'Unknown'} • 
+                           Level: {profile.levels?.name || 'Unknown'}
+                         </p>
+                       )}
                     </div>
                     
                     <div className="flex flex-wrap gap-2">
