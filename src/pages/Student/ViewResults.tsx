@@ -138,7 +138,7 @@ export default function StudentViewResults() {
                       </div>
                     </div>
                     <Badge 
-                      className={`${getGradeColor(result.grade, result.assignments.max_points)} text-white`}
+                      className={`${getGradeColor(result.grade, result.assignments.max_points)} text-primary-foreground`}
                     >
                       {result.grade}/{result.assignments.max_points}
                     </Badge>

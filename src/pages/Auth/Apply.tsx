@@ -259,7 +259,7 @@ export default function Apply() {
             </form>
 
             <div className="mt-6 text-center">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 Already have an account?{' '}
                 <Link to="/auth/login" className="text-primary hover:underline">
                   Sign in here

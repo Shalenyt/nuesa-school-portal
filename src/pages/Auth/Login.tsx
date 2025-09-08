@@ -114,7 +114,7 @@ export default function Login() {
                 Forgot your password?
               </Link>
               
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 Don't have an account?{' '}
                 <Link to="/auth/apply" className="text-primary hover:underline">
                   Apply here

@@ -102,7 +102,7 @@ export default function TeacherCourses() {
                     <div className="grid grid-cols-3 gap-4 text-center">
                       <div className="space-y-1">
                         <div className="flex items-center justify-center">
-                          <Users className="h-4 w-4 text-blue-500" />
+                          <Users className="h-4 w-4 text-primary" />
                         </div>
                         <div className="text-lg font-semibold">{stats.enrollments}</div>
                         <div className="text-xs text-muted-foreground">Students</div>
@@ -110,7 +110,7 @@ export default function TeacherCourses() {
                       
                       <div className="space-y-1">
                         <div className="flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-green-500" />
+                          <FileText className="h-4 w-4 text-accent" />
                         </div>
                         <div className="text-lg font-semibold">{stats.materials}</div>
                         <div className="text-xs text-muted-foreground">Materials</div>
@@ -118,7 +118,7 @@ export default function TeacherCourses() {
                       
                       <div className="space-y-1">
                         <div className="flex items-center justify-center">
-                          <ClipboardList className="h-4 w-4 text-orange-500" />
+                          <ClipboardList className="h-4 w-4 text-secondary" />
                         </div>
                         <div className="text-lg font-semibold">{stats.assignments}</div>
                         <div className="text-xs text-muted-foreground">Assignments</div>

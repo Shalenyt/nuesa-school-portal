@@ -64,7 +64,7 @@ export default function RecoverPassword() {
             </CardHeader>
             <CardContent>
               <div className="text-center space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Click the link in the email to reset your password. If you don't see the email, 
                   check your spam folder.
                 </p>
