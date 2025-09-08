@@ -70,7 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           full_name: userData.fullName,
           role: userData.role,
           student_id: userData.studentId,
-          staff_id: userData.staffId
+          staff_id: userData.staffId,
+          classId: userData.classId,
+          subjectId: userData.subjectId
         }
       }
     });
