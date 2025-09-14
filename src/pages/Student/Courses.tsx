@@ -29,9 +29,10 @@ export default function StudentCourses() {
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (!profile?.department_id || !profile?.level_id) {
+        console.log('Student profile missing department or level');
         setCourses([]);
         setLoading(false);
         return;
@@ -43,13 +44,17 @@ export default function StudentCourses() {
         .select('course_ids')
         .eq('class_id', profile.level_id)
         .eq('subject_id', profile.department_id)
-        .single();
+        .maybeSingle();
 
       if (!courseListData?.course_ids) {
+        console.log('No course list found for student level/department');
         setCourses([]);
         setLoading(false);
         return;
       }
+
+      // Auto-enroll student in these courses if not already enrolled
+      await autoEnrollStudent(userId, courseListData.course_ids);
 
       // Get course details
       const { data: coursesData } = await supabase
@@ -80,6 +85,38 @@ export default function StudentCourses() {
       console.error('Error fetching courses:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const autoEnrollStudent = async (studentId: string, courseIds: string[]) => {
+    try {
+      // Check which courses student is not enrolled in
+      const { data: existingEnrollments } = await supabase
+        .from('student_enrollments')
+        .select('course_id')
+        .eq('student_id', studentId);
+
+      const enrolledCourseIds = existingEnrollments?.map(e => e.course_id) || [];
+      const newCourseIds = courseIds.filter(id => !enrolledCourseIds.includes(id));
+
+      if (newCourseIds.length > 0) {
+        const enrollments = newCourseIds.map(courseId => ({
+          student_id: studentId,
+          course_id: courseId
+        }));
+
+        const { error } = await supabase
+          .from('student_enrollments')
+          .insert(enrollments);
+
+        if (error) {
+          console.error('Error auto-enrolling student:', error);
+        } else {
+          console.log(`Auto-enrolled student in ${newCourseIds.length} new courses`);
+        }
+      }
+    } catch (error) {
+      console.error('Error in auto-enrollment:', error);
     }
   };
 
