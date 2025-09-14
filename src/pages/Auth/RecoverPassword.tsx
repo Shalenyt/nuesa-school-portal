@@ -49,7 +49,7 @@ export default function RecoverPassword() {
                 alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
                 className="h-12 w-12 object-contain" 
               />
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h1 className="text-3xl font-black text-primary">
                 {settings?.portal_name || 'OAUSTECH Portal'}
               </h1>
             </div>
@@ -97,9 +97,9 @@ export default function RecoverPassword() {
               alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
               className="h-12 w-12 object-contain" 
             />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {settings?.portal_name || 'OAUSTECH Portal'}
-            </h1>
+              <h1 className="text-3xl font-black text-primary">
+                {settings?.portal_name || 'OAUSTECH Portal'}
+              </h1>
           </div>
           <p className="text-muted-foreground mt-2">Reset your password</p>
         </div>

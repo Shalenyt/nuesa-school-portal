@@ -63,9 +63,9 @@ export default function Login() {
               className="h-16 w-16 object-contain" 
             />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {settings?.portal_name || 'OAUSTECH Portal'}
-          </h1>
+            <h1 className="text-3xl font-black text-primary">
+              {settings?.portal_name || 'OAUSTECH Portal'}
+            </h1>
           <p className="text-muted-foreground mt-2">Sign in to your account</p>
         </div>
 

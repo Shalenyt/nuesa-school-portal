@@ -23,7 +23,7 @@ const Index = () => {
             alt={`${schoolSettings?.school_name || 'OAUSTECH'} Logo`} 
             className="h-16 w-16" 
           />
-          <h1 className="text-5xl font-black text-foreground">
+          <h1 className="text-5xl font-black text-primary">
             {schoolSettings?.portal_name || schoolSettings?.school_name || 'OAUSTECH Portal'}
           </h1>
         </div>

@@ -115,7 +115,7 @@ export default function Apply() {
               alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
               className="h-12 w-12 object-contain" 
             />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-3xl font-black text-primary">
               {settings?.portal_name || 'OAUSTECH Portal'}
             </h1>
           </div>
