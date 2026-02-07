@@ -149,7 +149,7 @@ export default function StudentCourses() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5" />
-                    {course.name}
+                    {course.subjects?.name || 'Course'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
