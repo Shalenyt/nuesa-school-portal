@@ -69,9 +69,9 @@ export default function StudentTimetable() {
 
       console.log('Timetable query result:', timetableData, 'Error:', timetableError);
 
-      const allTimetable = timetableData?.map(schedule => ({
+      const allTimetable = timetableData?.map((schedule: any) => ({
         ...schedule,
-        courseName: schedule.courses?.name,
+        courseName: schedule.courses?.subjects?.name,
         subjectName: schedule.courses?.subjects?.name,
         teacherName: schedule.courses?.profiles?.full_name
       })) || [];

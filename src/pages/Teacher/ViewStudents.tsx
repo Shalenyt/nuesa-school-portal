@@ -73,7 +73,7 @@ export default function ViewStudents() {
           const classIds = relevantCourseLists.map(cl => cl.class_id);
           const subjectIds = relevantCourseLists.map(cl => cl.subject_id);
 
-          const { data: studentsData, error: studentsError } = await supabase
+          const { data: studentsData, error: studentsError } = await (supabase as any)
             .from('profiles')
             .select(`
               id,

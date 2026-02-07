@@ -67,9 +67,9 @@ export default function StudentViewMaterials() {
 
       console.log('Materials query result:', materialsData, 'Error:', materialsError);
 
-      const allMaterials = materialsData?.map(material => ({
+      const allMaterials = materialsData?.map((material: any) => ({
         ...material,
-        courseName: material.courses?.name
+        courseName: material.courses?.subjects?.name
       })) || [];
 
       setMaterials(allMaterials);

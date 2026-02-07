@@ -73,9 +73,9 @@ export default function StudentSubmitAssignment() {
 
       console.log('Assignments query result:', assignmentsData, 'Error:', assignmentsError);
 
-      const allAssignments = assignmentsData?.map(assignment => ({
+      const allAssignments = assignmentsData?.map((assignment: any) => ({
         ...assignment,
-        courseName: assignment.courses?.name
+        courseName: assignment.courses?.subjects?.name
       })) || [];
 
       setAssignments(allAssignments);

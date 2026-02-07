@@ -52,7 +52,7 @@ export default function StudentViewResults() {
       }
 
       // Get assignment submissions for those courses
-      const { data: submissions } = await supabase
+      const { data: submissions } = await (supabase as any)
         .from('assignment_submissions')
         .select(`
           grade,
@@ -64,7 +64,6 @@ export default function StudentViewResults() {
             max_points,
             course_id,
             courses(
-              name,
               subjects(name)
             )
           )
