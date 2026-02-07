@@ -57,11 +57,11 @@ export default function StudentViewMaterials() {
 
       // Get materials for those courses
       console.log('Fetching materials for course IDs:', courseListData.course_ids);
-      const { data: materialsData, error: materialsError } = await supabase
+      const { data: materialsData, error: materialsError } = await (supabase as any)
         .from('materials')
         .select(`
           *,
-          courses(name)
+          courses(subjects(name))
         `)
         .in('course_id', courseListData.course_ids);
 
