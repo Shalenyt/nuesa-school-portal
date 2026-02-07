@@ -49,7 +49,7 @@ export function NotificationContent() {
           id: `schedule-${schedule.id}`,
           type: 'schedule',
           title: 'New Class Schedule',
-          message: `${schedule.courses.name} scheduled for ${getDayName(schedule.day_of_week)} at ${schedule.start_time}`,
+          message: `${schedule.courses?.subjects?.name || 'Course'} scheduled for ${getDayName(schedule.day_of_week)} at ${schedule.start_time}`,
           created_at: schedule.created_at,
           read: false
         });
