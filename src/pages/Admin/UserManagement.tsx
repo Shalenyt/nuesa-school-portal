@@ -208,26 +208,13 @@ export default function UserManagement() {
     try {
       console.log('Attempting to delete user:', userId);
       
-      // Use Supabase admin API to delete from auth.users table
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      
-      if (error) {
-        console.error('Error deleting user from auth:', error);
-        throw error;
-      }
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId }
+      });
 
-      // Send deletion notification
-      try {
-        await supabase.functions.invoke('send-notification-email', {
-          body: {
-            type: 'user_deleted',
-            user_id: userId,
-            user_email: profiles.find(u => u.id === userId)?.email || 'Unknown'
-          }
-        });
-      } catch (emailError) {
-        console.error('Failed to send deletion notification:', emailError);
-        // Don't fail the deletion if email fails
+      if (error) {
+        console.error('Error deleting user:', error);
+        throw error;
       }
 
       toast({
