@@ -35,8 +35,8 @@ interface Profile {
   level_id?: string;
   department_id?: string;
   created_at: string;
-  departments?: { name: string };
-  levels?: { name: string };
+  departments?: { name: string } | { name: string }[];
+  levels?: { name: string } | { name: string }[];
 }
 
 export default function UserManagement() {
