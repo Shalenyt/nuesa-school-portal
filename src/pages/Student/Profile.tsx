@@ -295,7 +295,7 @@ export default function StudentProfile() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {courses.map((course, index) => (
                   <div key={index} className="p-4 border rounded-lg">
-                    <h3 className="font-semibold">{course.name}</h3>
+                    <h3 className="font-semibold">{course.subjects?.name || 'Course'}</h3>
                     <p className="text-sm text-muted-foreground">
                       {course.classes?.name} • {course.subjects?.name}
                     </p>
