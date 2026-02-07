@@ -105,22 +105,11 @@ export default function ManageUsers() {
 
   const deleteUser = async (userId: string, userEmail: string) => {
     try {
-      // First delete from profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId }
+      });
 
-      if (profileError) throw profileError;
-
-      // Then delete from auth.users using the admin API
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-
-      if (authError) {
-        console.error('Auth deletion error:', authError);
-        // Don't throw here as the profile is already deleted
-        // This might fail if we don't have admin privileges
-      }
+      if (error) throw error;
 
       toast({
         title: "User deleted",
@@ -132,7 +121,7 @@ export default function ManageUsers() {
       console.error('Error deleting user:', error);
       toast({
         title: "Error",
-        description: "Failed to delete user completely. User may still exist in authentication.",
+        description: "Failed to delete user. Please try again.",
         variant: "destructive"
       });
     }

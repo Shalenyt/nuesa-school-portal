@@ -24,8 +24,20 @@ export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProp
       }
 
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${profile?.id}.${fileExt}`;
+      const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+      const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      if (!fileExt || !ALLOWED_IMAGE_EXTENSIONS.includes(fileExt)) {
+        throw new Error('Invalid image type. Allowed: JPG, PNG, GIF, WEBP');
+      }
+
+      if (file.size > MAX_IMAGE_SIZE) {
+        throw new Error('Image too large. Maximum size is 5MB.');
+      }
+
+      const safeExt = fileExt.replace(/[^a-z0-9]/gi, '');
+      const fileName = `${profile?.id}.${safeExt}`;
       const filePath = `${profile?.id}/${fileName}`;
 
       // Upload to storage

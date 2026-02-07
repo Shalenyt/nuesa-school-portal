@@ -115,8 +115,21 @@ export default function StudentSubmitAssignment() {
 
       // Upload file if provided
       if (file) {
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${Date.now()}.${fileExt}`;
+        const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png'];
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+        const fileExt = file.name.split('.').pop()?.toLowerCase();
+        if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+          throw new Error('Invalid file type. Allowed: PDF, DOC, DOCX, TXT, JPG, PNG');
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error('File too large. Maximum size is 10MB.');
+        }
+
+        const safeExt = fileExt.replace(/[^a-z0-9]/gi, '');
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        const filePath = `${userId}/${crypto.randomUUID()}.${safeExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('assignments')
