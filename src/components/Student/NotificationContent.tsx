@@ -56,12 +56,12 @@ export function NotificationContent() {
       });
 
       // Fetch new materials
-      const { data: materials } = await supabase
+      const { data: materials } = await (supabase as any)
         .from('materials')
         .select(`
           *,
           courses!inner(
-            name,
+            subjects(name),
             student_enrollments!inner(student_id)
           )
         `)
