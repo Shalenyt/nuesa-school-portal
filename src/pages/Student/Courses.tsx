@@ -25,7 +25,7 @@ export default function StudentCourses() {
       }
 
       // Get user profile to check department and level
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
@@ -39,7 +39,7 @@ export default function StudentCourses() {
       }
 
       // Get courses from course lists based on student's department and level
-      const { data: courseListData } = await supabase
+      const { data: courseListData } = await (supabase as any)
         .from('course_lists')
         .select('course_ids')
         .eq('class_id', profile.level_id)
@@ -57,14 +57,12 @@ export default function StudentCourses() {
       await autoEnrollStudent(userId, courseListData.course_ids);
 
       // Get course details
-      const { data: coursesData } = await supabase
+      const { data: coursesData } = await (supabase as any)
         .from('courses')
         .select(`
           id,
-          name,
-          description,
-          classes(name),
           subjects(name, code),
+          classes(name),
           profiles(full_name)
         `)
         .in('id', courseListData.course_ids);
@@ -76,8 +74,8 @@ export default function StudentCourses() {
       }
 
       // Sort courses by name
-      const sortedCourses = coursesData.sort((a, b) => 
-        (a.name || '').localeCompare(b.name || '')
+      const sortedCourses = coursesData.sort((a: any, b: any) => 
+        (a.subjects?.name || '').localeCompare(b.subjects?.name || '')
       );
 
       setCourses(sortedCourses);
@@ -151,13 +149,13 @@ export default function StudentCourses() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5" />
-                    {course.name}
+                    {course.subjects?.name || 'Course'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {course.description && (
+                  {course.subjects?.code && (
                     <p className="text-sm text-muted-foreground">
-                      {course.description}
+                      Code: {course.subjects.code}
                     </p>
                   )}
                   

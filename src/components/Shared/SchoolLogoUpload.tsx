@@ -42,7 +42,7 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
         .getPublicUrl(filePath);
 
       // Update school settings - use the first row's ID if it exists
-      const { data: existingSettings, error: fetchError } = await supabase
+      const { data: existingSettings, error: fetchError } = await (supabase as any)
         .from('school_settings')
         .select('*')
         .limit(1);
@@ -52,7 +52,7 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
       }
 
       if (existingSettings && existingSettings.length > 0) {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from('school_settings')
           .update({ logo_url: data.publicUrl })
           .eq('id', existingSettings[0].id);
@@ -61,7 +61,7 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
           throw updateError;
         }
       } else {
-        const { error: insertError } = await supabase
+        const { error: insertError } = await (supabase as any)
           .from('school_settings')
           .insert({ 
             id: crypto.randomUUID(),

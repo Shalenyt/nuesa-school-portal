@@ -35,8 +35,8 @@ interface Profile {
   level_id?: string;
   department_id?: string;
   created_at: string;
-  departments?: { name: string };
-  levels?: { name: string };
+  departments?: { name: string } | { name: string }[];
+  levels?: { name: string } | { name: string }[];
 }
 
 export default function UserManagement() {
@@ -53,7 +53,7 @@ export default function UserManagement() {
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      let query = supabase
+      let query = (supabase as any)
         .from('profiles')
         .select(`
           *,
@@ -332,10 +332,10 @@ export default function UserManagement() {
                        </p>
                        {profile.level_id && profile.department_id && (
                          <p className="text-xs text-muted-foreground">
-                           Department: {profile.departments?.name || 'Unknown'} • 
-                           Level: {profile.levels?.name || 'Unknown'}
-                         </p>
-                       )}
+                            Department: {Array.isArray(profile.departments) ? profile.departments[0]?.name : profile.departments?.name || 'Unknown'} • 
+                            Level: {Array.isArray(profile.levels) ? profile.levels[0]?.name : profile.levels?.name || 'Unknown'}
+                          </p>
+                        )}
                     </div>
                     
                     <div className="flex flex-wrap gap-2">

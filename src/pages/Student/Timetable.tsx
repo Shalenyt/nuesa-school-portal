@@ -26,7 +26,7 @@ export default function StudentTimetable() {
       }
 
       // Get user profile to check department and level
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
@@ -39,7 +39,7 @@ export default function StudentTimetable() {
       }
 
       // Get courses from course lists based on student's department and level
-      const { data: courseListData, error: courseListError } = await supabase
+      const { data: courseListData, error: courseListError } = await (supabase as any)
         .from('course_lists')
         .select('course_ids')  
         .eq('class_id', profile.level_id)
@@ -56,12 +56,11 @@ export default function StudentTimetable() {
 
       // Get timetable for those courses
       console.log('Fetching timetable for course IDs:', courseListData.course_ids);
-      const { data: timetableData, error: timetableError } = await supabase
+      const { data: timetableData, error: timetableError } = await (supabase as any)
         .from('timetable')
         .select(`
           *,
           courses(
-            name,
             subjects(name),
             profiles(full_name)
           )
@@ -70,9 +69,9 @@ export default function StudentTimetable() {
 
       console.log('Timetable query result:', timetableData, 'Error:', timetableError);
 
-      const allTimetable = timetableData?.map(schedule => ({
+      const allTimetable = timetableData?.map((schedule: any) => ({
         ...schedule,
-        courseName: schedule.courses?.name,
+        courseName: schedule.courses?.subjects?.name,
         subjectName: schedule.courses?.subjects?.name,
         teacherName: schedule.courses?.profiles?.full_name
       })) || [];

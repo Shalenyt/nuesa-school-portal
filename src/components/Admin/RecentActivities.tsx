@@ -52,9 +52,9 @@ export function RecentActivities() {
         .limit(2);
 
       // Fetch recent courses added
-      const { data: courses } = await supabase
+      const { data: courses } = await (supabase as any)
         .from('courses')
-        .select('name, created_at')
+        .select('created_at, subjects(name)')
         .order('created_at', { ascending: false })
         .limit(2);
 
@@ -112,11 +112,11 @@ export function RecentActivities() {
       });
 
       // Add courses
-      courses?.forEach(course => {
+      courses?.forEach((course: any) => {
         recentActivities.push({
           id: `course-${course.created_at}`,
           type: 'course',
-          message: `New course added: ${course.name}`,
+          message: `New course added: ${course.subjects?.name || 'Unknown'}`,
           user_name: 'System',
           created_at: course.created_at
         });

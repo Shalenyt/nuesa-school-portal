@@ -26,7 +26,7 @@ export default function StudentViewMaterials() {
       }
 
       // Get user profile to check department and level
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
@@ -39,7 +39,7 @@ export default function StudentViewMaterials() {
       }
 
       // Get courses from course lists based on student's department and level
-      const { data: courseListData, error: courseListError } = await supabase
+      const { data: courseListData, error: courseListError } = await (supabase as any)
         .from('course_lists')
         .select('course_ids')
         .eq('class_id', profile.level_id)
@@ -57,19 +57,19 @@ export default function StudentViewMaterials() {
 
       // Get materials for those courses
       console.log('Fetching materials for course IDs:', courseListData.course_ids);
-      const { data: materialsData, error: materialsError } = await supabase
+      const { data: materialsData, error: materialsError } = await (supabase as any)
         .from('materials')
         .select(`
           *,
-          courses(name)
+          courses(subjects(name))
         `)
         .in('course_id', courseListData.course_ids);
 
       console.log('Materials query result:', materialsData, 'Error:', materialsError);
 
-      const allMaterials = materialsData?.map(material => ({
+      const allMaterials = materialsData?.map((material: any) => ({
         ...material,
-        courseName: material.courses?.name
+        courseName: material.courses?.subjects?.name
       })) || [];
 
       setMaterials(allMaterials);

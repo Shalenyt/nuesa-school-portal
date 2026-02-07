@@ -33,7 +33,7 @@ export default function StudentSubmitAssignment() {
       }
 
       // Get user profile to check department and level
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
@@ -46,7 +46,7 @@ export default function StudentSubmitAssignment() {
       }
 
       // Get courses from course lists based on student's department and level  
-      const { data: courseListData, error: courseListError } = await supabase
+      const { data: courseListData, error: courseListError } = await (supabase as any)
         .from('course_lists')
         .select('course_ids')
         .eq('class_id', profile.level_id)
@@ -63,19 +63,19 @@ export default function StudentSubmitAssignment() {
 
       // Get assignments for those courses
       console.log('Fetching assignments for course IDs:', courseListData.course_ids);
-      const { data: assignmentsData, error: assignmentsError } = await supabase
+      const { data: assignmentsData, error: assignmentsError } = await (supabase as any)
         .from('assignments')
         .select(`
           *,
-          courses(name, subject_id, class_id)
+          courses(subject_id, class_id, subjects(name))
         `)
         .in('course_id', courseListData.course_ids);
 
       console.log('Assignments query result:', assignmentsData, 'Error:', assignmentsError);
 
-      const allAssignments = assignmentsData?.map(assignment => ({
+      const allAssignments = assignmentsData?.map((assignment: any) => ({
         ...assignment,
-        courseName: assignment.courses?.name
+        courseName: assignment.courses?.subjects?.name
       })) || [];
 
       setAssignments(allAssignments);

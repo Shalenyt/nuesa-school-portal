@@ -68,7 +68,7 @@ export default function StudentProfile() {
       }
 
       // Get courses from course lists based on student's department and level
-      const { data: courseListData, error: courseListError } = await supabase
+      const { data: courseListData, error: courseListError } = await (supabase as any)
         .from('course_lists')
         .select('course_ids')
         .eq('class_id', profile.level_id)
@@ -82,14 +82,11 @@ export default function StudentProfile() {
       }
 
       // Get course details
-      const { data: coursesData, error: coursesError } = await supabase
+      const { data: coursesData, error: coursesError } = await (supabase as any)
         .from('courses')
         .select(`
           id,
-          name,
-          description,
           semester,
-          credit_unit,
           subjects(name),
           classes(name),
           profiles(full_name)
@@ -298,18 +295,17 @@ export default function StudentProfile() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {courses.map((course, index) => (
                   <div key={index} className="p-4 border rounded-lg">
-                    <h3 className="font-semibold">{course.name}</h3>
+                    <h3 className="font-semibold">{course.subjects?.name || 'Course'}</h3>
                     <p className="text-sm text-muted-foreground">
                       {course.classes?.name} • {course.subjects?.name}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
                       Teacher: {course.profiles?.full_name}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {course.semester} Semester • {course.credit_unit} units
-                    </p>
-                    {course.description && (
-                      <p className="text-xs text-muted-foreground mt-2">{course.description}</p>
+                    {course.semester && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {course.semester} Semester
+                      </p>
                     )}
                   </div>
                 ))}

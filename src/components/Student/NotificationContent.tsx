@@ -31,12 +31,12 @@ export function NotificationContent() {
       const allNotifications: Notification[] = [];
 
       // Fetch class schedules (from timetable)
-      const { data: schedules } = await supabase
+      const { data: schedules } = await (supabase as any)
         .from('timetable')
         .select(`
           *,
           courses!inner(
-            name,
+            subjects(name),
             student_enrollments!inner(student_id)
           )
         `)
@@ -49,19 +49,19 @@ export function NotificationContent() {
           id: `schedule-${schedule.id}`,
           type: 'schedule',
           title: 'New Class Schedule',
-          message: `${schedule.courses.name} scheduled for ${getDayName(schedule.day_of_week)} at ${schedule.start_time}`,
+          message: `${schedule.courses?.subjects?.name || 'Course'} scheduled for ${getDayName(schedule.day_of_week)} at ${schedule.start_time}`,
           created_at: schedule.created_at,
           read: false
         });
       });
 
       // Fetch new materials
-      const { data: materials } = await supabase
+      const { data: materials } = await (supabase as any)
         .from('materials')
         .select(`
           *,
           courses!inner(
-            name,
+            subjects(name),
             student_enrollments!inner(student_id)
           )
         `)
@@ -74,19 +74,19 @@ export function NotificationContent() {
           id: `material-${material.id}`,
           type: 'material',
           title: 'New Course Material',
-          message: `${material.title} uploaded for ${material.courses.name}`,
+          message: `${material.title} uploaded for ${material.courses?.subjects?.name || 'Course'}`,
           created_at: material.created_at,
           read: false
         });
       });
 
       // Fetch assignments
-      const { data: assignments } = await supabase
+      const { data: assignments } = await (supabase as any)
         .from('assignments')
         .select(`
           *,
           courses!inner(
-            name,
+            subjects(name),
             student_enrollments!inner(student_id)
           )
         `)
@@ -99,7 +99,7 @@ export function NotificationContent() {
           id: `assignment-${assignment.id}`,
           type: 'assignment',
           title: 'New Assignment',
-          message: `${assignment.title} assigned for ${assignment.courses.name}`,
+          message: `${assignment.title} assigned for ${assignment.courses?.subjects?.name || 'Course'}`,
           created_at: assignment.created_at,
           read: false
         });

@@ -107,7 +107,7 @@ export default function AdminProfile() {
     try {
       if (settings?.id) {
         // Update existing settings - ONLY portal name and school name
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .update({
             portal_name: portalName.trim(),
@@ -118,7 +118,7 @@ export default function AdminProfile() {
         if (error) throw error;
       } else {
         // Create new settings with only portal/school name, preserve defaults for other fields
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .insert({
             portal_name: portalName.trim(),
@@ -156,7 +156,7 @@ export default function AdminProfile() {
     try {
       if (settings?.id) {
         // Update existing settings - ONLY theme color
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .update({
             theme_color: selectedThemeColor
@@ -166,7 +166,7 @@ export default function AdminProfile() {
         if (error) throw error;
       } else {
         // Create new settings with only theme color
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .insert({
             theme_color: selectedThemeColor

@@ -25,7 +25,7 @@ export default function StudentViewResults() {
       }
 
       // Get user profile to check department and level
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
@@ -38,7 +38,7 @@ export default function StudentViewResults() {
       }
 
       // Get courses from course lists based on student's department and level
-      const { data: courseListData } = await supabase
+      const { data: courseListData } = await (supabase as any)
         .from('course_lists')
         .select('course_ids')
         .eq('class_id', profile.level_id)
@@ -52,7 +52,7 @@ export default function StudentViewResults() {
       }
 
       // Get assignment submissions for those courses
-      const { data: submissions } = await supabase
+      const { data: submissions } = await (supabase as any)
         .from('assignment_submissions')
         .select(`
           grade,
@@ -64,7 +64,6 @@ export default function StudentViewResults() {
             max_points,
             course_id,
             courses(
-              name,
               subjects(name)
             )
           )
