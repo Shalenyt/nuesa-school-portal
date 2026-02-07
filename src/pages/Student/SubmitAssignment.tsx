@@ -63,11 +63,11 @@ export default function StudentSubmitAssignment() {
 
       // Get assignments for those courses
       console.log('Fetching assignments for course IDs:', courseListData.course_ids);
-      const { data: assignmentsData, error: assignmentsError } = await supabase
+      const { data: assignmentsData, error: assignmentsError } = await (supabase as any)
         .from('assignments')
         .select(`
           *,
-          courses(name, subject_id, class_id)
+          courses(subject_id, class_id, subjects(name))
         `)
         .in('course_id', courseListData.course_ids);
 
