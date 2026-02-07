@@ -74,7 +74,7 @@ export function NotificationContent() {
           id: `material-${material.id}`,
           type: 'material',
           title: 'New Course Material',
-          message: `${material.title} uploaded for ${material.courses.name}`,
+          message: `${material.title} uploaded for ${material.courses?.subjects?.name || 'Course'}`,
           created_at: material.created_at,
           read: false
         });
