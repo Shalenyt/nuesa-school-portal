@@ -52,9 +52,9 @@ export function RecentActivities() {
         .limit(2);
 
       // Fetch recent courses added
-      const { data: courses } = await supabase
+      const { data: courses } = await (supabase as any)
         .from('courses')
-        .select('name, created_at')
+        .select('created_at, subjects(name)')
         .order('created_at', { ascending: false })
         .limit(2);
 
