@@ -156,7 +156,7 @@ export default function AdminProfile() {
     try {
       if (settings?.id) {
         // Update existing settings - ONLY theme color
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .update({
             theme_color: selectedThemeColor
