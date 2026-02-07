@@ -99,7 +99,7 @@ export function NotificationContent() {
           id: `assignment-${assignment.id}`,
           type: 'assignment',
           title: 'New Assignment',
-          message: `${assignment.title} assigned for ${assignment.courses.name}`,
+          message: `${assignment.title} assigned for ${assignment.courses?.subjects?.name || 'Course'}`,
           created_at: assignment.created_at,
           read: false
         });

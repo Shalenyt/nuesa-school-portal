@@ -166,7 +166,7 @@ export default function AdminProfile() {
         if (error) throw error;
       } else {
         // Create new settings with only theme color
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .insert({
             theme_color: selectedThemeColor

@@ -332,10 +332,10 @@ export default function UserManagement() {
                        </p>
                        {profile.level_id && profile.department_id && (
                          <p className="text-xs text-muted-foreground">
-                           Department: {profile.departments?.name || 'Unknown'} • 
-                           Level: {profile.levels?.name || 'Unknown'}
-                         </p>
-                       )}
+                            Department: {Array.isArray(profile.departments) ? profile.departments[0]?.name : profile.departments?.name || 'Unknown'} • 
+                            Level: {Array.isArray(profile.levels) ? profile.levels[0]?.name : profile.levels?.name || 'Unknown'}
+                          </p>
+                        )}
                     </div>
                     
                     <div className="flex flex-wrap gap-2">

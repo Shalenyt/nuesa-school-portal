@@ -153,9 +153,9 @@ export default function StudentCourses() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {course.description && (
+                  {course.subjects?.code && (
                     <p className="text-sm text-muted-foreground">
-                      {course.description}
+                      Code: {course.subjects.code}
                     </p>
                   )}
                   

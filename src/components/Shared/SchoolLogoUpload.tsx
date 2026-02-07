@@ -61,7 +61,7 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
           throw updateError;
         }
       } else {
-        const { error: insertError } = await supabase
+        const { error: insertError } = await (supabase as any)
           .from('school_settings')
           .insert({ 
             id: crypto.randomUUID(),

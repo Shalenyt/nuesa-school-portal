@@ -112,11 +112,11 @@ export function RecentActivities() {
       });
 
       // Add courses
-      courses?.forEach(course => {
+      courses?.forEach((course: any) => {
         recentActivities.push({
           id: `course-${course.created_at}`,
           type: 'course',
-          message: `New course added: ${course.name}`,
+          message: `New course added: ${course.subjects?.name || 'Unknown'}`,
           user_name: 'System',
           created_at: course.created_at
         });

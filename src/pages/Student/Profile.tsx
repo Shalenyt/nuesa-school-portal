@@ -302,11 +302,10 @@ export default function StudentProfile() {
                     <p className="text-sm text-muted-foreground mt-1">
                       Teacher: {course.profiles?.full_name}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {course.semester} Semester • {course.credit_unit} units
-                    </p>
-                    {course.description && (
-                      <p className="text-xs text-muted-foreground mt-2">{course.description}</p>
+                    {course.semester && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {course.semester} Semester
+                      </p>
                     )}
                   </div>
                 ))}
