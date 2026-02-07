@@ -74,8 +74,8 @@ export default function StudentCourses() {
       }
 
       // Sort courses by name
-      const sortedCourses = coursesData.sort((a, b) => 
-        (a.name || '').localeCompare(b.name || '')
+      const sortedCourses = coursesData.sort((a: any, b: any) => 
+        (a.subjects?.name || '').localeCompare(b.subjects?.name || '')
       );
 
       setCourses(sortedCourses);
