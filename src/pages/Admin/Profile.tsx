@@ -118,7 +118,7 @@ export default function AdminProfile() {
         if (error) throw error;
       } else {
         // Create new settings with only portal/school name, preserve defaults for other fields
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .insert({
             portal_name: portalName.trim(),
