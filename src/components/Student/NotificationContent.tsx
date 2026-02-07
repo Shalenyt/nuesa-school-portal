@@ -81,12 +81,12 @@ export function NotificationContent() {
       });
 
       // Fetch assignments
-      const { data: assignments } = await supabase
+      const { data: assignments } = await (supabase as any)
         .from('assignments')
         .select(`
           *,
           courses!inner(
-            name,
+            subjects(name),
             student_enrollments!inner(student_id)
           )
         `)
