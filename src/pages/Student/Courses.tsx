@@ -57,14 +57,12 @@ export default function StudentCourses() {
       await autoEnrollStudent(userId, courseListData.course_ids);
 
       // Get course details
-      const { data: coursesData } = await supabase
+      const { data: coursesData } = await (supabase as any)
         .from('courses')
         .select(`
           id,
-          name,
-          description,
-          classes(name),
           subjects(name, code),
+          classes(name),
           profiles(full_name)
         `)
         .in('id', courseListData.course_ids);
