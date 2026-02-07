@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -207,57 +207,12 @@ export type Database = {
         }
         Relationships: []
       }
-      course_lists: {
-        Row: {
-          class_id: string
-          course_ids: string[] | null
-          created_at: string
-          id: string
-          subject_id: string
-          updated_at: string
-        }
-        Insert: {
-          class_id: string
-          course_ids?: string[] | null
-          created_at?: string
-          id?: string
-          subject_id: string
-          updated_at?: string
-        }
-        Update: {
-          class_id?: string
-          course_ids?: string[] | null
-          created_at?: string
-          id?: string
-          subject_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "course_lists_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "course_lists_subject_id_fkey"
-            columns: ["subject_id"]
-            isOneToOne: false
-            referencedRelation: "subjects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       courses: {
         Row: {
           academic_year: string | null
           class_id: string
           created_at: string
-          credit_unit: number | null
-          description: string | null
           id: string
-          name: string | null
           semester: string | null
           subject_id: string
           teacher_id: string | null
@@ -267,10 +222,7 @@ export type Database = {
           academic_year?: string | null
           class_id: string
           created_at?: string
-          credit_unit?: number | null
-          description?: string | null
           id?: string
-          name?: string | null
           semester?: string | null
           subject_id: string
           teacher_id?: string | null
@@ -280,10 +232,7 @@ export type Database = {
           academic_year?: string | null
           class_id?: string
           created_at?: string
-          credit_unit?: number | null
-          description?: string | null
           id?: string
-          name?: string | null
           semester?: string | null
           subject_id?: string
           teacher_id?: string | null
@@ -413,14 +362,10 @@ export type Database = {
       }
       profiles: {
         Row: {
-          address: string | null
           created_at: string
-          department_id: string | null
           email: string
           full_name: string
           id: string
-          level_id: string | null
-          phone: string | null
           profile_photo_url: string | null
           role: Database["public"]["Enums"]["user_role"]
           staff_id: string | null
@@ -429,14 +374,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          address?: string | null
           created_at?: string
-          department_id?: string | null
           email: string
           full_name: string
           id: string
-          level_id?: string | null
-          phone?: string | null
           profile_photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           staff_id?: string | null
@@ -445,65 +386,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          address?: string | null
           created_at?: string
-          department_id?: string | null
           email?: string
           full_name?: string
           id?: string
-          level_id?: string | null
-          phone?: string | null
           profile_photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           staff_id?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           student_id?: string | null
           updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_department_id_fkey"
-            columns: ["department_id"]
-            isOneToOne: false
-            referencedRelation: "subjects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_level_id_fkey"
-            columns: ["level_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      school_settings: {
-        Row: {
-          created_at: string | null
-          id: string
-          logo_url: string | null
-          portal_name: string | null
-          school_name: string | null
-          theme_color: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          logo_url?: string | null
-          portal_name?: string | null
-          school_name?: string | null
-          theme_color?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          logo_url?: string | null
-          portal_name?: string | null
-          school_name?: string | null
-          theme_color?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -616,37 +508,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_notification: {
-        Args: {
-          message_param: string
-          related_id_param?: string
-          title_param: string
-          type_param?: string
-          user_id_param: string
-        }
-        Returns: string
-      }
       get_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_teacher: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
+      is_teacher: { Args: never; Returns: boolean }
     }
     Enums: {
-      announcement_type:
-        | "global"
-        | "class"
-        | "subject"
-        | "academic"
-        | "general"
-        | "urgent"
+      announcement_type: "global" | "class" | "subject"
       application_status: "pending" | "approved" | "rejected"
       user_role: "admin" | "teacher" | "student"
     }
@@ -776,14 +646,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      announcement_type: [
-        "global",
-        "class",
-        "subject",
-        "academic",
-        "general",
-        "urgent",
-      ],
+      announcement_type: ["global", "class", "subject"],
       application_status: ["pending", "approved", "rejected"],
       user_role: ["admin", "teacher", "student"],
     },
