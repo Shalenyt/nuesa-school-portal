@@ -107,7 +107,7 @@ export default function AdminProfile() {
     try {
       if (settings?.id) {
         // Update existing settings - ONLY portal name and school name
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .update({
             portal_name: portalName.trim(),
