@@ -31,12 +31,12 @@ export function NotificationContent() {
       const allNotifications: Notification[] = [];
 
       // Fetch class schedules (from timetable)
-      const { data: schedules } = await supabase
+      const { data: schedules } = await (supabase as any)
         .from('timetable')
         .select(`
           *,
           courses!inner(
-            name,
+            subjects(name),
             student_enrollments!inner(student_id)
           )
         `)
