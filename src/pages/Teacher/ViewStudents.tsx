@@ -53,7 +53,7 @@ export default function ViewStudents() {
       
       if (courseIds.length > 0) {
         // Get all course lists that contain these course IDs
-        const { data: courseListsData, error: courseListsError } = await supabase
+        const { data: courseListsData, error: courseListsError } = await (supabase as any)
           .from('course_lists')
           .select(`
             *,
