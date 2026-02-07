@@ -42,7 +42,7 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
         .getPublicUrl(filePath);
 
       // Update school settings - use the first row's ID if it exists
-      const { data: existingSettings, error: fetchError } = await supabase
+      const { data: existingSettings, error: fetchError } = await (supabase as any)
         .from('school_settings')
         .select('*')
         .limit(1);
