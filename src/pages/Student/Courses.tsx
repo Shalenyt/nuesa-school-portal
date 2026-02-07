@@ -25,7 +25,7 @@ export default function StudentCourses() {
       }
 
       // Get user profile to check department and level
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('department_id, level_id')
         .eq('id', userId)
