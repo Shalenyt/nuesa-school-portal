@@ -82,14 +82,11 @@ export default function StudentProfile() {
       }
 
       // Get course details
-      const { data: coursesData, error: coursesError } = await supabase
+      const { data: coursesData, error: coursesError } = await (supabase as any)
         .from('courses')
         .select(`
           id,
-          name,
-          description,
           semester,
-          credit_unit,
           subjects(name),
           classes(name),
           profiles(full_name)
