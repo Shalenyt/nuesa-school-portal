@@ -46,7 +46,7 @@ export default function StudentSubmitAssignment() {
       }
 
       // Get courses from course lists based on student's department and level  
-      const { data: courseListData, error: courseListError } = await supabase
+      const { data: courseListData, error: courseListError } = await (supabase as any)
         .from('course_lists')
         .select('course_ids')
         .eq('class_id', profile.level_id)
