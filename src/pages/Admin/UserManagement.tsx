@@ -53,7 +53,7 @@ export default function UserManagement() {
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      let query = supabase
+      let query = (supabase as any)
         .from('profiles')
         .select(`
           *,
