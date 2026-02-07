@@ -1,0 +1,1 @@
+UPDATE profiles SET status = 'approved' WHERE id = '091c9a04-a68d-43b9-8cb5-b04669e0e234';
