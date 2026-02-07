@@ -56,12 +56,11 @@ export default function StudentTimetable() {
 
       // Get timetable for those courses
       console.log('Fetching timetable for course IDs:', courseListData.course_ids);
-      const { data: timetableData, error: timetableError } = await supabase
+      const { data: timetableData, error: timetableError } = await (supabase as any)
         .from('timetable')
         .select(`
           *,
           courses(
-            name,
             subjects(name),
             profiles(full_name)
           )
