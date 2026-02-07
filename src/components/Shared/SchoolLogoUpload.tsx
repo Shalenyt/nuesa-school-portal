@@ -52,7 +52,7 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
       }
 
       if (existingSettings && existingSettings.length > 0) {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from('school_settings')
           .update({ logo_url: data.publicUrl })
           .eq('id', existingSettings[0].id);
