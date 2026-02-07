@@ -39,7 +39,7 @@ export default function StudentCourses() {
       }
 
       // Get courses from course lists based on student's department and level
-      const { data: courseListData } = await supabase
+      const { data: courseListData } = await (supabase as any)
         .from('course_lists')
         .select('course_ids')
         .eq('class_id', profile.level_id)
