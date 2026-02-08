@@ -26,16 +26,17 @@ export function useSchoolSettings() {
         .maybeSingle();
 
       if (error) {
-        // If no record exists, use defaults (don't try to insert - RLS may block it)
-        if (error.code === 'PGRST116') {
-          setSettings({ 
-            id: '', 
-            school_name: 'OAUSTECH Portal',
-            portal_name: 'OAUSTECH Portal',
-            theme_color: '#ef4444'
-          });
-        } else {
-          throw error;
+        throw error;
+      } else if (data) {
+        setSettings(data);
+      } else {
+        // No settings row found, use defaults
+        setSettings({ 
+          id: '', 
+          school_name: 'OAUSTECH Portal',
+          portal_name: 'OAUSTECH Portal',
+          theme_color: '#ef4444'
+        });
         }
       } else {
         setSettings(data);
