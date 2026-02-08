@@ -362,10 +362,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           created_at: string
           email: string
           full_name: string
           id: string
+          phone: string | null
           profile_photo_url: string | null
           role: Database["public"]["Enums"]["user_role"]
           staff_id: string | null
@@ -374,10 +376,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           email: string
           full_name: string
           id: string
+          phone?: string | null
           profile_photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           staff_id?: string | null
@@ -386,15 +390,47 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          phone?: string | null
           profile_photo_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           staff_id?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      school_settings: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          portal_name: string | null
+          school_name: string
+          theme_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          portal_name?: string | null
+          school_name?: string
+          theme_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          portal_name?: string | null
+          school_name?: string
+          theme_color?: string | null
           updated_at?: string
         }
         Relationships: []
