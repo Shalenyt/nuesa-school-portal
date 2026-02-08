@@ -22,7 +22,8 @@ export function useSchoolSettings() {
       const { data, error } = await (supabase as any)
         .from('school_settings')
         .select('*')
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error) {
         // If no record exists, use defaults (don't try to insert - RLS may block it)
