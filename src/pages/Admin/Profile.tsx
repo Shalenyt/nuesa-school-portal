@@ -140,28 +140,15 @@ export default function AdminProfile() {
   };
 
   const updateThemeColor = async () => {
+    if (!settings?.id) return;
     setLoading(true);
     try {
-      if (settings?.id) {
-        // Update existing settings - ONLY theme color
-        const { error } = await (supabase as any)
-          .from('school_settings')
-          .update({
-            theme_color: selectedThemeColor
-          })
-          .eq('id', settings.id);
+      const { error } = await (supabase as any)
+        .from('school_settings')
+        .update({ theme_color: selectedThemeColor })
+        .eq('id', settings.id);
 
-        if (error) throw error;
-      } else {
-        // Create new settings with only theme color
-        const { error } = await (supabase as any)
-          .from('school_settings')
-          .insert({
-            theme_color: selectedThemeColor
-          });
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Theme color updated",
