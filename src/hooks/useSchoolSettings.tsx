@@ -30,16 +30,12 @@ export function useSchoolSettings() {
       } else if (data) {
         setSettings(data);
       } else {
-        // No settings row found, use defaults
         setSettings({ 
           id: '', 
           school_name: 'OAUSTECH Portal',
           portal_name: 'OAUSTECH Portal',
           theme_color: '#ef4444'
         });
-        }
-      } else {
-        setSettings(data);
       }
     } catch (error) {
       console.error('Error fetching school settings:', error);
