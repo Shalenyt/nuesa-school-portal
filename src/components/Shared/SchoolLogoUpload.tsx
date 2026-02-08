@@ -41,39 +41,22 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
         .from('school-assets')
         .getPublicUrl(filePath);
 
-      // Update school settings - use the first row's ID if it exists
+      // Update school settings - get the first row and update it
       const { data: existingSettings, error: fetchError } = await (supabase as any)
         .from('school_settings')
-        .select('*')
-        .limit(1);
+        .select('id')
+        .limit(1)
+        .maybeSingle();
 
-      if (fetchError) {
-        throw fetchError;
-      }
+      if (fetchError) throw fetchError;
 
-      if (existingSettings && existingSettings.length > 0) {
+      if (existingSettings) {
         const { error: updateError } = await (supabase as any)
           .from('school_settings')
           .update({ logo_url: data.publicUrl })
-          .eq('id', existingSettings[0].id);
+          .eq('id', existingSettings.id);
 
-        if (updateError) {
-          throw updateError;
-        }
-      } else {
-        const { error: insertError } = await (supabase as any)
-          .from('school_settings')
-          .insert({ 
-            id: crypto.randomUUID(),
-            logo_url: data.publicUrl,
-            school_name: 'OAUSTECH Portal',
-            portal_name: 'OAUSTECH Portal',
-            theme_color: '#ef4444'
-          });
-
-        if (insertError) {
-          throw insertError;
-        }
+        if (updateError) throw updateError;
       }
 
       onLogoUpdated(data.publicUrl);
