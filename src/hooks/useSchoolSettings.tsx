@@ -25,20 +25,14 @@ export function useSchoolSettings() {
         .single();
 
       if (error) {
-        // If no record exists, create default one
+        // If no record exists, use defaults (don't try to insert - RLS may block it)
         if (error.code === 'PGRST116') {
-          const { data: newData, error: insertError } = await (supabase as any)
-            .from('school_settings')
-            .insert({
-              school_name: 'OAUSTECH Portal',
-              portal_name: 'OAUSTECH Portal',
-              theme_color: '#ef4444'
-            })
-            .select()
-            .single();
-
-          if (insertError) throw insertError;
-          setSettings(newData);
+          setSettings({ 
+            id: '', 
+            school_name: 'OAUSTECH Portal',
+            portal_name: 'OAUSTECH Portal',
+            theme_color: '#ef4444'
+          });
         } else {
           throw error;
         }
