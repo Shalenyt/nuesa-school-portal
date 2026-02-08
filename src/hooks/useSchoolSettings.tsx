@@ -22,22 +22,20 @@ export function useSchoolSettings() {
       const { data, error } = await (supabase as any)
         .from('school_settings')
         .select('*')
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error) {
-        // If no record exists, use defaults (don't try to insert - RLS may block it)
-        if (error.code === 'PGRST116') {
-          setSettings({ 
-            id: '', 
-            school_name: 'OAUSTECH Portal',
-            portal_name: 'OAUSTECH Portal',
-            theme_color: '#ef4444'
-          });
-        } else {
-          throw error;
-        }
-      } else {
+        throw error;
+      } else if (data) {
         setSettings(data);
+      } else {
+        setSettings({ 
+          id: '', 
+          school_name: 'OAUSTECH Portal',
+          portal_name: 'OAUSTECH Portal',
+          theme_color: '#ef4444'
+        });
       }
     } catch (error) {
       console.error('Error fetching school settings:', error);

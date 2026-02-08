@@ -412,6 +412,7 @@ export type Database = {
           logo_url: string | null
           portal_name: string | null
           school_name: string
+          singleton: boolean
           theme_color: string | null
           updated_at: string
         }
@@ -421,6 +422,7 @@ export type Database = {
           logo_url?: string | null
           portal_name?: string | null
           school_name?: string
+          singleton?: boolean
           theme_color?: string | null
           updated_at?: string
         }
@@ -430,6 +432,7 @@ export type Database = {
           logo_url?: string | null
           portal_name?: string | null
           school_name?: string
+          singleton?: boolean
           theme_color?: string | null
           updated_at?: string
         }
