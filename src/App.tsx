@@ -160,6 +160,16 @@ const App = () => (
                   <ViewStudents />
                 </ProtectedRoute>
               } />
+              <Route path="/teacher/attendance" element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <TeacherAttendance />
+                </ProtectedRoute>
+              } />
+              <Route path="/teacher/quizzes" element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <TeacherQuizzes />
+                </ProtectedRoute>
+              } />
               
               {/* Student Routes */}
               <Route path="/student/profile" element={
