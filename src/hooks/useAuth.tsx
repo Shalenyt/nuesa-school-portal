@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
@@ -105,9 +105,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive"
       });
+      return { error, profile: null };
     }
 
-    return { error };
+    // Fetch profile immediately so caller can use it for navigation
+    let fetchedProfile = null;
+    if (data?.user) {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (!profileError && profileData) {
+        fetchedProfile = profileData;
+        setProfile(profileData);
+      }
+    }
+
+    return { error: null, profile: fetchedProfile };
   };
 
   const signOut = async () => {

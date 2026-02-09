@@ -51,5 +51,9 @@ export function useSchoolSettings() {
     }
   };
 
-  return { settings, loading, refetch: fetchSettings };
+  useEffect(() => {
+    if (!loading) setReady(true);
+  }, [loading]);
+
+  return { settings, loading, ready, refetch: fetchSettings };
 }

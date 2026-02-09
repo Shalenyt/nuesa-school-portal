@@ -7,8 +7,16 @@ import oaustechLogo from '@/assets/oaustech-logo.png';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { settings: schoolSettings } = useSchoolSettings();
-  useThemeSync(); // Apply theme colors
+  const { settings: schoolSettings, ready } = useSchoolSettings();
+  useThemeSync();
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative">
