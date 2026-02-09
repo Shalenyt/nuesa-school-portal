@@ -26,11 +26,10 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const result = await signIn(email, password);
 
-    if (!error && profile) {
-      // Redirect based on role
-      switch (profile.role) {
+    if (!result.error && result.profile) {
+      switch (result.profile.role) {
         case 'admin':
           navigate('/admin/dashboard');
           break;
