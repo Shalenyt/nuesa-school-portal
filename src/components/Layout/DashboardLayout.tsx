@@ -24,43 +24,43 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="min-h-screen flex w-full">
         <SidebarMenu />
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-14 items-center px-4">
-              <SidebarTrigger />
+            <div className="flex h-14 items-center px-2 sm:px-4 gap-2">
+              <SidebarTrigger className="shrink-0" />
               
-              <div className="flex items-center gap-2 ml-4">
+              <div className="flex items-center gap-2 min-w-0">
                 <img 
                   src={settings?.logo_url || oaustechLogo} 
                   alt="School Logo" 
-                  className="h-8 w-8 object-contain" 
+                  className="h-7 w-7 sm:h-8 sm:w-8 object-contain shrink-0" 
                 />
-                <h1 className="font-semibold text-lg">{settings?.portal_name || settings?.school_name || 'OAUSTECH Portal'}</h1>
+                <h1 className="font-semibold text-sm sm:text-lg truncate">{settings?.portal_name || settings?.school_name || 'OAUSTECH Portal'}</h1>
               </div>
               
-              <div className="ml-auto flex items-center gap-4">
-                <Avatar className="h-8 w-8">
+              <div className="ml-auto flex items-center gap-1 sm:gap-4 shrink-0">
+                <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                   <AvatarImage src={profile?.profile_photo_url} />
-                  <AvatarFallback>
+                  <AvatarFallback className="text-xs">
                     {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-sm">
+                <div className="text-sm hidden sm:block">
                   <span className="text-muted-foreground">Welcome,</span>{' '}
                   <span className="font-medium">{profile?.full_name}</span>
                 </div>
                 
                 <ThemeToggle />
                 
-                <Button variant="ghost" size="sm" onClick={signOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                <Button variant="ghost" size="sm" onClick={signOut} className="px-2 sm:px-3">
+                  <LogOut className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </div>
             </div>
           </header>
           
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-3 sm:p-6 overflow-x-hidden">
             {children}
           </main>
         </div>

@@ -171,7 +171,7 @@ export default function ViewStudents() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or student ID"
+                  placeholder="Search by name or matric number"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -243,7 +243,7 @@ export default function ViewStudents() {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium truncate">{student.full_name}</h3>
-                          <p className="text-sm text-muted-foreground">ID: {student.student_id}</p>
+                          <p className="text-sm text-muted-foreground">Matric NO: {student.student_id}</p>
                           <p className="text-sm text-muted-foreground">
                             {student.classes?.name} (Grade {student.classes?.grade_level}) • {student.subjects?.name}
                           </p>

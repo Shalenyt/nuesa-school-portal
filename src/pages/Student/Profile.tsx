@@ -214,7 +214,7 @@ export default function StudentProfile() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="student_id">Student ID</Label>
+                    <Label htmlFor="student_id">Matric NO</Label>
                     <Input
                       id="student_id"
                       value={formData.student_id}

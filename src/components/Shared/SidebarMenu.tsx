@@ -36,6 +36,7 @@ const adminMenuItems = [
   { title: "Announcements", url: "/admin/announcements", icon: MessageSquare },
   { title: "Courses", url: "/admin/courses", icon: BookOpen },
   { title: "Course Lists", url: "/admin/course-lists", icon: FileText },
+  { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Profile", url: "/admin/profile", icon: Settings }
 ];
 
@@ -49,6 +50,7 @@ const lecturerMenuItems = [
   { title: "Class Schedule", url: "/teacher/class-schedule", icon: Calendar },
   { title: "View Students", url: "/teacher/view-students", icon: Users },
   { title: "Announcements", url: "/teacher/announcements", icon: MessageSquare },
+  { title: "Notifications", url: "/teacher/notifications", icon: Bell },
   { title: "Courses", url: "/teacher/courses", icon: BookOpen }
 ];
 
@@ -112,14 +114,14 @@ export function SidebarMenu() {
                            }`
                           }
                     >
-                      <item.icon className={`h-5 w-5 transition-all duration-300 ${
+                      <item.icon className={`h-5 w-5 shrink-0 transition-all duration-300 ${
                         location.pathname === item.url 
                           ? "text-primary" 
                           : "text-muted-foreground group-hover:text-primary"
                       }`} />
-                      <span className="transition-all duration-300">{item.title}</span>
-                      {item.title === 'Notifications' && profile?.role === 'student' && counts.total > 0 && (
-                        <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center">
+                      <span className="transition-all duration-300 truncate">{item.title}</span>
+                      {item.title === 'Notifications' && counts.total > 0 && (
+                        <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
                           {counts.total}
                         </Badge>
                       )}

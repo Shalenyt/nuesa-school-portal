@@ -13,7 +13,7 @@ export function useNotificationCounts() {
   const [counts, setCounts] = useState<NotificationCounts>({ announcements: 0, notifications: 0, total: 0 });
 
   useEffect(() => {
-    if (profile?.role !== 'student') return;
+    if (!profile) return;
     fetchCounts();
 
     const notificationChannel = supabase
@@ -29,7 +29,6 @@ export function useNotificationCounts() {
   const fetchCounts = async () => {
     if (!profile) return;
 
-    // Only count unread notifications (not announcements - they don't have per-user read tracking)
     const { count: notificationCount } = await supabase
       .from('notifications')
       .select('id', { count: 'exact', head: true })

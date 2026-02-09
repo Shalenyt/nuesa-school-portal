@@ -211,7 +211,7 @@ export default function ManageUsers() {
                       
                       <div className="text-sm text-muted-foreground space-y-1">
                         <p>Email: {profile.email}</p>
-                        {profile.student_id && <p>Student ID: {profile.student_id}</p>}
+                        {profile.student_id && <p>Matric NO: {profile.student_id}</p>}
                         {profile.staff_id && <p>Staff ID: {profile.staff_id}</p>}
                         <p>Applied: {new Date(profile.created_at).toLocaleDateString()}</p>
                       </div>
