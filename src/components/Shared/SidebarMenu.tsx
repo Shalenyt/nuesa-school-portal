@@ -39,7 +39,7 @@ const adminMenuItems = [
   { title: "Profile", url: "/admin/profile", icon: Settings }
 ];
 
-const teacherMenuItems = [
+const lecturerMenuItems = [
   { title: "Profile", url: "/teacher/profile", icon: LayoutDashboard },
   { title: "Upload Materials", url: "/teacher/upload-materials", icon: Upload },
   { title: "Assignments", url: "/teacher/assignments", icon: ClipboardList },
@@ -69,10 +69,19 @@ export function SidebarMenu() {
   const location = useLocation();
   const { counts } = useNotificationCounts();
 
+  const getRoleLabel = () => {
+    switch (profile?.role) {
+      case 'admin': return 'Admin';
+      case 'teacher': return 'Lecturer';
+      case 'student': return 'Student';
+      default: return '';
+    }
+  };
+
   const getMenuItems = () => {
     switch (profile?.role) {
       case 'admin': return adminMenuItems;
-      case 'teacher': return teacherMenuItems;
+      case 'teacher': return lecturerMenuItems;
       case 'student': return studentMenuItems;
       default: return [];
     }
@@ -85,7 +94,7 @@ export function SidebarMenu() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
-            {profile?.role?.charAt(0).toUpperCase() + profile?.role?.slice(1)} Menu
+            {getRoleLabel()} Menu
           </SidebarGroupLabel>
           
           <SidebarGroupContent>

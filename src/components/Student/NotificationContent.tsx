@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Bell, MessageSquare, Calendar, Book, Trophy, ClipboardList, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +15,7 @@ interface Notification {
   message: string;
   created_at: string;
   read: boolean;
-  db_id?: string; // actual DB notification id for marking read
+  db_id?: string;
 }
 
 const getNotificationIcon = (type: string) => {
@@ -31,7 +32,7 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
-function NotificationList({ items, onMarkRead }: { items: Notification[]; onMarkRead?: (item: Notification) => void }) {
+function NotificationList({ items, onItemClick }: { items: Notification[]; onItemClick: (item: Notification) => void }) {
   if (items.length === 0) {
     return (
       <Card>
@@ -51,8 +52,8 @@ function NotificationList({ items, onMarkRead }: { items: Notification[]; onMark
       {items.map((notification) => (
         <Card 
           key={notification.id} 
-          className={`cursor-pointer transition-colors ${!notification.read ? 'border-primary' : ''}`}
-          onClick={() => !notification.read && onMarkRead?.(notification)}
+          className={`cursor-pointer transition-colors hover:bg-muted/50 ${!notification.read ? 'border-primary' : ''}`}
+          onClick={() => onItemClick(notification)}
         >
           <CardHeader>
             <div className="flex justify-between items-start">
@@ -63,7 +64,7 @@ function NotificationList({ items, onMarkRead }: { items: Notification[]; onMark
                     {notification.title}
                     {!notification.read && <Badge variant="destructive" className="text-[10px] px-1.5 py-0">New</Badge>}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{notification.message}</p>
                 </div>
               </div>
               <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
@@ -82,11 +83,11 @@ export function NotificationContent() {
   const [announcements, setAnnouncements] = useState<Notification[]>([]);
   const [generalNotifications, setGeneralNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<Notification | null>(null);
 
   useEffect(() => {
     if (profile) fetchAll();
 
-    // Real-time subscription for deletions and new items
     const announcementChannel = supabase
       .channel('student-announcements')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
@@ -113,7 +114,6 @@ export function NotificationContent() {
   };
 
   const fetchAnnouncements = async () => {
-    // All announcements from admins and teachers
     const { data } = await supabase
       .from('announcements')
       .select('*, profiles(full_name, role)')
@@ -123,10 +123,10 @@ export function NotificationContent() {
     const list: Notification[] = (data || []).map((a: any) => ({
       id: `announcement-${a.id}`,
       type: 'announcement' as const,
-      title: `${a.profiles?.role === 'admin' ? 'Admin' : 'Teacher'} Announcement`,
-      message: `${a.title}${a.content ? ': ' + a.content.substring(0, 100) : ''}`,
+      title: `${a.profiles?.role === 'admin' ? 'Admin' : 'Lecturer'} Announcement: ${a.title}`,
+      message: a.content || '',
       created_at: a.created_at,
-      read: false, // announcements don't track read state per-student
+      read: true, // announcements don't track read per student
     }));
 
     setAnnouncements(list);
@@ -135,7 +135,6 @@ export function NotificationContent() {
   const fetchNotifications = async () => {
     if (!profile) return;
 
-    // Fetch from the notifications table (includes quiz, attendance, assignment, etc.)
     const { data: dbNotifications } = await supabase
       .from('notifications')
       .select('*')
@@ -157,7 +156,7 @@ export function NotificationContent() {
   };
 
   const markAsRead = async (item: Notification) => {
-    if (item.db_id) {
+    if (item.db_id && !item.read) {
       await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -169,32 +168,77 @@ export function NotificationContent() {
     }
   };
 
+  const markAllNotificationsAsRead = async () => {
+    if (!profile) return;
+    const unread = generalNotifications.filter(n => !n.read && n.db_id);
+    if (unread.length === 0) return;
+    
+    const ids = unread.map(n => n.db_id!);
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .in('id', ids);
+
+    setGeneralNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const handleItemClick = (item: Notification) => {
+    setSelectedItem(item);
+    markAsRead(item);
+  };
+
+  const handleTabChange = (value: string) => {
+    if (value === 'general') {
+      markAllNotificationsAsRead();
+    }
+  };
+
   if (loading) return <div className="text-center">Loading notifications...</div>;
 
   const unreadNotifications = generalNotifications.filter(n => !n.read).length;
 
   return (
-    <Tabs defaultValue="announcements" className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="announcements" className="relative">
-          Announcements
-          {announcements.length > 0 && (
-            <Badge variant="secondary" className="ml-2">{announcements.length}</Badge>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value="general" className="relative">
-          Notifications
-          {unreadNotifications > 0 && (
-            <Badge variant="destructive" className="ml-2">{unreadNotifications}</Badge>
-          )}
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="announcements">
-        <NotificationList items={announcements} />
-      </TabsContent>
-      <TabsContent value="general">
-        <NotificationList items={generalNotifications} onMarkRead={markAsRead} />
-      </TabsContent>
-    </Tabs>
+    <>
+      <Tabs defaultValue="announcements" className="w-full" onValueChange={handleTabChange}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="announcements" className="relative">
+            Announcements
+            {announcements.length > 0 && (
+              <Badge variant="secondary" className="ml-2">{announcements.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="general" className="relative">
+            Notifications
+            {unreadNotifications > 0 && (
+              <Badge variant="destructive" className="ml-2">{unreadNotifications}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="announcements">
+          <NotificationList items={announcements} onItemClick={handleItemClick} />
+        </TabsContent>
+        <TabsContent value="general">
+          <NotificationList items={generalNotifications} onItemClick={handleItemClick} />
+        </TabsContent>
+      </Tabs>
+
+      {/* Detail popup */}
+      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              {selectedItem && getNotificationIcon(selectedItem.type)}
+              <DialogTitle>{selectedItem?.title}</DialogTitle>
+            </div>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedItem?.message}</p>
+            <p className="text-xs text-muted-foreground">
+              {selectedItem && formatDistanceToNow(new Date(selectedItem.created_at), { addSuffix: true })}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

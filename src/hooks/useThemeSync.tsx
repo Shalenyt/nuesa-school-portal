@@ -6,8 +6,8 @@ export function useThemeSync() {
 
   useEffect(() => {
     if (!ready) {
-      // Hide body until branding is ready to prevent flicker
-      document.body.style.visibility = 'hidden';
+      // Keep body hidden until branding is ready
+      document.body.classList.remove('theme-ready');
       return;
     }
 
@@ -62,6 +62,6 @@ export function useThemeSync() {
     }
 
     // Show body now that branding is applied
-    document.body.style.visibility = 'visible';
+    document.body.classList.add('theme-ready');
   }, [settings?.theme_color, ready]);
 }

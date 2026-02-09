@@ -8,13 +8,24 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, MapPin, AlertTriangle } from 'lucide-react';
+
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export default function StudentAttendance() {
   const { profile } = useAuth();
   const [activeSessions, setActiveSessions] = useState<any[]>([]);
   const [stats, setStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkingIn, setCheckingIn] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -24,7 +35,6 @@ export default function StudentAttendance() {
   }, [profile]);
 
   const fetchActiveSessions = async () => {
-    // Get open sessions for enrolled courses
     const { data: enrollments } = await supabase
       .from('student_enrollments')
       .select('course_id')
@@ -40,7 +50,6 @@ export default function StudentAttendance() {
       .eq('status', 'open')
       .order('created_at', { ascending: false });
 
-    // Check which sessions student already checked into
     const sessions = data || [];
     for (const s of sessions) {
       const { data: record } = await (supabase as any)
@@ -93,17 +102,77 @@ export default function StudentAttendance() {
     setStats(courseStats);
   };
 
-  const checkIn = async (sessionId: string) => {
-    const { error } = await (supabase as any)
-      .from('attendance_records')
-      .insert({ session_id: sessionId, student_id: profile?.id });
-    
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Success', description: 'Attendance marked successfully!' });
-      fetchActiveSessions();
-      fetchAttendanceStats();
+  const getCurrentPosition = (): Promise<GeolocationPosition> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser.'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+    });
+  };
+
+  const checkIn = async (session: any) => {
+    setCheckingIn(session.id);
+    try {
+      // Check if session has GPS requirement
+      if (session.latitude && session.longitude) {
+        const position = await getCurrentPosition();
+        const studentLat = position.coords.latitude;
+        const studentLon = position.coords.longitude;
+        const distance = haversineDistance(session.latitude, session.longitude, studentLat, studentLon);
+        const allowedRadius = session.allowed_radius_meters || 100;
+
+        if (distance > allowedRadius) {
+          toast({ 
+            title: 'Too far from class', 
+            description: `You are ${Math.round(distance)}m away. You must be within ${allowedRadius}m of the lecturer to mark attendance.`, 
+            variant: 'destructive' 
+          });
+          setCheckingIn(null);
+          return;
+        }
+
+        // Insert with GPS data
+        const { error } = await (supabase as any)
+          .from('attendance_records')
+          .insert({ 
+            session_id: session.id, 
+            student_id: profile?.id,
+            latitude: studentLat,
+            longitude: studentLon,
+            distance_meters: Math.round(distance)
+          });
+        
+        if (error) {
+          toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        } else {
+          toast({ title: 'Success', description: `Attendance marked! You were ${Math.round(distance)}m from the lecturer.` });
+          fetchActiveSessions();
+          fetchAttendanceStats();
+        }
+      } else {
+        // No GPS requirement - simple check-in
+        const { error } = await (supabase as any)
+          .from('attendance_records')
+          .insert({ session_id: session.id, student_id: profile?.id });
+        
+        if (error) {
+          toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        } else {
+          toast({ title: 'Success', description: 'Attendance marked successfully!' });
+          fetchActiveSessions();
+          fetchAttendanceStats();
+        }
+      }
+    } catch (err: any) {
+      toast({ title: 'GPS Error', description: err.message || 'Could not get your location. Please enable GPS and try again.', variant: 'destructive' });
+    } finally {
+      setCheckingIn(null);
     }
   };
 
@@ -135,9 +204,12 @@ export default function StudentAttendance() {
                     <CardTitle className="text-base">
                       {s.courses?.name || s.courses?.subjects?.name}
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(s.session_date).toLocaleDateString()}
-                    </p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{new Date(s.session_date).toLocaleDateString()}</span>
+                      {s.latitude && (
+                        <Badge variant="outline" className="text-xs"><MapPin className="h-3 w-3 mr-1" />GPS Required</Badge>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {s.checked_in ? (
@@ -145,8 +217,12 @@ export default function StudentAttendance() {
                         <CheckCircle className="h-4 w-4 mr-2" /> Checked In
                       </Badge>
                     ) : (
-                      <Button className="w-full" onClick={() => checkIn(s.id)}>
-                        <Clock className="h-4 w-4 mr-2" /> Mark Attendance
+                      <Button className="w-full" onClick={() => checkIn(s)} disabled={checkingIn === s.id}>
+                        {checkingIn === s.id ? (
+                          <><MapPin className="h-4 w-4 mr-2 animate-pulse" /> Getting Location...</>
+                        ) : (
+                          <><Clock className="h-4 w-4 mr-2" /> Mark Attendance</>
+                        )}
                       </Button>
                     )}
                   </CardContent>

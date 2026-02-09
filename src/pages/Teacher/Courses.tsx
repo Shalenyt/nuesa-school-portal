@@ -71,7 +71,7 @@ export default function TeacherCourses() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Courses</h1>
           <p className="text-muted-foreground">
-            Overview of courses you're teaching
+            Overview of courses you're lecturing
           </p>
         </div>
 

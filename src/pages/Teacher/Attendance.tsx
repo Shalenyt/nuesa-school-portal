@@ -7,25 +7,34 @@ import { notifyEnrolledStudents } from '@/lib/notifications';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Users, CheckCircle, XCircle, MapPin } from 'lucide-react';
 
-export default function TeacherAttendance() {
+export default function LecturerAttendance() {
   const { profile } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [sessions, setSessions] = useState<any[]>([]);
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
+  const [enrolledCount, setEnrolledCount] = useState(0);
+  const [studentStats, setStudentStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allowedRadius, setAllowedRadius] = useState('100');
+  const [gpsLoading, setGpsLoading] = useState(false);
 
   useEffect(() => {
     if (profile) fetchCourses();
   }, [profile]);
 
   useEffect(() => {
-    if (selectedCourse) fetchSessions();
+    if (selectedCourse) {
+      fetchSessions();
+      fetchStudentStats();
+    }
   }, [selectedCourse]);
 
   const fetchCourses = async () => {
@@ -46,23 +55,96 @@ export default function TeacherAttendance() {
     setSessions(data || []);
   };
 
+  const fetchStudentStats = async () => {
+    if (!selectedCourse) return;
+    // Get enrolled students
+    const { data: enrollments } = await supabase
+      .from('student_enrollments')
+      .select('student_id, profiles!student_enrollments_student_id_fkey(full_name, student_id)')
+      .eq('course_id', selectedCourse);
+
+    if (!enrollments?.length) { setStudentStats([]); setEnrolledCount(0); return; }
+    setEnrolledCount(enrollments.length);
+
+    // Get all sessions for this course
+    const { data: allSessions } = await (supabase as any)
+      .from('attendance_sessions')
+      .select('id')
+      .eq('course_id', selectedCourse);
+
+    const totalSessions = allSessions?.length || 0;
+    if (totalSessions === 0) { setStudentStats([]); return; }
+
+    const sessionIds = allSessions?.map((s: any) => s.id) || [];
+
+    // Get attendance records for these sessions
+    const { data: allRecords } = await (supabase as any)
+      .from('attendance_records')
+      .select('student_id')
+      .in('session_id', sessionIds);
+
+    // Count per student
+    const countMap: Record<string, number> = {};
+    (allRecords || []).forEach((r: any) => {
+      countMap[r.student_id] = (countMap[r.student_id] || 0) + 1;
+    });
+
+    const stats = enrollments.map((e: any) => ({
+      student_id: e.student_id,
+      full_name: e.profiles?.full_name,
+      matric_no: e.profiles?.student_id,
+      attended: countMap[e.student_id] || 0,
+      total: totalSessions,
+      percentage: Math.round(((countMap[e.student_id] || 0) / totalSessions) * 100)
+    }));
+
+    setStudentStats(stats);
+  };
+
+  const getCurrentPosition = (): Promise<GeolocationPosition> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser.'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+    });
+  };
+
   const openSession = async () => {
     if (!selectedCourse) return;
-    const { error } = await (supabase as any)
-      .from('attendance_sessions')
-      .insert({
-        course_id: selectedCourse,
-        teacher_id: profile?.id,
-        status: 'open'
-      });
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Success', description: 'Attendance session opened.' });
-      const course = courses.find(c => c.id === selectedCourse);
-      const courseName = course?.name || course?.subjects?.name || 'Course';
-      await notifyEnrolledStudents(selectedCourse, 'Attendance Open', `Attendance is now open for ${courseName}. Mark your attendance now!`, 'attendance');
-      fetchSessions();
+    setGpsLoading(true);
+    try {
+      const position = await getCurrentPosition();
+      const { latitude, longitude } = position.coords;
+
+      const { error } = await (supabase as any)
+        .from('attendance_sessions')
+        .insert({
+          course_id: selectedCourse,
+          teacher_id: profile?.id,
+          status: 'open',
+          latitude,
+          longitude,
+          allowed_radius_meters: parseInt(allowedRadius) || 100
+        });
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Success', description: 'Attendance session opened with GPS location.' });
+        const course = courses.find(c => c.id === selectedCourse);
+        const courseName = course?.name || course?.subjects?.name || 'Course';
+        await notifyEnrolledStudents(selectedCourse, 'Attendance Open', `Attendance is now open for ${courseName}. Mark your attendance now!`, 'attendance');
+        fetchSessions();
+      }
+    } catch (err: any) {
+      toast({ title: 'GPS Error', description: err.message || 'Could not get your location. Please enable GPS.', variant: 'destructive' });
+    } finally {
+      setGpsLoading(false);
     }
   };
 
@@ -101,24 +183,33 @@ export default function TeacherAttendance() {
           <p className="text-muted-foreground">Open, close, and track attendance for your courses</p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Select a course" />
-            </SelectTrigger>
-            <SelectContent>
-              {courses.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name || c.subjects?.name} ({c.classes?.name})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="space-y-1">
+            <Label className="text-sm">Course</Label>
+            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+              <SelectTrigger className="w-[300px]">
+                <SelectValue placeholder="Select a course" />
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name || c.subjects?.name} ({c.classes?.name})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {selectedCourse && (
-            <Button onClick={openSession}>
-              <Calendar className="h-4 w-4 mr-2" />
-              Open New Session
-            </Button>
+            <>
+              <div className="space-y-1">
+                <Label className="text-sm">Allowed Radius (meters)</Label>
+                <Input className="w-[140px]" type="number" value={allowedRadius} onChange={e => setAllowedRadius(e.target.value)} min="10" max="1000" />
+              </div>
+              <Button onClick={openSession} disabled={gpsLoading}>
+                <MapPin className="h-4 w-4 mr-2" />
+                {gpsLoading ? 'Getting GPS...' : 'Open Session (GPS)'}
+              </Button>
+            </>
           )}
         </div>
 
@@ -132,6 +223,9 @@ export default function TeacherAttendance() {
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   Attendance for {new Date(selectedSession.session_date).toLocaleDateString()}
+                  {selectedSession.latitude && (
+                    <Badge variant="outline" className="ml-2"><MapPin className="h-3 w-3 mr-1" />GPS enabled</Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -145,8 +239,11 @@ export default function TeacherAttendance() {
                           <p className="font-medium">{r.profiles?.full_name}</p>
                           <p className="text-sm text-muted-foreground">ID: {r.profiles?.student_id}</p>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(r.checked_in_at).toLocaleTimeString()}
+                        <div className="text-right text-sm text-muted-foreground">
+                          <p>{new Date(r.checked_in_at).toLocaleTimeString()}</p>
+                          {r.distance_meters !== null && r.distance_meters !== undefined && (
+                            <p className="text-xs">{Math.round(r.distance_meters)}m away</p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -156,34 +253,65 @@ export default function TeacherAttendance() {
             </Card>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sessions.map((s) => (
-              <Card key={s.id}>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center justify-between">
-                    {new Date(s.session_date).toLocaleDateString()}
-                    <Badge variant={s.status === 'open' ? 'default' : 'secondary'}>
-                      {s.status === 'open' ? 'Open' : 'Closed'}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => viewRecords(s)}>
-                    <Users className="h-4 w-4 mr-1" /> View Records
-                  </Button>
-                  {s.status === 'open' && (
-                    <Button variant="destructive" size="sm" onClick={() => closeSession(s.id)}>
-                      <XCircle className="h-4 w-4 mr-1" /> Close
+          <div className="space-y-6">
+            {/* Sessions */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {sessions.map((s) => (
+                <Card key={s.id}>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center justify-between">
+                      {new Date(s.session_date).toLocaleDateString()}
+                      <div className="flex items-center gap-1">
+                        {s.latitude && <MapPin className="h-3 w-3 text-muted-foreground" />}
+                        <Badge variant={s.status === 'open' ? 'default' : 'secondary'}>
+                          {s.status === 'open' ? 'Open' : 'Closed'}
+                        </Badge>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => viewRecords(s)}>
+                      <Users className="h-4 w-4 mr-1" /> View Records
                     </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-            {sessions.length === 0 && selectedCourse && (
+                    {s.status === 'open' && (
+                      <Button variant="destructive" size="sm" onClick={() => closeSession(s.id)}>
+                        <XCircle className="h-4 w-4 mr-1" /> Close
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+              {sessions.length === 0 && selectedCourse && (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No attendance sessions yet.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Student attendance percentage */}
+            {selectedCourse && studentStats.length > 0 && (
               <Card>
-                <CardContent className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No attendance sessions yet.</p>
+                <CardHeader>
+                  <CardTitle>Student Attendance Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {studentStats.map((s) => (
+                      <div key={s.student_id} className="flex items-center gap-4">
+                        <div className="w-48 truncate">
+                          <p className="font-medium text-sm">{s.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{s.matric_no}</p>
+                        </div>
+                        <div className="flex-1">
+                          <Progress value={s.percentage} />
+                        </div>
+                        <span className="text-sm font-semibold w-16 text-right">{s.attended}/{s.total} ({s.percentage}%)</span>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}

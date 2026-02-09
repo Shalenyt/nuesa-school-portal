@@ -131,7 +131,7 @@ export default function AdminCourses() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Courses</h1>
             <p className="text-muted-foreground">
-              Manage courses and assign teachers
+              Manage courses and assign lecturers
             </p>
           </div>
           <Button onClick={() => setIsCreating(true)}>
@@ -211,7 +211,7 @@ export default function AdminCourses() {
                   onValueChange={(value) => setNewCourse(prev => ({ ...prev, teacher_id: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select teacher" />
+                    <SelectValue placeholder="Select lecturer" />
                   </SelectTrigger>
                   <SelectContent>
                     {teachers.map((teacher) => (
@@ -267,7 +267,7 @@ export default function AdminCourses() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
-                  <span>Teacher: {course.profiles?.full_name}</span>
+                  <span>Lecturer: {course.profiles?.full_name}</span>
                 </div>
               </CardContent>
             </Card>

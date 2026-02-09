@@ -184,14 +184,14 @@ export default function UserManagement() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: 'teacher' as any })
+        .update({ role: 'teacher' as any }) // DB enum stays 'teacher'
         .eq('id', userId);
 
       if (error) throw error;
 
       toast({
         title: "User demoted",
-        description: "User has been demoted to teacher",
+        description: "User has been demoted to lecturer",
       });
 
       fetchProfiles();
@@ -287,7 +287,7 @@ export default function UserManagement() {
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
               <SelectItem value="admin">Admins</SelectItem>
-              <SelectItem value="teacher">Teachers</SelectItem>
+              <SelectItem value="teacher">Lecturers</SelectItem>
               <SelectItem value="student">Students</SelectItem>
               <SelectItem value="pending">Pending Applications</SelectItem>
             </SelectContent>

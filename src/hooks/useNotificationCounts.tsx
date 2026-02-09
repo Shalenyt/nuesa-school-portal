@@ -16,19 +16,12 @@ export function useNotificationCounts() {
     if (profile?.role !== 'student') return;
     fetchCounts();
 
-    // Subscribe to real-time changes
-    const announcementChannel = supabase
-      .channel('announcement-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => fetchCounts())
-      .subscribe();
-
     const notificationChannel = supabase
-      .channel('notification-changes')
+      .channel('notification-count-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${profile?.id}` }, () => fetchCounts())
       .subscribe();
 
     return () => {
-      supabase.removeChannel(announcementChannel);
       supabase.removeChannel(notificationChannel);
     };
   }, [profile]);
@@ -36,15 +29,15 @@ export function useNotificationCounts() {
   const fetchCounts = async () => {
     if (!profile) return;
 
-    const [{ count: announcementCount }, { count: notificationCount }] = await Promise.all([
-      supabase.from('announcements').select('id', { count: 'exact', head: true }),
-      supabase.from('notifications').select('id', { count: 'exact', head: true })
-        .eq('user_id', profile.id).eq('is_read', false)
-    ]);
+    // Only count unread notifications (not announcements - they don't have per-user read tracking)
+    const { count: notificationCount } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', profile.id)
+      .eq('is_read', false);
 
-    const a = announcementCount || 0;
     const n = notificationCount || 0;
-    setCounts({ announcements: a, notifications: n, total: a + n });
+    setCounts({ announcements: 0, notifications: n, total: n });
   };
 
   return { counts, refetch: fetchCounts };

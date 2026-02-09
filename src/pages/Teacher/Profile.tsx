@@ -98,7 +98,7 @@ export default function TeacherProfile() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Teacher Profile</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Lecturer Profile</h1>
           <p className="text-muted-foreground">
             Manage your account information and view assigned courses
           </p>
