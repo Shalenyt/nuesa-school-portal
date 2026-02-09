@@ -6,8 +6,8 @@ export function useThemeSync() {
 
   useEffect(() => {
     if (!ready) {
-      // Hide body until branding is ready to prevent flicker
-      document.body.style.visibility = 'hidden';
+      // Keep body hidden until branding is ready
+      document.body.classList.remove('theme-ready');
       return;
     }
 
