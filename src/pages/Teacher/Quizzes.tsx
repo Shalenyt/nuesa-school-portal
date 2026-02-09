@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { notifyEnrolledStudents } from '@/lib/notifications';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -120,6 +121,8 @@ export default function TeacherQuizzes() {
     }
 
     toast({ title: 'Success', description: 'Quiz created and published!' });
+    // Notify enrolled students
+    await notifyEnrolledStudents(quizForm.course_id, 'New Quiz Available', `A new quiz "${quizForm.title}" has been published. Take it now!`, 'quiz', quiz.id);
     setView('list');
     setQuizForm({ title: '', description: '', course_id: '', duration_minutes: '', max_points: '100' });
     setQuestions([{ question_text: '', options: ['', '', '', ''], correct_answer: 0, points: 1 }]);
@@ -148,6 +151,14 @@ export default function TeacherQuizzes() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Quiz graded!' });
+      // Notify the student about their grade
+      await supabase.from('notifications').insert({
+        user_id: selectedSubmission.student_id,
+        title: 'Quiz Graded',
+        message: `Your quiz "${selectedQuiz?.title}" has been graded. Score: ${gradeValue}/${selectedQuiz?.max_points || 100}`,
+        type: 'grade',
+        related_id: selectedSubmission.quiz_id,
+      });
       setView('submissions');
       setSelectedSubmission(null);
       setGradeValue('');

@@ -3,31 +3,35 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, MessageSquare, Calendar, Book, Trophy } from 'lucide-react';
+import { Bell, MessageSquare, Calendar, Book, Trophy, ClipboardList, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Notification {
   id: string;
-  type: 'schedule' | 'material' | 'assignment' | 'result' | 'announcement';
+  type: 'schedule' | 'material' | 'assignment' | 'result' | 'announcement' | 'quiz' | 'attendance' | 'grade';
   title: string;
   message: string;
   created_at: string;
   read: boolean;
+  db_id?: string; // actual DB notification id for marking read
 }
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'schedule': return <Calendar className="h-4 w-4" />;
     case 'material': return <Book className="h-4 w-4" />;
-    case 'assignment': return <Calendar className="h-4 w-4" />;
+    case 'assignment': return <ClipboardList className="h-4 w-4" />;
     case 'result': return <Trophy className="h-4 w-4" />;
     case 'announcement': return <MessageSquare className="h-4 w-4" />;
+    case 'quiz': return <Book className="h-4 w-4" />;
+    case 'attendance': return <CheckCircle className="h-4 w-4" />;
+    case 'grade': return <Trophy className="h-4 w-4" />;
     default: return <Bell className="h-4 w-4" />;
   }
 };
 
-function NotificationList({ items }: { items: Notification[] }) {
+function NotificationList({ items, onMarkRead }: { items: Notification[]; onMarkRead?: (item: Notification) => void }) {
   if (items.length === 0) {
     return (
       <Card>
@@ -45,7 +49,11 @@ function NotificationList({ items }: { items: Notification[] }) {
   return (
     <div className="space-y-4">
       {items.map((notification) => (
-        <Card key={notification.id} className={!notification.read ? 'border-primary' : ''}>
+        <Card 
+          key={notification.id} 
+          className={`cursor-pointer transition-colors ${!notification.read ? 'border-primary' : ''}`}
+          onClick={() => !notification.read && onMarkRead?.(notification)}
+        >
           <CardHeader>
             <div className="flex justify-between items-start">
               <div className="flex items-start gap-3">
@@ -53,12 +61,12 @@ function NotificationList({ items }: { items: Notification[] }) {
                 <div className="flex-1">
                   <CardTitle className="text-base flex items-center gap-2">
                     {notification.title}
-                    {!notification.read && <Badge variant="secondary">New</Badge>}
+                    {!notification.read && <Badge variant="destructive" className="text-[10px] px-1.5 py-0">New</Badge>}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
                 {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
               </span>
             </div>
@@ -76,123 +84,116 @@ export function NotificationContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile) fetchRealNotifications();
+    if (profile) fetchAll();
+
+    // Real-time subscription for deletions and new items
+    const announcementChannel = supabase
+      .channel('student-announcements')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
+        if (profile) fetchAnnouncements();
+      })
+      .subscribe();
+
+    const notificationChannel = supabase
+      .channel('student-notifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${profile?.id}` }, () => {
+        if (profile) fetchNotifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(announcementChannel);
+      supabase.removeChannel(notificationChannel);
+    };
   }, [profile]);
 
-  const getDayName = (dayOfWeek: number) => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[dayOfWeek] || 'Unknown';
+  const fetchAll = async () => {
+    await Promise.all([fetchAnnouncements(), fetchNotifications()]);
+    setLoading(false);
   };
 
-  const fetchRealNotifications = async () => {
-    try {
-      const general: Notification[] = [];
-      const announcementList: Notification[] = [];
+  const fetchAnnouncements = async () => {
+    // All announcements from admins and teachers
+    const { data } = await supabase
+      .from('announcements')
+      .select('*, profiles(full_name, role)')
+      .order('created_at', { ascending: false })
+      .limit(20);
 
-      // Fetch class schedules
-      const { data: schedules } = await (supabase as any)
-        .from('timetable')
-        .select(`*, courses!inner(name, subjects(name, code), student_enrollments!inner(student_id))`)
-        .eq('courses.student_enrollments.student_id', profile?.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+    const list: Notification[] = (data || []).map((a: any) => ({
+      id: `announcement-${a.id}`,
+      type: 'announcement' as const,
+      title: `${a.profiles?.role === 'admin' ? 'Admin' : 'Teacher'} Announcement`,
+      message: `${a.title}${a.content ? ': ' + a.content.substring(0, 100) : ''}`,
+      created_at: a.created_at,
+      read: false, // announcements don't track read state per-student
+    }));
 
-      schedules?.forEach((schedule: any) => {
-        general.push({
-          id: `schedule-${schedule.id}`,
-          type: 'schedule',
-          title: 'New Class Schedule',
-          message: `${schedule.courses?.name || schedule.courses?.subjects?.code || 'Course'} scheduled for ${getDayName(schedule.day_of_week)} at ${schedule.start_time}`,
-          created_at: schedule.created_at,
-          read: false
-        });
-      });
+    setAnnouncements(list);
+  };
 
-      // Fetch new materials
-      const { data: materials } = await (supabase as any)
-        .from('materials')
-        .select(`*, courses!inner(name, subjects(name, code), student_enrollments!inner(student_id))`)
-        .eq('courses.student_enrollments.student_id', profile?.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+  const fetchNotifications = async () => {
+    if (!profile) return;
 
-      materials?.forEach((material: any) => {
-        general.push({
-          id: `material-${material.id}`,
-          type: 'material',
-          title: 'New Course Material',
-          message: `${material.title} uploaded for ${material.courses?.name || material.courses?.subjects?.code || 'Course'}`,
-          created_at: material.created_at,
-          read: false
-        });
-      });
+    // Fetch from the notifications table (includes quiz, attendance, assignment, etc.)
+    const { data: dbNotifications } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
 
-      // Fetch assignments
-      const { data: assignments } = await (supabase as any)
-        .from('assignments')
-        .select(`*, courses!inner(name, subjects(name, code), student_enrollments!inner(student_id))`)
-        .eq('courses.student_enrollments.student_id', profile?.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+    const items: Notification[] = (dbNotifications || []).map((n: any) => ({
+      id: `notification-${n.id}`,
+      type: n.type as any,
+      title: n.title,
+      message: n.message,
+      created_at: n.created_at,
+      read: n.is_read || false,
+      db_id: n.id,
+    }));
 
-      assignments?.forEach((assignment: any) => {
-        general.push({
-          id: `assignment-${assignment.id}`,
-          type: 'assignment',
-          title: 'New Assignment',
-          message: `${assignment.title} assigned for ${assignment.courses?.name || assignment.courses?.subjects?.code || 'Course'}`,
-          created_at: assignment.created_at,
-          read: false
-        });
-      });
+    setGeneralNotifications(items);
+  };
 
-      // Fetch announcements
-      const { data: announcementsData } = await supabase
-        .from('announcements')
-        .select('*, profiles(full_name, role)')
-        .order('created_at', { ascending: false })
-        .limit(10);
+  const markAsRead = async (item: Notification) => {
+    if (item.db_id) {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', item.db_id);
 
-      announcementsData?.forEach((announcement: any) => {
-        announcementList.push({
-          id: `announcement-${announcement.id}`,
-          type: 'announcement',
-          title: `${announcement.profiles?.role === 'admin' ? 'Admin' : 'Teacher'} Announcement`,
-          message: announcement.title,
-          created_at: announcement.created_at,
-          read: false
-        });
-      });
-
-      general.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      announcementList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      setGeneralNotifications(general.slice(0, 10));
-      setAnnouncements(announcementList.slice(0, 10));
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
+      setGeneralNotifications(prev =>
+        prev.map(n => n.id === item.id ? { ...n, read: true } : n)
+      );
     }
   };
 
   if (loading) return <div className="text-center">Loading notifications...</div>;
 
+  const unreadNotifications = generalNotifications.filter(n => !n.read).length;
+
   return (
     <Tabs defaultValue="announcements" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="announcements">
-          Announcements {announcements.length > 0 && <Badge variant="secondary" className="ml-2">{announcements.length}</Badge>}
+        <TabsTrigger value="announcements" className="relative">
+          Announcements
+          {announcements.length > 0 && (
+            <Badge variant="secondary" className="ml-2">{announcements.length}</Badge>
+          )}
         </TabsTrigger>
-        <TabsTrigger value="general">
-          General Notifications {generalNotifications.length > 0 && <Badge variant="secondary" className="ml-2">{generalNotifications.length}</Badge>}
+        <TabsTrigger value="general" className="relative">
+          Notifications
+          {unreadNotifications > 0 && (
+            <Badge variant="destructive" className="ml-2">{unreadNotifications}</Badge>
+          )}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="announcements">
         <NotificationList items={announcements} />
       </TabsContent>
       <TabsContent value="general">
-        <NotificationList items={generalNotifications} />
+        <NotificationList items={generalNotifications} onMarkRead={markAsRead} />
       </TabsContent>
     </Tabs>
   );

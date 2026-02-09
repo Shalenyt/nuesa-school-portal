@@ -2,13 +2,13 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useNavigate } from 'react-router-dom';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
-import { useThemeSync } from '@/hooks/useThemeSync';
+
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
 const Index = () => {
   const navigate = useNavigate();
   const { settings: schoolSettings, ready } = useSchoolSettings();
-  useThemeSync();
+  
 
   if (!ready) {
     return (

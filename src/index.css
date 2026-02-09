@@ -95,5 +95,6 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    visibility: hidden; /* Prevent flash before theme sync */
   }
 }

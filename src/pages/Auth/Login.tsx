@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
-import { useThemeSync } from '@/hooks/useThemeSync';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,9 +18,8 @@ export default function Login() {
   const { signIn } = useAuth();
   const { settings, ready } = useSchoolSettings();
   const navigate = useNavigate();
-  
-  // Initialize theme sync
-  useThemeSync();
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

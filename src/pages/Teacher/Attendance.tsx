@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { notifyEnrolledStudents } from '@/lib/notifications';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +59,9 @@ export default function TeacherAttendance() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Attendance session opened.' });
+      const course = courses.find(c => c.id === selectedCourse);
+      const courseName = course?.name || course?.subjects?.name || 'Course';
+      await notifyEnrolledStudents(selectedCourse, 'Attendance Open', `Attendance is now open for ${courseName}. Mark your attendance now!`, 'attendance');
       fetchSessions();
     }
   };
@@ -71,6 +75,10 @@ export default function TeacherAttendance() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Attendance session closed.' });
+      const session = sessions.find(s => s.id === sessionId);
+      if (session) {
+        await notifyEnrolledStudents(session.course_id, 'Attendance Closed', 'Attendance session has been closed.', 'attendance');
+      }
       fetchSessions();
     }
   };
