@@ -8,7 +8,7 @@ import oaustechLogo from '@/assets/oaustech-logo.png';
 const Index = () => {
   const navigate = useNavigate();
   const { settings: schoolSettings, ready } = useSchoolSettings();
-  useThemeSync();
+  
 
   if (!ready) {
     return (

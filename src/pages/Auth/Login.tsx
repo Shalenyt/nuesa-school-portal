@@ -18,9 +18,8 @@ export default function Login() {
   const { signIn } = useAuth();
   const { settings, ready } = useSchoolSettings();
   const navigate = useNavigate();
-  
-  // Initialize theme sync
-  useThemeSync();
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -17,7 +17,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { signOut, profile } = useAuth();
   const { settings, ready } = useSchoolSettings();
-  useThemeSync();
+  
 
   return (
     <SidebarProvider>
