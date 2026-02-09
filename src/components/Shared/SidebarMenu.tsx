@@ -10,12 +10,9 @@ import {
   MessageSquare,
   Upload,
   GraduationCap,
-  Eye,
   Calendar,
   Bell,
   ClipboardList,
-  Download,
-  PieChart,
   Building2
 } from 'lucide-react';
 import {
@@ -27,8 +24,9 @@ import {
   SidebarMenu as SidebarMenuPrimitive,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
+import { Badge } from '@/components/ui/badge';
+import { useNotificationCounts } from '@/hooks/useNotificationCounts';
 
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
@@ -69,17 +67,14 @@ const studentMenuItems = [
 export function SidebarMenu() {
   const { profile } = useAuth();
   const location = useLocation();
+  const { counts } = useNotificationCounts();
 
   const getMenuItems = () => {
     switch (profile?.role) {
-      case 'admin':
-        return adminMenuItems;
-      case 'teacher':
-        return teacherMenuItems;
-      case 'student':
-        return studentMenuItems;
-      default:
-        return [];
+      case 'admin': return adminMenuItems;
+      case 'teacher': return teacherMenuItems;
+      case 'student': return studentMenuItems;
+      default: return [];
     }
   };
 
@@ -114,6 +109,11 @@ export function SidebarMenu() {
                           : "text-muted-foreground group-hover:text-primary"
                       }`} />
                       <span className="transition-all duration-300">{item.title}</span>
+                      {item.title === 'Notifications' && profile?.role === 'student' && counts.total > 0 && (
+                        <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center">
+                          {counts.total}
+                        </Badge>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
