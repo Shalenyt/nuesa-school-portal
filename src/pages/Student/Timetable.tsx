@@ -163,8 +163,11 @@ export default function StudentTimetable() {
                                 <div className="flex items-center gap-2">
                                   <BookOpen className="h-4 w-4" />
                                   <span className="font-medium">{schedule.courseName}</span>
+                                  {schedule.courseCode && (
+                                    <Badge variant="outline" className="text-xs">{schedule.courseCode}</Badge>
+                                  )}
                                 </div>
-                                {schedule.subjectName && (
+                                {schedule.subjectName && schedule.subjectName !== schedule.courseName && (
                                   <p className="text-sm text-muted-foreground">
                                     {schedule.subjectName}
                                   </p>
