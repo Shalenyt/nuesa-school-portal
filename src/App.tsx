@@ -38,6 +38,7 @@ import GradeAssignments from "./pages/Teacher/GradeAssignments";
 import TeacherAttendance from "./pages/Teacher/Attendance";
 import TeacherQuizzes from "./pages/Teacher/Quizzes";
 import ViewStudents from "./pages/Teacher/ViewStudents";
+import TeacherNotifications from "./pages/Teacher/Notifications";
 
 // Student pages
 import StudentProfile from "./pages/Student/Profile";
