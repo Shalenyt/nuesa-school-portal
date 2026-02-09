@@ -8,9 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { BookOpen, Loader2 } from 'lucide-react';
+import { BookOpen, Loader2, CheckCircle2, Mail, ShieldCheck } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
 export default function Apply() {
@@ -26,6 +35,7 @@ export default function Apply() {
     subjectId: ''
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const { signUp } = useAuth();
@@ -86,7 +96,7 @@ export default function Apply() {
     setLoading(true);
 
     try {
-      await signUp(formData.email, formData.password, {
+      const { error } = await signUp(formData.email, formData.password, {
         fullName: formData.fullName,
         role: formData.role,
         studentId: formData.role === 'student' ? formData.studentId : null,
@@ -94,6 +104,9 @@ export default function Apply() {
         classId: formData.role === 'student' ? formData.classId : null,
         subjectId: formData.role === 'student' ? formData.subjectId : null
       });
+      if (!error) {
+        setShowSuccess(true);
+      }
     } catch (error) {
       console.error('Application error:', error);
     } finally {
@@ -269,6 +282,36 @@ export default function Apply() {
           </CardContent>
         </Card>
       </div>
+      <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <AlertDialogContent className="max-w-md text-center">
+          <AlertDialogHeader className="flex flex-col items-center gap-3">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <CheckCircle2 className="h-9 w-9 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-xl">Application Submitted!</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 text-sm text-muted-foreground">
+                <p>Your application has been received successfully. Here's what happens next:</p>
+                <div className="flex items-start gap-3 text-left">
+                  <Mail className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <p>Check your email (<span className="font-medium text-foreground">{formData.email}</span>) for a verification link to confirm your account.</p>
+                </div>
+                <div className="flex items-start gap-3 text-left">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <p>After verifying your email, an administrator will review and approve your application. You'll be notified once approved.</p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction asChild>
+              <Button onClick={() => window.location.href = '/auth/login'}>
+                Go to Login
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
