@@ -207,6 +207,48 @@ export type Database = {
         }
         Relationships: []
       }
+      course_lists: {
+        Row: {
+          class_id: string
+          course_ids: string[] | null
+          created_at: string
+          id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          course_ids?: string[] | null
+          created_at?: string
+          id?: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          course_ids?: string[] | null
+          created_at?: string
+          id?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_lists_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_lists_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           academic_year: string | null
