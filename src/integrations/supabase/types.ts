@@ -183,19 +183,28 @@ export type Database = {
       attendance_records: {
         Row: {
           checked_in_at: string
+          distance_meters: number | null
           id: string
+          latitude: number | null
+          longitude: number | null
           session_id: string
           student_id: string
         }
         Insert: {
           checked_in_at?: string
+          distance_meters?: number | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           session_id: string
           student_id: string
         }
         Update: {
           checked_in_at?: string
+          distance_meters?: number | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           session_id?: string
           student_id?: string
         }
@@ -218,27 +227,36 @@ export type Database = {
       }
       attendance_sessions: {
         Row: {
+          allowed_radius_meters: number | null
           course_id: string
           created_at: string
           id: string
+          latitude: number | null
+          longitude: number | null
           session_date: string
           status: string
           teacher_id: string
           updated_at: string
         }
         Insert: {
+          allowed_radius_meters?: number | null
           course_id: string
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           session_date?: string
           status?: string
           teacher_id: string
           updated_at?: string
         }
         Update: {
+          allowed_radius_meters?: number | null
           course_id?: string
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           session_date?: string
           status?: string
           teacher_id?: string

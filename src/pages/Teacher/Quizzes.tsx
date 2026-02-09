@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Trash2, Eye, CheckCircle, ArrowLeft, BookOpen } from 'lucide-react';
 
 interface QuestionForm {
@@ -22,7 +21,7 @@ interface QuestionForm {
   points: number;
 }
 
-export default function TeacherQuizzes() {
+export default function LecturerQuizzes() {
   const { profile } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]);
@@ -30,6 +29,7 @@ export default function TeacherQuizzes() {
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [gradeValue, setGradeValue] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -104,7 +104,6 @@ export default function TeacherQuizzes() {
       return;
     }
 
-    // Insert questions
     const questionsToInsert = questions.map((q, i) => ({
       quiz_id: quiz.id,
       question_text: q.question_text,
@@ -121,7 +120,6 @@ export default function TeacherQuizzes() {
     }
 
     toast({ title: 'Success', description: 'Quiz created and published!' });
-    // Notify enrolled students
     await notifyEnrolledStudents(quizForm.course_id, 'New Quiz Available', `A new quiz "${quizForm.title}" has been published. Take it now!`, 'quiz', quiz.id);
     setView('list');
     setQuizForm({ title: '', description: '', course_id: '', duration_minutes: '', max_points: '100' });
@@ -131,12 +129,20 @@ export default function TeacherQuizzes() {
 
   const viewSubmissions = async (quiz: any) => {
     setSelectedQuiz(quiz);
-    const { data } = await (supabase as any)
-      .from('quiz_submissions')
-      .select('*, profiles!quiz_submissions_student_id_fkey(full_name, student_id)')
-      .eq('quiz_id', quiz.id)
-      .order('submitted_at', { ascending: false });
-    setSubmissions(data || []);
+    const [{ data: subsData }, { data: questionsData }] = await Promise.all([
+      (supabase as any)
+        .from('quiz_submissions')
+        .select('*, profiles!quiz_submissions_student_id_fkey(full_name, student_id)')
+        .eq('quiz_id', quiz.id)
+        .order('submitted_at', { ascending: false }),
+      (supabase as any)
+        .from('quiz_questions')
+        .select('*')
+        .eq('quiz_id', quiz.id)
+        .order('sort_order', { ascending: true })
+    ]);
+    setSubmissions(subsData || []);
+    setQuizQuestions(questionsData || []);
     setView('submissions');
   };
 
@@ -151,7 +157,6 @@ export default function TeacherQuizzes() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Quiz graded!' });
-      // Notify the student about their grade
       await supabase.from('notifications').insert({
         user_id: selectedSubmission.student_id,
         title: 'Quiz Graded',
@@ -170,6 +175,39 @@ export default function TeacherQuizzes() {
     const newStatus = quiz.status === 'published' ? 'closed' : 'published';
     await (supabase as any).from('quizzes').update({ status: newStatus }).eq('id', quiz.id);
     fetchData();
+  };
+
+  // Render student answers with actual text
+  const renderStudentAnswers = (submission: any) => {
+    if (!quizQuestions.length) return <p className="text-muted-foreground">No questions found.</p>;
+    const answers = submission.answers || {};
+
+    return (
+      <div className="space-y-4">
+        {quizQuestions.map((q: any, idx: number) => {
+          const studentAnswerIdx = answers[q.id];
+          const studentAnswer = studentAnswerIdx !== undefined && q.options?.[studentAnswerIdx] 
+            ? q.options[studentAnswerIdx] 
+            : 'Not answered';
+          const correctAnswer = q.options?.[q.correct_answer] || 'N/A';
+          const isCorrect = studentAnswerIdx === q.correct_answer;
+
+          return (
+            <div key={q.id} className="p-4 border rounded-lg space-y-2">
+              <p className="font-medium">{idx + 1}. {q.question_text} <span className="text-sm text-muted-foreground">({q.points} pt{q.points > 1 ? 's' : ''})</span></p>
+              <div className="grid gap-1 text-sm">
+                <p className={isCorrect ? 'text-green-600 font-medium' : 'text-destructive font-medium'}>
+                  Student's Answer: {studentAnswer} {isCorrect ? '✓' : '✗'}
+                </p>
+                {!isCorrect && (
+                  <p className="text-green-600">Correct Answer: {correctAnswer}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -324,7 +362,7 @@ export default function TeacherQuizzes() {
             <TabsContent value="graded">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {submissions.filter(s => s.score !== null).map((s) => (
-                  <Card key={s.id}>
+                  <Card key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { setSelectedSubmission(s); setView('grade'); }}>
                     <CardHeader>
                       <CardTitle className="text-base">{s.profiles?.full_name}</CardTitle>
                     </CardHeader>
@@ -347,7 +385,7 @@ export default function TeacherQuizzes() {
             <CardContent className="space-y-4">
               <p><strong>Student:</strong> {selectedSubmission.profiles?.full_name}</p>
               <p><strong>Answers:</strong></p>
-              <pre className="bg-muted p-4 rounded text-sm overflow-auto">{JSON.stringify(selectedSubmission.answers, null, 2)}</pre>
+              {renderStudentAnswers(selectedSubmission)}
               <div className="flex items-center gap-4">
                 <div className="space-y-2">
                   <Label>Score (0-{selectedQuiz?.max_points || 100})</Label>
