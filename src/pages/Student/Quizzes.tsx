@@ -63,16 +63,15 @@ export default function StudentQuizzes() {
     setView('attempt');
   };
 
-  const submitQuiz = async () => {
+  const submitQuiz = async (submittedAnswers: Record<string, number>) => {
     if (!selectedQuiz) return;
-    setSubmitting(true);
 
     const { error } = await (supabase as any)
       .from('quiz_submissions')
       .insert({
         quiz_id: selectedQuiz.id,
         student_id: profile?.id,
-        answers: answers
+        answers: submittedAnswers
       });
 
     if (error) {
@@ -82,7 +81,6 @@ export default function StudentQuizzes() {
       setView('list');
       fetchData();
     }
-    setSubmitting(false);
   };
 
   if (loading) return <DashboardLayout><div className="text-center">Loading...</div></DashboardLayout>;
