@@ -75,6 +75,10 @@ export default function TeacherAttendance() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Attendance session closed.' });
+      const session = sessions.find(s => s.id === sessionId);
+      if (session) {
+        await notifyEnrolledStudents(session.course_id, 'Attendance Closed', 'Attendance session has been closed.', 'attendance');
+      }
       fetchSessions();
     }
   };
