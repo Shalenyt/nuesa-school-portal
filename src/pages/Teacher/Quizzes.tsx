@@ -151,6 +151,14 @@ export default function TeacherQuizzes() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Quiz graded!' });
+      // Notify the student about their grade
+      await supabase.from('notifications').insert({
+        user_id: selectedSubmission.profiles?.id || selectedSubmission.student_id,
+        title: 'Quiz Graded',
+        message: `Your quiz "${selectedQuiz?.title}" has been graded. Score: ${gradeValue}/${selectedQuiz?.max_points || 100}`,
+        type: 'grade',
+        related_id: selectedSubmission.quiz_id,
+      });
       setView('submissions');
       setSelectedSubmission(null);
       setGradeValue('');
