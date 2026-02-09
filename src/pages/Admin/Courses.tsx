@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookOpen, Plus, Edit2, Trash2, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { toast } from '@/hooks/use-toast';
 
