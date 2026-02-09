@@ -184,7 +184,7 @@ export default function UserManagement() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: 'teacher' as any })
+        .update({ role: 'teacher' as any }) // DB enum stays 'teacher'
         .eq('id', userId);
 
       if (error) throw error;
