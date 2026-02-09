@@ -24,6 +24,7 @@ import AdminAnnouncements from "./pages/Admin/Announcements";
 import AdminCourses from "./pages/Admin/Courses";
 import CourseLists from "./pages/Admin/CourseLists";
 import AdminProfile from "./pages/Admin/Profile";
+import AdminNotifications from "./pages/Admin/Notifications";
 import UserManagement from "./pages/Admin/UserManagement";
 
 // Teacher pages
