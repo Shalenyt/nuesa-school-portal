@@ -96,5 +96,12 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     visibility: hidden; /* Prevent flash before theme sync */
+    opacity: 0;
+    transition: opacity 0.1s ease-in;
+  }
+
+  body.theme-ready {
+    visibility: visible;
+    opacity: 1;
   }
 }

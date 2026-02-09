@@ -62,6 +62,6 @@ export function useThemeSync() {
     }
 
     // Show body now that branding is applied
-    document.body.style.visibility = 'visible';
+    document.body.classList.add('theme-ready');
   }, [settings?.theme_color, ready]);
 }
