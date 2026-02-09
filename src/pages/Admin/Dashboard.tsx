@@ -114,10 +114,10 @@ export default function AdminDashboard() {
       onClick: () => navigate('/admin/users')
     },
     {
-      title: "Active Teachers",
+      title: "Active Lecturers",
       value: stats.approvedTeachers,
       icon: Users,
-      description: "Approved teachers",
+      description: "Approved lecturers",
       onClick: () => navigate('/admin/users')
     },
     {

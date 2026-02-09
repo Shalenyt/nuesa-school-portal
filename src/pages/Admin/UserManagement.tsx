@@ -191,7 +191,7 @@ export default function UserManagement() {
 
       toast({
         title: "User demoted",
-        description: "User has been demoted to teacher",
+        description: "User has been demoted to lecturer",
       });
 
       fetchProfiles();

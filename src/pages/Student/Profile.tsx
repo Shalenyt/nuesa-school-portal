@@ -300,7 +300,7 @@ export default function StudentProfile() {
                       {course.classes?.name} • {course.subjects?.name}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Teacher: {course.profiles?.full_name}
+                      Lecturer: {course.profiles?.full_name}
                     </p>
                     {course.semester && (
                       <p className="text-sm text-muted-foreground mt-1">

@@ -267,7 +267,7 @@ export default function AdminCourses() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
-                  <span>Teacher: {course.profiles?.full_name}</span>
+                  <span>Lecturer: {course.profiles?.full_name}</span>
                 </div>
               </CardContent>
             </Card>

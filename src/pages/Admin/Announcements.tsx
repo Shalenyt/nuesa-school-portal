@@ -179,7 +179,7 @@ export default function AdminAnnouncements() {
                       </Badge>
                       {announcement.profiles?.role && (
                         <Badge variant={announcement.profiles.role === 'admin' ? 'default' : 'outline'}>
-                          {announcement.profiles.role === 'admin' ? 'Admin' : 'Teacher'}
+                          {announcement.profiles.role === 'admin' ? 'Admin' : 'Lecturer'}
                         </Badge>
                       )}
                       <span className="text-xs text-muted-foreground">
