@@ -60,7 +60,7 @@ export default function StudentCourses() {
       const { data: coursesData } = await (supabase as any)
         .from('courses')
         .select(`
-          id,
+          id, name, description, credit_unit, semester,
           subjects(name, code),
           classes(name),
           profiles(full_name)
