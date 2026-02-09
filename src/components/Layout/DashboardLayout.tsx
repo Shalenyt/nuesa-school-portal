@@ -16,8 +16,8 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { signOut, profile } = useAuth();
-  const { settings } = useSchoolSettings();
-  useThemeSync(); // Apply theme colors
+  const { settings, ready } = useSchoolSettings();
+  useThemeSync();
 
   return (
     <SidebarProvider>

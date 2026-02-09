@@ -15,8 +15,8 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, profile } = useAuth();
-  const { settings } = useSchoolSettings();
+  const { signIn } = useAuth();
+  const { settings, ready } = useSchoolSettings();
   const navigate = useNavigate();
   
   // Initialize theme sync
@@ -26,11 +26,10 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const result = await signIn(email, password);
 
-    if (!error && profile) {
-      // Redirect based on role
-      switch (profile.role) {
+    if (!result.error && result.profile) {
+      switch (result.profile.role) {
         case 'admin':
           navigate('/admin/dashboard');
           break;
@@ -47,6 +46,14 @@ export default function Login() {
 
     setLoading(false);
   };
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

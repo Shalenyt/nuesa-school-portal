@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClipboardList, Download, Eye, CheckCircle, ArrowLeft, User } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
@@ -239,64 +240,88 @@ export default function GradeAssignments() {
           </div>
         )}
 
-        {view === 'submissions' && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {submissions.map((submission) => (
-              <Card
-                key={submission.id}
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSubmissionSelect(submission)}
-              >
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src={submission.profiles?.profile_photo_url} />
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-medium">{submission.profiles?.full_name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        ID: {submission.profiles?.student_id}
-                      </p>
+        {view === 'submissions' && (() => {
+          const pendingSubmissions = submissions.filter(s => !s.grade && s.grade !== 0);
+          const gradedSubmissions = submissions.filter(s => s.grade !== null && s.grade !== undefined);
+          
+          const renderSubmissionCards = (items: any[]) => (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {items.map((submission) => (
+                <Card
+                  key={submission.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => handleSubmissionSelect(submission)}
+                >
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={submission.profiles?.profile_photo_url} />
+                        <AvatarFallback>
+                          <User className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-medium">{submission.profiles?.full_name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          ID: {submission.profiles?.student_id}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Badge variant={submission.grade ? 'default' : 'secondary'}>
-                        {submission.grade ? `${submission.grade}/${selectedAssignment?.max_points || 100}` : 'Not graded'}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(submission.submitted_at).toLocaleDateString()}
-                      </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <Badge variant={submission.grade !== null && submission.grade !== undefined ? 'default' : 'secondary'}>
+                          {submission.grade !== null && submission.grade !== undefined ? `${submission.grade}/${selectedAssignment?.max_points || 100}` : 'Not graded'}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(submission.submitted_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {submission.file_name && (
+                        <p className="text-sm text-muted-foreground truncate">
+                          📎 {submission.file_name}
+                        </p>
+                      )}
+                      {submission.submission_text && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {submission.submission_text}
+                        </p>
+                      )}
                     </div>
-                    {submission.file_name && (
-                      <p className="text-sm text-muted-foreground truncate">
-                        📎 {submission.file_name}
-                      </p>
-                    )}
-                    {submission.submission_text && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {submission.submission_text}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {submissions.length === 0 && (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No submissions yet for this assignment.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
+                  </CardContent>
+                </Card>
+              ))}
+              {items.length === 0 && (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No submissions in this category.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          );
+
+          return (
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="pending">
+                  Pending {pendingSubmissions.length > 0 && <Badge variant="secondary" className="ml-2">{pendingSubmissions.length}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="graded">
+                  Graded {gradedSubmissions.length > 0 && <Badge variant="secondary" className="ml-2">{gradedSubmissions.length}</Badge>}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="pending">
+                {renderSubmissionCards(pendingSubmissions)}
+              </TabsContent>
+              <TabsContent value="graded">
+                {renderSubmissionCards(gradedSubmissions)}
+              </TabsContent>
+            </Tabs>
+          );
+        })()}
 
         {view === 'grading' && selectedSubmission && (
           <div className="max-w-4xl mx-auto">

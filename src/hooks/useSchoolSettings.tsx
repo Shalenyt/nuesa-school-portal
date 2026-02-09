@@ -12,6 +12,7 @@ interface SchoolSettings {
 export function useSchoolSettings() {
   const [settings, setSettings] = useState<SchoolSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -50,5 +51,9 @@ export function useSchoolSettings() {
     }
   };
 
-  return { settings, loading, refetch: fetchSettings };
+  useEffect(() => {
+    if (!loading) setReady(true);
+  }, [loading]);
+
+  return { settings, loading, ready, refetch: fetchSettings };
 }
