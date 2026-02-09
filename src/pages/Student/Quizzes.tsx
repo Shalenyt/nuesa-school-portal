@@ -158,41 +158,11 @@ export default function StudentQuizzes() {
         )}
 
         {view === 'attempt' && selectedQuiz && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{selectedQuiz.title}</CardTitle>
-              {selectedQuiz.description && <p className="text-sm text-muted-foreground">{selectedQuiz.description}</p>}
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {questions.map((q, idx) => (
-                <div key={q.id} className="space-y-3 p-4 border rounded-lg">
-                  <p className="font-medium">
-                    {idx + 1}. {q.question_text}
-                    <span className="text-sm text-muted-foreground ml-2">({q.points} pt{q.points > 1 ? 's' : ''})</span>
-                  </p>
-                  <div className="space-y-2">
-                    {(q.options as string[]).map((opt: string, oIdx: number) => (
-                      <label key={oIdx} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${answers[q.id] === oIdx ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}>
-                        <input
-                          type="radio"
-                          name={`q-${q.id}`}
-                          checked={answers[q.id] === oIdx}
-                          onChange={() => setAnswers({ ...answers, [q.id]: oIdx })}
-                          className="accent-primary"
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <Button onClick={submitQuiz} disabled={submitting} className="w-full">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {submitting ? 'Submitting...' : 'Submit Quiz'}
-              </Button>
-            </CardContent>
-          </Card>
+          <QuizAttempt
+            quiz={selectedQuiz}
+            questions={questions}
+            onSubmit={submitQuiz}
+          />
         )}
       </div>
     </DashboardLayout>
