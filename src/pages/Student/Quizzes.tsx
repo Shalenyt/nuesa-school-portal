@@ -7,7 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, BookOpen, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock } from 'lucide-react';
+import { QuizAttempt } from '@/components/Student/QuizAttempt';
 
 export default function StudentQuizzes() {
   const { profile } = useAuth();
