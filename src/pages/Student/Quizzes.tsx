@@ -59,7 +59,6 @@ export default function StudentQuizzes() {
 
     setSelectedQuiz(quiz);
     setQuestions(data || []);
-    setAnswers({});
     setView('attempt');
   };
 
