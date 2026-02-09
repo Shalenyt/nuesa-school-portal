@@ -7,7 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, BookOpen, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock } from 'lucide-react';
+import { QuizAttempt } from '@/components/Student/QuizAttempt';
 
 export default function StudentQuizzes() {
   const { profile } = useAuth();
@@ -16,8 +17,6 @@ export default function StudentQuizzes() {
   const [view, setView] = useState<'list' | 'attempt'>('list');
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,20 +59,18 @@ export default function StudentQuizzes() {
 
     setSelectedQuiz(quiz);
     setQuestions(data || []);
-    setAnswers({});
     setView('attempt');
   };
 
-  const submitQuiz = async () => {
+  const submitQuiz = async (submittedAnswers: Record<string, number>) => {
     if (!selectedQuiz) return;
-    setSubmitting(true);
 
     const { error } = await (supabase as any)
       .from('quiz_submissions')
       .insert({
         quiz_id: selectedQuiz.id,
         student_id: profile?.id,
-        answers: answers
+        answers: submittedAnswers
       });
 
     if (error) {
@@ -83,7 +80,6 @@ export default function StudentQuizzes() {
       setView('list');
       fetchData();
     }
-    setSubmitting(false);
   };
 
   if (loading) return <DashboardLayout><div className="text-center">Loading...</div></DashboardLayout>;
@@ -161,41 +157,11 @@ export default function StudentQuizzes() {
         )}
 
         {view === 'attempt' && selectedQuiz && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{selectedQuiz.title}</CardTitle>
-              {selectedQuiz.description && <p className="text-sm text-muted-foreground">{selectedQuiz.description}</p>}
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {questions.map((q, idx) => (
-                <div key={q.id} className="space-y-3 p-4 border rounded-lg">
-                  <p className="font-medium">
-                    {idx + 1}. {q.question_text}
-                    <span className="text-sm text-muted-foreground ml-2">({q.points} pt{q.points > 1 ? 's' : ''})</span>
-                  </p>
-                  <div className="space-y-2">
-                    {(q.options as string[]).map((opt: string, oIdx: number) => (
-                      <label key={oIdx} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${answers[q.id] === oIdx ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}>
-                        <input
-                          type="radio"
-                          name={`q-${q.id}`}
-                          checked={answers[q.id] === oIdx}
-                          onChange={() => setAnswers({ ...answers, [q.id]: oIdx })}
-                          className="accent-primary"
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <Button onClick={submitQuiz} disabled={submitting} className="w-full">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {submitting ? 'Submitting...' : 'Submit Quiz'}
-              </Button>
-            </CardContent>
-          </Card>
+          <QuizAttempt
+            quiz={selectedQuiz}
+            questions={questions}
+            onSubmit={submitQuiz}
+          />
         )}
       </div>
     </DashboardLayout>
