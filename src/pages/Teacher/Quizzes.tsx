@@ -121,6 +121,8 @@ export default function TeacherQuizzes() {
     }
 
     toast({ title: 'Success', description: 'Quiz created and published!' });
+    // Notify enrolled students
+    await notifyEnrolledStudents(quizForm.course_id, 'New Quiz Available', `A new quiz "${quizForm.title}" has been published. Take it now!`, 'quiz', quiz.id);
     setView('list');
     setQuizForm({ title: '', description: '', course_id: '', duration_minutes: '', max_points: '100' });
     setQuestions([{ question_text: '', options: ['', '', '', ''], correct_answer: 0, points: 1 }]);
