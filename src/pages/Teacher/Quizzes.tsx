@@ -153,7 +153,7 @@ export default function TeacherQuizzes() {
       toast({ title: 'Success', description: 'Quiz graded!' });
       // Notify the student about their grade
       await supabase.from('notifications').insert({
-        user_id: selectedSubmission.profiles?.id || selectedSubmission.student_id,
+        user_id: selectedSubmission.student_id,
         title: 'Quiz Graded',
         message: `Your quiz "${selectedQuiz?.title}" has been graded. Score: ${gradeValue}/${selectedQuiz?.max_points || 100}`,
         type: 'grade',
