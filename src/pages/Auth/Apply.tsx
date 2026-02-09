@@ -96,7 +96,7 @@ export default function Apply() {
     setLoading(true);
 
     try {
-      await signUp(formData.email, formData.password, {
+      const { error } = await signUp(formData.email, formData.password, {
         fullName: formData.fullName,
         role: formData.role,
         studentId: formData.role === 'student' ? formData.studentId : null,
@@ -104,6 +104,9 @@ export default function Apply() {
         classId: formData.role === 'student' ? formData.classId : null,
         subjectId: formData.role === 'student' ? formData.subjectId : null
       });
+      if (!error) {
+        setShowSuccess(true);
+      }
     } catch (error) {
       console.error('Application error:', error);
     } finally {
