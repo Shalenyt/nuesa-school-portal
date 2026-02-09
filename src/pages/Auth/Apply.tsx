@@ -35,6 +35,7 @@ export default function Apply() {
     subjectId: ''
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const { signUp } = useAuth();
