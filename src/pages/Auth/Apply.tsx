@@ -282,6 +282,36 @@ export default function Apply() {
           </CardContent>
         </Card>
       </div>
+      <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <AlertDialogContent className="max-w-md text-center">
+          <AlertDialogHeader className="flex flex-col items-center gap-3">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <CheckCircle2 className="h-9 w-9 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-xl">Application Submitted!</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 text-sm text-muted-foreground">
+                <p>Your application has been received successfully. Here's what happens next:</p>
+                <div className="flex items-start gap-3 text-left">
+                  <Mail className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <p>Check your email (<span className="font-medium text-foreground">{formData.email}</span>) for a verification link to confirm your account.</p>
+                </div>
+                <div className="flex items-start gap-3 text-left">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <p>After verifying your email, an administrator will review and approve your application. You'll be notified once approved.</p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction asChild>
+              <Button onClick={() => window.location.href = '/auth/login'}>
+                Go to Login
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
