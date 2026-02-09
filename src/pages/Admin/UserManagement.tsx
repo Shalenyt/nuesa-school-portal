@@ -287,7 +287,7 @@ export default function UserManagement() {
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
               <SelectItem value="admin">Admins</SelectItem>
-              <SelectItem value="teacher">Teachers</SelectItem>
+              <SelectItem value="teacher">Lecturers</SelectItem>
               <SelectItem value="student">Students</SelectItem>
               <SelectItem value="pending">Pending Applications</SelectItem>
             </SelectContent>
