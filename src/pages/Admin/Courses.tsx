@@ -211,7 +211,7 @@ export default function AdminCourses() {
                   onValueChange={(value) => setNewCourse(prev => ({ ...prev, teacher_id: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select teacher" />
+                    <SelectValue placeholder="Select lecturer" />
                   </SelectTrigger>
                   <SelectContent>
                     {teachers.map((teacher) => (
