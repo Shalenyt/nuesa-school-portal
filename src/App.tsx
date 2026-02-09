@@ -46,6 +46,8 @@ import StudentTimetable from "./pages/Student/Timetable";
 import StudentCourses from "./pages/Student/Courses";
 import StudentViewResults from "./pages/Student/ViewResults";
 import StudentNotifications from "./pages/Student/Notifications";
+import StudentAttendance from "./pages/Student/Attendance";
+import StudentQuizzes from "./pages/Student/Quizzes";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
