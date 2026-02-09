@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookOpen, Plus, Edit2, Trash2, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { toast } from '@/hooks/use-toast';
 
@@ -256,6 +257,14 @@ export default function AdminCourses() {
                     {course.description}
                   </p>
                 )}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {course.semester && (
+                    <Badge variant="secondary">{course.semester} Semester</Badge>
+                  )}
+                  {course.credit_unit && (
+                    <Badge variant="outline">{course.credit_unit} Credit{course.credit_unit > 1 ? 's' : ''}</Badge>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
                   <span>Teacher: {course.profiles?.full_name}</span>

@@ -60,7 +60,7 @@ export default function StudentCourses() {
       const { data: coursesData } = await (supabase as any)
         .from('courses')
         .select(`
-          id,
+          id, name, description, credit_unit, semester,
           subjects(name, code),
           classes(name),
           profiles(full_name)
@@ -153,23 +153,26 @@ export default function StudentCourses() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {course.subjects?.code && (
-                    <p className="text-sm text-muted-foreground">
-                      Code: {course.subjects.code}
-                    </p>
+                  {course.name && (
+                    <p className="text-sm font-medium">{course.name}</p>
+                  )}
+                  {course.description && (
+                    <p className="text-sm text-muted-foreground">{course.description}</p>
                   )}
                   
-                  <div className="space-y-2">
-                    {course.subjects && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <GraduationCap className="h-4 w-4" />
-                        <span>{course.subjects.name} ({course.subjects.code})</span>
-                      </div>
+                  <div className="flex flex-wrap gap-2">
+                    {course.semester && (
+                      <Badge variant="secondary">{course.semester} Semester</Badge>
                     )}
-                    
+                    {course.credit_unit && (
+                      <Badge variant="outline">{course.credit_unit} Credit{course.credit_unit > 1 ? 's' : ''}</Badge>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
                     {course.classes && (
                       <div className="flex items-center gap-2 text-sm">
-                        <Users className="h-4 w-4" />
+                        <GraduationCap className="h-4 w-4" />
                         <span>{course.classes.name}</span>
                       </div>
                     )}
@@ -178,7 +181,6 @@ export default function StudentCourses() {
                       <Users className="h-4 w-4" />
                       <span>Instructor: {course.profiles?.full_name || 'Pending'}</span>
                     </div>
-                    
                   </div>
                 </CardContent>
               </Card>

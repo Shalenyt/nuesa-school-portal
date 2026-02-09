@@ -87,9 +87,15 @@ export default function TeacherCourses() {
                       <BookOpen className="h-5 w-5" />
                       {course.name}
                     </CardTitle>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Badge variant="secondary">{course.classes?.name}</Badge>
                       <Badge variant="outline">{course.subjects?.name}</Badge>
+                      {course.semester && (
+                        <Badge variant="secondary">{course.semester} Sem</Badge>
+                      )}
+                      {course.credit_unit && (
+                        <Badge variant="outline">{course.credit_unit} Credit{course.credit_unit > 1 ? 's' : ''}</Badge>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
