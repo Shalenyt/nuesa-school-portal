@@ -61,7 +61,8 @@ export default function StudentTimetable() {
         .select(`
           *,
           courses(
-            subjects(name),
+            name,
+            subjects(name, code),
             profiles(full_name)
           )
         `)
@@ -71,7 +72,8 @@ export default function StudentTimetable() {
 
       const allTimetable = timetableData?.map((schedule: any) => ({
         ...schedule,
-        courseName: schedule.courses?.subjects?.name,
+        courseName: schedule.courses?.name || schedule.courses?.subjects?.code || 'Course',
+        courseCode: schedule.courses?.subjects?.code,
         subjectName: schedule.courses?.subjects?.name,
         teacherName: schedule.courses?.profiles?.full_name
       })) || [];
