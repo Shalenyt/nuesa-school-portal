@@ -184,13 +184,13 @@ export default function Apply() {
               {formData.role === 'student' && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="studentId">Student ID</Label>
+                    <Label htmlFor="studentId">Matric NO</Label>
                     <Input
                       id="studentId"
                       value={formData.studentId}
                       onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
                       required
-                      placeholder="Enter your student ID"
+                      placeholder="Enter your matric number"
                     />
                   </div>
 

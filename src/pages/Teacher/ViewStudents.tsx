@@ -243,7 +243,7 @@ export default function ViewStudents() {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium truncate">{student.full_name}</h3>
-                          <p className="text-sm text-muted-foreground">ID: {student.student_id}</p>
+                          <p className="text-sm text-muted-foreground">Matric NO: {student.student_id}</p>
                           <p className="text-sm text-muted-foreground">
                             {student.classes?.name} (Grade {student.classes?.grade_level}) • {student.subjects?.name}
                           </p>
