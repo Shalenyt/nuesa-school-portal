@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Calendar, Clock, MapPin, BookOpen } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -61,7 +62,8 @@ export default function StudentTimetable() {
         .select(`
           *,
           courses(
-            subjects(name),
+            name,
+            subjects(name, code),
             profiles(full_name)
           )
         `)
@@ -71,7 +73,8 @@ export default function StudentTimetable() {
 
       const allTimetable = timetableData?.map((schedule: any) => ({
         ...schedule,
-        courseName: schedule.courses?.subjects?.name,
+        courseName: schedule.courses?.name || schedule.courses?.subjects?.code || 'Course',
+        courseCode: schedule.courses?.subjects?.code,
         subjectName: schedule.courses?.subjects?.name,
         teacherName: schedule.courses?.profiles?.full_name
       })) || [];
@@ -161,8 +164,11 @@ export default function StudentTimetable() {
                                 <div className="flex items-center gap-2">
                                   <BookOpen className="h-4 w-4" />
                                   <span className="font-medium">{schedule.courseName}</span>
+                                  {schedule.courseCode && (
+                                    <Badge variant="outline" className="text-xs">{schedule.courseCode}</Badge>
+                                  )}
                                 </div>
-                                {schedule.subjectName && (
+                                {schedule.subjectName && schedule.subjectName !== schedule.courseName && (
                                   <p className="text-sm text-muted-foreground">
                                     {schedule.subjectName}
                                   </p>
