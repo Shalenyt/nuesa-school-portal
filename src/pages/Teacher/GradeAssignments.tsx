@@ -35,8 +35,9 @@ export default function GradeAssignments() {
         .from('assignments')
         .select(`
           *,
-          courses(
+          courses!inner(
             name,
+            teacher_id,
             classes(name),
             subjects(name)
           )
