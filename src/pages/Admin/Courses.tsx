@@ -131,7 +131,7 @@ export default function AdminCourses() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Courses</h1>
             <p className="text-muted-foreground">
-              Manage courses and assign teachers
+              Manage courses and assign lecturers
             </p>
           </div>
           <Button onClick={() => setIsCreating(true)}>
