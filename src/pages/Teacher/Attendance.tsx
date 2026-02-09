@@ -59,6 +59,9 @@ export default function TeacherAttendance() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Attendance session opened.' });
+      const course = courses.find(c => c.id === selectedCourse);
+      const courseName = course?.name || course?.subjects?.name || 'Course';
+      await notifyEnrolledStudents(selectedCourse, 'Attendance Open', `Attendance is now open for ${courseName}. Mark your attendance now!`, 'attendance');
       fetchSessions();
     }
   };
