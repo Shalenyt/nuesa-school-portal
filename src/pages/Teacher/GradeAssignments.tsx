@@ -60,7 +60,7 @@ export default function GradeAssignments() {
         .from('assignment_submissions')
         .select(`
           *,
-          profiles(full_name, student_id, profile_photo_url)
+          profiles!assignment_submissions_student_id_fkey(full_name, student_id, profile_photo_url)
         `)
         .eq('assignment_id', assignmentId)
         .order('submitted_at', { ascending: false });
