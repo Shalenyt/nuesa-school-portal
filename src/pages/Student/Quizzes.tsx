@@ -17,8 +17,6 @@ export default function StudentQuizzes() {
   const [view, setView] = useState<'list' | 'attempt'>('list');
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
