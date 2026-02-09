@@ -207,6 +207,16 @@ const App = () => (
                   <StudentNotifications />
                 </ProtectedRoute>
               } />
+              <Route path="/student/attendance" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentAttendance />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/quizzes" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentQuizzes />
+                </ProtectedRoute>
+              } />
               
               {/* Redirect based on role */}
               <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
