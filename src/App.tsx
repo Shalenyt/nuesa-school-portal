@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -114,7 +115,12 @@ function AppRoutes() {
   );
 }
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    console.log("%cBuilt by Shalen", "color: #ff69b4; font-size:14px; font-weight:bold;");
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
@@ -128,6 +134,7 @@ const App = () => (
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

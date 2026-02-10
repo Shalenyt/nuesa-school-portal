@@ -47,6 +47,7 @@ const Index = () => {
             Apply for Account
           </Button>
         </div>
+        <p className="mt-12 text-xs text-muted-foreground/40">Built by Shalen</p>
       </div>
     </div>
   );
