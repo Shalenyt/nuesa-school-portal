@@ -138,16 +138,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
+    console.log('[Auth] Requesting password reset for:', email);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`
     });
 
     if (error) {
+      console.error('[Auth] Password reset error:', error.message, error.status);
+      const description = error.message.includes('rate limit')
+        ? 'Too many attempts. Please wait a few minutes before trying again.'
+        : error.message;
       toast({
         title: "Error",
-        description: error.message,
+        description,
         variant: "destructive"
       });
+    } else {
+      console.log('[Auth] Password reset email requested successfully');
     }
 
     return { error };
