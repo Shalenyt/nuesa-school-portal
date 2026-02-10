@@ -63,6 +63,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <main className="flex-1 p-3 sm:p-6 overflow-x-hidden">
             {children}
           </main>
+          <footer className="py-2 text-center text-xs text-muted-foreground/50">
+            Built by Shalen
+          </footer>
         </div>
       </div>
     </SidebarProvider>
