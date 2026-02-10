@@ -115,7 +115,12 @@ function AppRoutes() {
   );
 }
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    console.log("%cBuilt by Shalen", "color: #ff69b4; font-size:14px; font-weight:bold;");
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
