@@ -63,13 +63,22 @@ export default function Login() {
       
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4">
-            <img 
-              src={settings?.logo_url || oaustechLogo} 
-              alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
-              className="h-16 w-16 object-contain" 
-            />
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4 cursor-default">
+                  <img 
+                    src={settings?.logo_url || oaustechLogo} 
+                    alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
+                    className="h-16 w-16 object-contain" 
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs text-muted-foreground">
+                Built by Shalen
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
             <h1 className="text-3xl font-black text-primary">
               {settings?.portal_name || 'OAUSTECH Portal'}
             </h1>
