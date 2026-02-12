@@ -576,6 +576,41 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_questions: {
         Row: {
           correct_answer: number
@@ -617,33 +652,48 @@ export type Database = {
       quiz_submissions: {
         Row: {
           answers: Json
+          device_info: Json | null
           graded_at: string | null
           graded_by: string | null
           id: string
+          ip_address: string | null
+          latitude: number | null
+          longitude: number | null
           quiz_id: string
           score: number | null
           student_id: string
           submitted_at: string
+          tab_switch_count: number | null
         }
         Insert: {
           answers?: Json
+          device_info?: Json | null
           graded_at?: string | null
           graded_by?: string | null
           id?: string
+          ip_address?: string | null
+          latitude?: number | null
+          longitude?: number | null
           quiz_id: string
           score?: number | null
           student_id: string
           submitted_at?: string
+          tab_switch_count?: number | null
         }
         Update: {
           answers?: Json
+          device_info?: Json | null
           graded_at?: string | null
           graded_by?: string | null
           id?: string
+          ip_address?: string | null
+          latitude?: number | null
+          longitude?: number | null
           quiz_id?: string
           score?: number | null
           student_id?: string
           submitted_at?: string
+          tab_switch_count?: number | null
         }
         Relationships: [
           {
@@ -669,38 +719,92 @@ export type Database = {
           },
         ]
       }
+      quiz_violation_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          quiz_id: string
+          student_id: string
+          violation_type: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          quiz_id: string
+          student_id: string
+          violation_type: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          quiz_id?: string
+          student_id?: string
+          violation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_violation_logs_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_violation_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quizzes: {
         Row: {
+          allowed_radius_meters: number | null
           course_id: string
           created_at: string
           created_by: string
           description: string | null
           duration_minutes: number | null
+          gps_enabled: boolean | null
           id: string
+          latitude: number | null
+          longitude: number | null
           max_points: number
           status: string
           title: string
           updated_at: string
         }
         Insert: {
+          allowed_radius_meters?: number | null
           course_id: string
           created_at?: string
           created_by: string
           description?: string | null
           duration_minutes?: number | null
+          gps_enabled?: boolean | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           max_points?: number
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
+          allowed_radius_meters?: number | null
           course_id?: string
           created_at?: string
           created_by?: string
           description?: string | null
           duration_minutes?: number | null
+          gps_enabled?: boolean | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           max_points?: number
           status?: string
           title?: string
