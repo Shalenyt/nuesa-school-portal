@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Eye, CheckCircle, ArrowLeft, BookOpen, Send } from 'lucide-react';
+import { Plus, Trash2, Eye, CheckCircle, ArrowLeft, BookOpen, Send, MapPin, Shield } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 interface QuestionForm {
   question_text: string;
@@ -41,7 +42,9 @@ export default function LecturerQuizzes() {
     description: '',
     course_id: '',
     duration_minutes: '',
-    max_points: '100'
+    max_points: '100',
+    gps_enabled: false,
+    allowed_radius_meters: '100',
   });
   const [questions, setQuestions] = useState<QuestionForm[]>([
     { question_text: '', options: ['', '', '', ''], correct_answer: 0, points: 1 }
@@ -100,6 +103,24 @@ export default function LecturerQuizzes() {
       }
     }
 
+    // Get GPS coordinates if GPS is enabled
+    let gpsLat: number | null = null;
+    let gpsLng: number | null = null;
+    if (quizForm.gps_enabled) {
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true, timeout: 10000, maximumAge: 0,
+          });
+        });
+        gpsLat = position.coords.latitude;
+        gpsLng = position.coords.longitude;
+      } catch {
+        toast({ title: 'GPS Error', description: 'Could not get your location. Please enable GPS and try again.', variant: 'destructive' });
+        return;
+      }
+    }
+
     const { data: quiz, error } = await (supabase as any)
       .from('quizzes')
       .insert({
@@ -109,7 +130,11 @@ export default function LecturerQuizzes() {
         created_by: profile?.id,
         duration_minutes: quizForm.duration_minutes ? parseInt(quizForm.duration_minutes) : null,
         max_points: parseInt(quizForm.max_points) || 100,
-        status: 'published'
+        status: 'published',
+        gps_enabled: quizForm.gps_enabled,
+        latitude: gpsLat,
+        longitude: gpsLng,
+        allowed_radius_meters: quizForm.gps_enabled ? parseInt(quizForm.allowed_radius_meters) || 100 : null,
       })
       .select()
       .single();
@@ -137,7 +162,7 @@ export default function LecturerQuizzes() {
     toast({ title: 'Success', description: 'Quiz created and published!' });
     await notifyEnrolledStudents(quizForm.course_id, 'New Quiz Available', `A new quiz "${quizForm.title}" has been published. Take it now!`, 'quiz', quiz.id);
     setView('list');
-    setQuizForm({ title: '', description: '', course_id: '', duration_minutes: '', max_points: '100' });
+    setQuizForm({ title: '', description: '', course_id: '', duration_minutes: '', max_points: '100', gps_enabled: false, allowed_radius_meters: '100' });
     setQuestions([{ question_text: '', options: ['', '', '', ''], correct_answer: 0, points: 1 }]);
     fetchData();
   };
@@ -360,6 +385,25 @@ export default function LecturerQuizzes() {
                   <Label>Max Points</Label>
                   <Input type="number" value={quizForm.max_points} onChange={(e) => setQuizForm({ ...quizForm, max_points: e.target.value })} />
                 </div>
+              </div>
+              {/* GPS Toggle */}
+              <div className="col-span-full flex items-center gap-3 p-3 border rounded-lg">
+                <Switch
+                  checked={quizForm.gps_enabled}
+                  onCheckedChange={(checked) => setQuizForm({ ...quizForm, gps_enabled: checked })}
+                />
+                <div className="flex-1">
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <MapPin className="h-4 w-4" /> Enable GPS Restriction
+                  </Label>
+                  <p className="text-xs text-muted-foreground">Students must be within range of your current location to start the quiz</p>
+                </div>
+                {quizForm.gps_enabled && (
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs whitespace-nowrap">Radius (m):</Label>
+                    <Input className="w-20" type="number" value={quizForm.allowed_radius_meters} onChange={(e) => setQuizForm({ ...quizForm, allowed_radius_meters: e.target.value })} />
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>

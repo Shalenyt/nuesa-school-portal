@@ -13,7 +13,8 @@ import {
   Calendar,
   Bell,
   ClipboardList,
-  Building2
+  Building2,
+  Shield
 } from 'lucide-react';
 import {
   Sidebar,
@@ -46,6 +47,7 @@ const lecturerMenuItems = [
   { title: "Assignments", url: "/teacher/assignments", icon: ClipboardList },
   { title: "Grade Assignments", url: "/teacher/grade-assignments", icon: ClipboardList },
   { title: "Quizzes", url: "/teacher/quizzes", icon: BookOpen },
+  { title: "Quiz Security", url: "/teacher/quiz-security", icon: Shield },
   { title: "Attendance", url: "/teacher/attendance", icon: Calendar },
   { title: "Class Schedule", url: "/teacher/class-schedule", icon: Calendar },
   { title: "View Students", url: "/teacher/view-students", icon: Users },

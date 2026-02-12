@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useThemeSync } from "@/hooks/useThemeSync";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 
 // Auth pages
 import Login from "./pages/Auth/Login";
@@ -38,6 +39,7 @@ import TeacherClassSchedule from "./pages/Teacher/ClassSchedule";
 import GradeAssignments from "./pages/Teacher/GradeAssignments";
 import TeacherAttendance from "./pages/Teacher/Attendance";
 import TeacherQuizzes from "./pages/Teacher/Quizzes";
+import QuizSecurity from "./pages/Teacher/QuizSecurity";
 import ViewStudents from "./pages/Teacher/ViewStudents";
 import TeacherNotifications from "./pages/Teacher/Notifications";
 
@@ -96,6 +98,7 @@ function AppRoutes() {
       <Route path="/teacher/view-students" element={<ProtectedRoute allowedRoles={['teacher']}><ViewStudents /></ProtectedRoute>} />
       <Route path="/teacher/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherAttendance /></ProtectedRoute>} />
       <Route path="/teacher/quizzes" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherQuizzes /></ProtectedRoute>} />
+      <Route path="/teacher/quiz-security" element={<ProtectedRoute allowedRoles={['teacher']}><QuizSecurity /></ProtectedRoute>} />
       <Route path="/teacher/notifications" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherNotifications /></ProtectedRoute>} />
       
       {/* Student Routes */}
@@ -129,6 +132,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <AppRoutes />
+            <PushNotificationPrompt />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
