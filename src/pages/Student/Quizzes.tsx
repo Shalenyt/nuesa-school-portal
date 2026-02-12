@@ -7,8 +7,18 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, BookOpen, Clock } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, MapPin, AlertTriangle } from 'lucide-react';
 import { QuizAttempt } from '@/components/Student/QuizAttempt';
+
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export default function StudentQuizzes() {
   const { profile } = useAuth();
@@ -18,13 +28,13 @@ export default function StudentQuizzes() {
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gpsChecking, setGpsChecking] = useState(false);
 
   useEffect(() => {
     if (profile) fetchData();
   }, [profile]);
 
   const fetchData = async () => {
-    // Published quizzes for enrolled courses
     const { data: enrollments } = await supabase
       .from('student_enrollments')
       .select('course_id')
@@ -43,12 +53,57 @@ export default function StudentQuizzes() {
     setLoading(false);
   };
 
+  const getCurrentPosition = (): Promise<GeolocationPosition> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser.'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+    });
+  };
+
   const startQuiz = async (quiz: any) => {
-    // Check if already submitted
     const existing = mySubmissions.find(s => s.quiz_id === quiz.id);
     if (existing) {
       toast({ title: 'Already submitted', description: 'You have already taken this quiz.', variant: 'destructive' });
       return;
+    }
+
+    // GPS validation if enabled
+    if (quiz.gps_enabled && quiz.latitude && quiz.longitude) {
+      setGpsChecking(true);
+      try {
+        const position = await getCurrentPosition();
+        const distance = haversineDistance(
+          quiz.latitude, quiz.longitude,
+          position.coords.latitude, position.coords.longitude
+        );
+        const allowedRadius = quiz.allowed_radius_meters || 100;
+
+        if (distance > allowedRadius) {
+          toast({
+            title: 'Too far from exam location',
+            description: `You are ${Math.round(distance)}m away. You must be within ${allowedRadius}m to start this quiz.`,
+            variant: 'destructive'
+          });
+          setGpsChecking(false);
+          return;
+        }
+      } catch (err: any) {
+        toast({
+          title: 'GPS Required',
+          description: 'This quiz requires location access. Please enable GPS and try again.',
+          variant: 'destructive'
+        });
+        setGpsChecking(false);
+        return;
+      }
+      setGpsChecking(false);
     }
 
     const { data } = await (supabase as any)
@@ -62,15 +117,26 @@ export default function StudentQuizzes() {
     setView('attempt');
   };
 
-  const submitQuiz = async (submittedAnswers: Record<string, number>) => {
-    if (!selectedQuiz) return;
+  const submitQuiz = async (submittedAnswers: Record<string, number>, deviceInfo?: any) => {
+    if (!selectedQuiz || !profile) return;
+
+    // Get student location for logging
+    let lat: number | undefined, lng: number | undefined;
+    try {
+      const position = await getCurrentPosition();
+      lat = position.coords.latitude;
+      lng = position.coords.longitude;
+    } catch {}
 
     const { error } = await (supabase as any)
       .from('quiz_submissions')
       .insert({
         quiz_id: selectedQuiz.id,
-        student_id: profile?.id,
-        answers: submittedAnswers
+        student_id: profile.id,
+        answers: submittedAnswers,
+        device_info: deviceInfo || {},
+        latitude: lat,
+        longitude: lng,
       });
 
     if (error) {
@@ -115,9 +181,10 @@ export default function StudentQuizzes() {
                       <p className="text-sm text-muted-foreground">{q.courses?.name || q.courses?.subjects?.name}</p>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Badge variant="outline">{q.max_points} pts</Badge>
                         {q.duration_minutes && <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />{q.duration_minutes} min</Badge>}
+                        {q.gps_enabled && <Badge variant="outline" className="text-orange-600"><MapPin className="h-3 w-3 mr-1" />GPS Required</Badge>}
                       </div>
                     </CardContent>
                   </Card>
@@ -156,12 +223,26 @@ export default function StudentQuizzes() {
           </Tabs>
         )}
 
-        {view === 'attempt' && selectedQuiz && (
+        {view === 'attempt' && selectedQuiz && profile && (
           <QuizAttempt
             quiz={selectedQuiz}
             questions={questions}
             onSubmit={submitQuiz}
+            studentId={profile.id}
           />
+        )}
+
+        {/* GPS checking overlay */}
+        {gpsChecking && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+            <Card className="max-w-sm w-full">
+              <CardContent className="pt-6 text-center space-y-3">
+                <MapPin className="h-8 w-8 text-primary mx-auto animate-pulse" />
+                <p className="font-medium">Verifying your location...</p>
+                <p className="text-sm text-muted-foreground">Please wait while we check you're within the allowed area.</p>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </DashboardLayout>
