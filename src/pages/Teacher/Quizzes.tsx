@@ -103,6 +103,24 @@ export default function LecturerQuizzes() {
       }
     }
 
+    // Get GPS coordinates if GPS is enabled
+    let gpsLat: number | null = null;
+    let gpsLng: number | null = null;
+    if (quizForm.gps_enabled) {
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true, timeout: 10000, maximumAge: 0,
+          });
+        });
+        gpsLat = position.coords.latitude;
+        gpsLng = position.coords.longitude;
+      } catch {
+        toast({ title: 'GPS Error', description: 'Could not get your location. Please enable GPS and try again.', variant: 'destructive' });
+        return;
+      }
+    }
+
     const { data: quiz, error } = await (supabase as any)
       .from('quizzes')
       .insert({
@@ -112,7 +130,11 @@ export default function LecturerQuizzes() {
         created_by: profile?.id,
         duration_minutes: quizForm.duration_minutes ? parseInt(quizForm.duration_minutes) : null,
         max_points: parseInt(quizForm.max_points) || 100,
-        status: 'published'
+        status: 'published',
+        gps_enabled: quizForm.gps_enabled,
+        latitude: gpsLat,
+        longitude: gpsLng,
+        allowed_radius_meters: quizForm.gps_enabled ? parseInt(quizForm.allowed_radius_meters) || 100 : null,
       })
       .select()
       .single();
