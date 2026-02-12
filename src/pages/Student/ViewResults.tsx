@@ -4,6 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Trophy, Calendar, FileText } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
+import { GPACard } from '@/components/Student/GPACard';
+import { AttendanceChart } from '@/components/Student/AttendanceChart';
+import { QuizPerformanceChart } from '@/components/Student/QuizPerformanceChart';
 
 export default function StudentViewResults() {
   const [results, setResults] = useState<any[]>([]);
@@ -19,22 +22,21 @@ export default function StudentViewResults() {
       const userId = user.user?.id;
       if (!userId) { setLoading(false); return; }
 
-      // Fetch all graded submissions for the student directly
       const { data: submissions, error } = await supabase
         .from('assignment_submissions')
         .select(`
           id, grade, feedback, graded_at, submitted_at,
-          assignments(title, max_points, course_id, courses(name, subjects(name)))
+          assignments(title, max_points, course_id, grades_locked, results_released, courses(name, subjects(name)))
         `)
         .eq('student_id', userId)
         .not('grade', 'is', null)
         .order('graded_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching results:', error);
-      }
+      if (error) console.error('Error fetching results:', error);
 
-      setResults(submissions || []);
+      // Filter to only show released results
+      const released = (submissions || []).filter((s: any) => s.assignments?.results_released !== false);
+      setResults(released);
     } catch (error) {
       console.error('Error fetching results:', error);
     } finally {
@@ -63,7 +65,14 @@ export default function StudentViewResults() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Results</h1>
-          <p className="text-muted-foreground">View your assignment grades and feedback</p>
+          <p className="text-muted-foreground">View your assignment grades, GPA, and performance analytics</p>
+        </div>
+
+        {/* Analytics Section */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <GPACard />
+          <AttendanceChart />
+          <QuizPerformanceChart />
         </div>
 
         {loading ? (
@@ -74,7 +83,7 @@ export default function StudentViewResults() {
               <div className="text-center">
                 <Trophy className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold text-foreground">No results available</h3>
-                <p className="mt-1 text-sm text-muted-foreground">No graded assignments yet.</p>
+                <p className="mt-1 text-sm text-muted-foreground">No graded assignments yet or results pending release.</p>
               </div>
             </CardContent>
           </Card>

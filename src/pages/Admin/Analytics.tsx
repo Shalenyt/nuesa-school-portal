@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart3, TrendingUp, Users, BookOpen } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
+import { DepartmentPerformance } from '@/components/Admin/DepartmentPerformance';
+import { CourseSuccessRate } from '@/components/Admin/CourseSuccessRate';
+import { TeacherGradingPerformance } from '@/components/Admin/TeacherGradingPerformance';
 
 export default function Analytics() {
   const [analytics, setAnalytics] = useState({
@@ -29,7 +32,7 @@ export default function Analytics() {
         totalEnrollments: enrollments.count || 0,
         activeCourses: courses.count || 0,
         completedAssignments: assignments.count || 0,
-        monthlyGrowth: 12.5 // Mock data
+        monthlyGrowth: 12.5
       });
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -39,30 +42,10 @@ export default function Analytics() {
   };
 
   const analyticsCards = [
-    {
-      title: "Total Enrollments",
-      value: analytics.totalEnrollments,
-      icon: Users,
-      description: "Students enrolled in courses"
-    },
-    {
-      title: "Active Courses",
-      value: analytics.activeCourses,
-      icon: BookOpen,
-      description: "Currently running courses"
-    },
-    {
-      title: "Completed Assignments",
-      value: analytics.completedAssignments,
-      icon: BarChart3,
-      description: "Assignments submitted"
-    },
-    {
-      title: "Monthly Growth",
-      value: `${analytics.monthlyGrowth}%`,
-      icon: TrendingUp,
-      description: "Increase in enrollments"
-    }
+    { title: "Total Enrollments", value: analytics.totalEnrollments, icon: Users, description: "Students enrolled in courses" },
+    { title: "Active Courses", value: analytics.activeCourses, icon: BookOpen, description: "Currently running courses" },
+    { title: "Completed Assignments", value: analytics.completedAssignments, icon: BarChart3, description: "Assignments submitted" },
+    { title: "Monthly Growth", value: `${analytics.monthlyGrowth}%`, icon: TrendingUp, description: "Increase in enrollments" }
   ];
 
   return (
@@ -70,42 +53,30 @@ export default function Analytics() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground">
-            School performance metrics and insights
-          </p>
+          <p className="text-muted-foreground">School performance metrics and insights</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {analyticsCards.map((card, index) => (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {card.title}
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
                 <card.icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {loading ? '-' : card.value}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {card.description}
-                </p>
+                <div className="text-2xl font-bold">{loading ? '-' : card.value}</div>
+                <p className="text-xs text-muted-foreground">{card.description}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Detailed Analytics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Advanced analytics charts and reports will be displayed here.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="grid gap-6 md:grid-cols-2">
+          <DepartmentPerformance />
+          <CourseSuccessRate />
+        </div>
+
+        <TeacherGradingPerformance />
       </div>
     </DashboardLayout>
   );
