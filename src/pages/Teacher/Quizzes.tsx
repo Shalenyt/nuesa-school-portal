@@ -41,7 +41,9 @@ export default function LecturerQuizzes() {
     description: '',
     course_id: '',
     duration_minutes: '',
-    max_points: '100'
+    max_points: '100',
+    gps_enabled: false,
+    allowed_radius_meters: '100',
   });
   const [questions, setQuestions] = useState<QuestionForm[]>([
     { question_text: '', options: ['', '', '', ''], correct_answer: 0, points: 1 }
