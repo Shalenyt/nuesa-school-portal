@@ -10,6 +10,9 @@ import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { ClassAverageCard } from '@/components/Teacher/ClassAverageCard';
+import { HardestQuestions } from '@/components/Teacher/HardestQuestions';
+import { AttendanceConsistency } from '@/components/Teacher/AttendanceConsistency';
 
 export default function TeacherProfile() {
   const { profile, user } = useAuth();
