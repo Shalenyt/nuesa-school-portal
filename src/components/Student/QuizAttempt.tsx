@@ -96,9 +96,11 @@ export function QuizAttempt({ quiz, questions, onSubmit, studentId }: QuizAttemp
               <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
               <p className="font-semibold text-destructive">{antiCheat.warningMessage}</p>
               <div className="flex gap-2 justify-center">
-                {!antiCheat.warningMessage.includes('auto-submitted') && (
+                {antiCheat.warningMessage.includes('auto-submitted') ? (
+                  <p className="text-sm text-muted-foreground">Your quiz has been submitted.</p>
+                ) : (
                   <Button onClick={() => { antiCheat.dismissWarning(); antiCheat.requestFullscreen(); }}>
-                    Return to Quiz
+                    Okay, Return to Quiz
                   </Button>
                 )}
               </div>
