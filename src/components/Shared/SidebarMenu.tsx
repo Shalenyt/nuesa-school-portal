@@ -13,7 +13,8 @@ import {
   Calendar,
   Bell,
   ClipboardList,
-  Building2
+  Building2,
+  Shield
 } from 'lucide-react';
 import {
   Sidebar,
