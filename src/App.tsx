@@ -9,6 +9,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useThemeSync } from "@/hooks/useThemeSync";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
+import { HighPriorityNotification } from "@/components/HighPriorityNotification";
 
 // Auth pages
 import Login from "./pages/Auth/Login";
@@ -28,6 +30,7 @@ import CourseLists from "./pages/Admin/CourseLists";
 import AdminProfile from "./pages/Admin/Profile";
 import AdminNotifications from "./pages/Admin/Notifications";
 import UserManagement from "./pages/Admin/UserManagement";
+import SemesterSettings from "./pages/Admin/SemesterSettings";
 
 // Teacher pages
 import TeacherProfile from "./pages/Teacher/Profile";
@@ -53,6 +56,7 @@ import StudentViewResults from "./pages/Student/ViewResults";
 import StudentNotifications from "./pages/Student/Notifications";
 import StudentAttendance from "./pages/Student/Attendance";
 import StudentQuizzes from "./pages/Student/Quizzes";
+import StudentID from "./pages/Student/StudentID";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -60,7 +64,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  // Global theme sync - runs on every page
   useThemeSync();
 
   return (
@@ -86,6 +89,7 @@ function AppRoutes() {
       <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['admin']}><AdminProfile /></ProtectedRoute>} />
       <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><AdminNotifications /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagement /></ProtectedRoute>} />
+      <Route path="/admin/semester-settings" element={<ProtectedRoute allowedRoles={['admin']}><SemesterSettings /></ProtectedRoute>} />
       
       {/* Teacher Routes */}
       <Route path="/teacher/profile" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherProfile /></ProtectedRoute>} />
@@ -111,6 +115,7 @@ function AppRoutes() {
       <Route path="/student/notifications" element={<ProtectedRoute allowedRoles={['student']}><StudentNotifications /></ProtectedRoute>} />
       <Route path="/student/attendance" element={<ProtectedRoute allowedRoles={['student']}><StudentAttendance /></ProtectedRoute>} />
       <Route path="/student/quizzes" element={<ProtectedRoute allowedRoles={['student']}><StudentQuizzes /></ProtectedRoute>} />
+      <Route path="/student/student-id" element={<ProtectedRoute allowedRoles={['student']}><StudentID /></ProtectedRoute>} />
       
       <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />
@@ -133,6 +138,8 @@ const App = () => {
           <BrowserRouter>
             <AppRoutes />
             <PushNotificationPrompt />
+            <SessionTimeoutWarning />
+            <HighPriorityNotification />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

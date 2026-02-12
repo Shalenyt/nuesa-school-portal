@@ -1,30 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  Users, 
-  BarChart3, 
-  Settings, 
-  BookOpen,
-  FileText,
-  MessageSquare,
-  Upload,
-  GraduationCap,
-  Calendar,
-  Bell,
-  ClipboardList,
-  Building2,
-  Shield
+  LayoutDashboard, Users, BarChart3, Settings, BookOpen, FileText, MessageSquare, Upload,
+  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode
 } from 'lucide-react';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu as SidebarMenuPrimitive,
-  SidebarMenuButton,
-  SidebarMenuItem,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu as SidebarMenuPrimitive, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Badge } from '@/components/ui/badge';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
@@ -37,6 +19,7 @@ const adminMenuItems = [
   { title: "Announcements", url: "/admin/announcements", icon: MessageSquare },
   { title: "Courses", url: "/admin/courses", icon: BookOpen },
   { title: "Course Lists", url: "/admin/course-lists", icon: FileText },
+  { title: "Semester", url: "/admin/semester-settings", icon: Calendar },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Profile", url: "/admin/profile", icon: Settings }
 ];
@@ -65,6 +48,7 @@ const studentMenuItems = [
   { title: "Timetable", url: "/student/timetable", icon: Calendar },
   { title: "Courses", url: "/student/courses", icon: BookOpen },
   { title: "View Results", url: "/student/view-results", icon: GraduationCap },
+  { title: "Student ID", url: "/student/student-id", icon: QrCode },
   { title: "Notifications", url: "/student/notifications", icon: Bell }
 ];
 
@@ -97,29 +81,24 @@ export function SidebarMenu() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>
-            {getRoleLabel()} Menu
-          </SidebarGroupLabel>
-          
+          <SidebarGroupLabel>{getRoleLabel()} Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenuPrimitive>
               {menuItems.map((item) => (
-                 <SidebarMenuItem key={item.title}>
-                   <SidebarMenuButton asChild>
-                      <NavLink 
-                         to={item.url} 
-                          className={({ isActive }) =>
-                           `flex items-center gap-3 w-full transition-all duration-300 rounded-lg px-3 py-2.5 group ${
-                             isActive 
-                               ? "bg-primary/10 text-primary border-l-4 border-primary font-semibold shadow-sm" 
-                               : "text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium border-l-4 border-transparent hover:border-primary/30"
-                           }`
-                          }
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 w-full transition-all duration-300 rounded-lg px-3 py-2.5 group ${
+                          isActive 
+                            ? "bg-primary/10 text-primary border-l-4 border-primary font-semibold shadow-sm" 
+                            : "text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium border-l-4 border-transparent hover:border-primary/30"
+                        }`
+                      }
                     >
                       <item.icon className={`h-5 w-5 shrink-0 transition-all duration-300 ${
-                        location.pathname === item.url 
-                          ? "text-primary" 
-                          : "text-muted-foreground group-hover:text-primary"
+                        location.pathname === item.url ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                       }`} />
                       <span className="transition-all duration-300 truncate">{item.title}</span>
                       {item.title === 'Notifications' && counts.total > 0 && (
