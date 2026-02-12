@@ -1052,7 +1052,13 @@ export type Database = {
       is_teacher: { Args: never; Returns: boolean }
     }
     Enums: {
-      announcement_type: "global" | "class" | "subject"
+      announcement_type:
+        | "global"
+        | "class"
+        | "subject"
+        | "general"
+        | "urgent"
+        | "academic"
       application_status: "pending" | "approved" | "rejected"
       user_role: "admin" | "teacher" | "student"
     }
@@ -1182,7 +1188,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      announcement_type: ["global", "class", "subject"],
+      announcement_type: [
+        "global",
+        "class",
+        "subject",
+        "general",
+        "urgent",
+        "academic",
+      ],
       application_status: ["pending", "approved", "rejected"],
       user_role: ["admin", "teacher", "student"],
     },
