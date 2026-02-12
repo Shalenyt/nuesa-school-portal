@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Eye, CheckCircle, ArrowLeft, BookOpen, Send } from 'lucide-react';
+import { Plus, Trash2, Eye, CheckCircle, ArrowLeft, BookOpen, Send, MapPin, Shield } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 interface QuestionForm {
   question_text: string;
