@@ -12,10 +12,7 @@ export function PushNotificationPrompt() {
     if (!supported) return;
     if (permission !== 'default') return;
     
-    // Show prompt after 2 seconds on first visit
-    const dismissed = localStorage.getItem('push-notification-dismissed');
-    if (dismissed) return;
-    
+    // Show prompt after 2 seconds for any user who hasn't granted/denied yet
     const timer = setTimeout(() => setShowPrompt(true), 2000);
     return () => clearTimeout(timer);
   }, [supported, permission]);
