@@ -459,11 +459,26 @@ export default function LecturerQuizzes() {
         {view === 'submissions' && (
           <>
             <div className="flex gap-2 flex-wrap">
-              <Button onClick={autoGradeAll} variant="default">
+              <Button onClick={autoGradeAll} variant="default" disabled={selectedQuiz?.grades_locked}>
                 <CheckCircle className="h-4 w-4 mr-2" /> Auto-Grade All
               </Button>
               <Button onClick={() => setPublishDialogOpen(true)} variant="outline">
-                <Send className="h-4 w-4 mr-2" /> Publish Scores to Students
+                <Send className="h-4 w-4 mr-2" /> {selectedQuiz?.results_released ? 'Results Released ✓' : 'Release Results'}
+              </Button>
+              <Button
+                variant={selectedQuiz?.grades_locked ? 'destructive' : 'outline'}
+                onClick={async () => {
+                  const newLocked = !selectedQuiz?.grades_locked;
+                  await (supabase as any).from('quizzes').update({ grades_locked: newLocked }).eq('id', selectedQuiz.id);
+                  await (supabase as any).from('grade_audit_logs').insert({
+                    entity_type: 'quiz', entity_id: selectedQuiz.id,
+                    action: newLocked ? 'lock' : 'unlock', performed_by: profile?.id,
+                  });
+                  setSelectedQuiz({ ...selectedQuiz, grades_locked: newLocked });
+                  toast({ title: newLocked ? 'Grades Locked' : 'Grades Unlocked' });
+                }}
+              >
+                <Shield className="h-4 w-4 mr-2" /> {selectedQuiz?.grades_locked ? 'Unlock Grades' : 'Lock Grades'}
               </Button>
             </div>
             <Tabs defaultValue="pending" className="w-full">
@@ -512,15 +527,19 @@ export default function LecturerQuizzes() {
             <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Publish Scores</DialogTitle>
+                  <DialogTitle>Release Results</DialogTitle>
                 </DialogHeader>
                 <p className="text-sm text-muted-foreground">
-                  This will notify all {submissions.filter(s => s.score !== null).length} graded students with their scores for "{selectedQuiz?.title}".
+                  This will notify all {submissions.filter(s => s.score !== null).length} graded students and make results visible for "{selectedQuiz?.title}".
                 </p>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setPublishDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={publishScores}>
-                    <Send className="h-4 w-4 mr-2" /> Publish
+                  <Button onClick={async () => {
+                    await (supabase as any).from('quizzes').update({ results_released: true }).eq('id', selectedQuiz.id);
+                    await publishScores();
+                    setSelectedQuiz({ ...selectedQuiz, results_released: true });
+                  }}>
+                    <Send className="h-4 w-4 mr-2" /> Release Results
                   </Button>
                 </DialogFooter>
               </DialogContent>
