@@ -200,21 +200,26 @@ export default function StudentQuizzes() {
 
             <TabsContent value="results">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mySubmissions.map((s) => (
-                  <Card key={s.id}>
-                    <CardHeader>
-                      <CardTitle className="text-base">{s.quizzes?.title}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{s.quizzes?.courses?.name}</p>
-                    </CardHeader>
-                    <CardContent>
-                      {s.score !== null ? (
-                        <Badge variant="default">{s.score}/{s.quizzes?.max_points || 100}</Badge>
-                      ) : (
-                        <Badge variant="secondary">Awaiting grading</Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                {mySubmissions.map((s) => {
+                  const released = s.quizzes?.results_released !== false;
+                  return (
+                    <Card key={s.id}>
+                      <CardHeader>
+                        <CardTitle className="text-base">{s.quizzes?.title}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{s.quizzes?.courses?.name}</p>
+                      </CardHeader>
+                      <CardContent>
+                        {!released ? (
+                          <Badge variant="secondary">Results Pending</Badge>
+                        ) : s.score !== null ? (
+                          <Badge variant="default">{s.score}/{s.quizzes?.max_points || 100}</Badge>
+                        ) : (
+                          <Badge variant="secondary">Awaiting grading</Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
                 {mySubmissions.length === 0 && (
                   <Card><CardContent className="text-center py-8"><p className="text-muted-foreground">No quiz submissions yet.</p></CardContent></Card>
                 )}
