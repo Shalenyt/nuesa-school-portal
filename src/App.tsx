@@ -129,6 +129,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <AppRoutes />
+            <PushNotificationPrompt />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

@@ -386,6 +386,25 @@ export default function LecturerQuizzes() {
                   <Input type="number" value={quizForm.max_points} onChange={(e) => setQuizForm({ ...quizForm, max_points: e.target.value })} />
                 </div>
               </div>
+              {/* GPS Toggle */}
+              <div className="col-span-full flex items-center gap-3 p-3 border rounded-lg">
+                <Switch
+                  checked={quizForm.gps_enabled}
+                  onCheckedChange={(checked) => setQuizForm({ ...quizForm, gps_enabled: checked })}
+                />
+                <div className="flex-1">
+                  <Label className="flex items-center gap-2 cursor-pointer">
+                    <MapPin className="h-4 w-4" /> Enable GPS Restriction
+                  </Label>
+                  <p className="text-xs text-muted-foreground">Students must be within range of your current location to start the quiz</p>
+                </div>
+                {quizForm.gps_enabled && (
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs whitespace-nowrap">Radius (m):</Label>
+                    <Input className="w-20" type="number" value={quizForm.allowed_radius_meters} onChange={(e) => setQuizForm({ ...quizForm, allowed_radius_meters: e.target.value })} />
+                  </div>
+                )}
+              </div>
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea value={quizForm.description} onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })} />
