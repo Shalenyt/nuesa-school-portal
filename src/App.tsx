@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useThemeSync } from "@/hooks/useThemeSync";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 
 // Auth pages
 import Login from "./pages/Auth/Login";
