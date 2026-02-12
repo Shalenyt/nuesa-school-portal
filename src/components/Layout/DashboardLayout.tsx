@@ -29,14 +29,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex h-14 items-center px-2 sm:px-4 gap-2">
               <SidebarTrigger className="shrink-0" />
               
-              <div className="flex items-center gap-2 min-w-0">
+              <a 
+                href={profile?.role === 'admin' ? '/admin/dashboard' : profile?.role === 'teacher' ? '/teacher/profile' : '/student/profile'}
+                className="flex items-center gap-2 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+              >
                 <img 
                   src={settings?.logo_url || oaustechLogo} 
                   alt="School Logo" 
                   className="h-7 w-7 sm:h-8 sm:w-8 object-contain shrink-0" 
                 />
                 <h1 className="font-semibold text-sm sm:text-lg truncate">{settings?.portal_name || settings?.school_name || 'OAUSTECH Portal'}</h1>
-              </div>
+              </a>
               
               <div className="ml-auto flex items-center gap-1 sm:gap-4 shrink-0">
                 <Avatar className="h-7 w-7 sm:h-8 sm:w-8">

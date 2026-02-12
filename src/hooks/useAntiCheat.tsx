@@ -18,8 +18,13 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
   const logViolation = useCallback(async (type: string, details: Record<string, any> = {}) => {
     if (hasAutoSubmitted.current) return;
 
-    violationCountRef.current += 1;
-    setViolations(violationCountRef.current);
+    // Only count tab_switch and focus_loss as strike violations
+    const isStrikeViolation = type === 'tab_switch' || type === 'focus_loss';
+    
+    if (isStrikeViolation) {
+      violationCountRef.current += 1;
+      setViolations(violationCountRef.current);
+    }
 
     await (supabase as any).from('quiz_violation_logs').insert({
       quiz_id: quizId,
@@ -28,14 +33,15 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
       details: { ...details, session_id: sessionId.current, timestamp: new Date().toISOString() },
     });
 
-    if (type === 'tab_switch' || type === 'focus_loss') {
+    if (isStrikeViolation) {
       if (violationCountRef.current >= maxViolations) {
-        setWarningMessage(`Quiz auto-submitted due to ${maxViolations} violations.`);
+        setWarningMessage(`You have exceeded the maximum number of warnings. Your quiz has been submitted.`);
         hasAutoSubmitted.current = true;
         onAutoSubmit();
       } else {
+        const remaining = maxViolations - violationCountRef.current;
         setWarningMessage(
-          `Warning: Tab switching detected! (${violationCountRef.current}/${maxViolations}). Your quiz will be auto-submitted after ${maxViolations} violations.`
+          `Warning ${violationCountRef.current}/${maxViolations} – You have ${remaining} warning${remaining > 1 ? 's' : ''} remaining.`
         );
       }
     }

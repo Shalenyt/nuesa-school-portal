@@ -26,6 +26,7 @@ const adminMenuItems = [
 
 const lecturerMenuItems = [
   { title: "Profile", url: "/teacher/profile", icon: LayoutDashboard },
+  { title: "Analytics", url: "/teacher/analytics", icon: BarChart3 },
   { title: "Upload Materials", url: "/teacher/upload-materials", icon: Upload },
   { title: "Assignments", url: "/teacher/assignments", icon: ClipboardList },
   { title: "Grade Assignments", url: "/teacher/grade-assignments", icon: ClipboardList },
@@ -41,6 +42,7 @@ const lecturerMenuItems = [
 
 const studentMenuItems = [
   { title: "Profile", url: "/student/profile", icon: LayoutDashboard },
+  { title: "Analytics", url: "/student/analytics", icon: BarChart3 },
   { title: "View Materials", url: "/student/view-materials", icon: FileText },
   { title: "Submit Assignment", url: "/student/submit-assignment", icon: Upload },
   { title: "Quizzes", url: "/student/quizzes", icon: BookOpen },

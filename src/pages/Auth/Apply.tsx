@@ -122,7 +122,7 @@ export default function Apply() {
       
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <Link to="/" className="flex items-center justify-center gap-3 mb-4 no-underline hover:opacity-80 transition-opacity">
             <img 
               src={settings?.logo_url || oaustechLogo} 
               alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
@@ -131,7 +131,7 @@ export default function Apply() {
             <h1 className="text-3xl font-black text-primary">
               {settings?.portal_name || 'OAUSTECH Portal'}
             </h1>
-          </div>
+          </Link>
           <p className="text-muted-foreground mt-2">Apply for access to the portal</p>
         </div>
 
