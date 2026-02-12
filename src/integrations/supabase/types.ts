@@ -136,8 +136,10 @@ export type Database = {
           created_by: string
           description: string | null
           due_date: string | null
+          grades_locked: boolean | null
           id: string
           max_points: number | null
+          results_released: boolean | null
           title: string
           updated_at: string
         }
@@ -147,8 +149,10 @@ export type Database = {
           created_by: string
           description?: string | null
           due_date?: string | null
+          grades_locked?: boolean | null
           id?: string
           max_points?: number | null
+          results_released?: boolean | null
           title: string
           updated_at?: string
         }
@@ -158,8 +162,10 @@ export type Database = {
           created_by?: string
           description?: string | null
           due_date?: string | null
+          grades_locked?: boolean | null
           id?: string
           max_points?: number | null
+          results_released?: boolean | null
           title?: string
           updated_at?: string
         }
@@ -412,6 +418,33 @@ export type Database = {
           },
         ]
       }
+      grade_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          performed_by: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          performed_by: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          performed_by?: string
+        }
+        Relationships: []
+      }
       materials: {
         Row: {
           course_id: string
@@ -471,30 +504,36 @@ export type Database = {
       }
       notifications: {
         Row: {
+          acknowledged: boolean | null
           created_at: string
           id: string
           is_read: boolean | null
           message: string
+          priority: string | null
           related_id: string | null
           title: string
           type: string
           user_id: string
         }
         Insert: {
+          acknowledged?: boolean | null
           created_at?: string
           id?: string
           is_read?: boolean | null
           message: string
+          priority?: string | null
           related_id?: string | null
           title: string
           type: string
           user_id: string
         }
         Update: {
+          acknowledged?: boolean | null
           created_at?: string
           id?: string
           is_read?: boolean | null
           message?: string
+          priority?: string | null
           related_id?: string | null
           title?: string
           type?: string
@@ -770,10 +809,12 @@ export type Database = {
           description: string | null
           duration_minutes: number | null
           gps_enabled: boolean | null
+          grades_locked: boolean | null
           id: string
           latitude: number | null
           longitude: number | null
           max_points: number
+          results_released: boolean | null
           status: string
           title: string
           updated_at: string
@@ -786,10 +827,12 @@ export type Database = {
           description?: string | null
           duration_minutes?: number | null
           gps_enabled?: boolean | null
+          grades_locked?: boolean | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           max_points?: number
+          results_released?: boolean | null
           status?: string
           title: string
           updated_at?: string
@@ -802,10 +845,12 @@ export type Database = {
           description?: string | null
           duration_minutes?: number | null
           gps_enabled?: boolean | null
+          grades_locked?: boolean | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           max_points?: number
+          results_released?: boolean | null
           status?: string
           title?: string
           updated_at?: string
@@ -856,6 +901,36 @@ export type Database = {
           school_name?: string
           singleton?: boolean
           theme_color?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      semester_config: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          is_active: boolean | null
+          name: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          start_date?: string
           updated_at?: string
         }
         Relationships: []
