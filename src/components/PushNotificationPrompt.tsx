@@ -24,7 +24,6 @@ export function PushNotificationPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem('push-notification-dismissed', 'true');
   };
 
   if (!showPrompt) return null;
