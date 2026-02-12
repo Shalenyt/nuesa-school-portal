@@ -94,13 +94,16 @@ export function QuizAttempt({ quiz, questions, onSubmit, studentId }: QuizAttemp
           <Card className="max-w-md w-full border-destructive">
             <CardContent className="pt-6 text-center space-y-4">
               <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
-              <p className="font-semibold text-destructive">{antiCheat.warningMessage}</p>
+              <p className="font-semibold text-destructive text-lg">{antiCheat.warningMessage}</p>
               <div className="flex gap-2 justify-center">
-                {antiCheat.warningMessage.includes('auto-submitted') ? (
-                  <p className="text-sm text-muted-foreground">Your quiz has been submitted.</p>
+                {antiCheat.warningMessage.includes('exceeded') ? (
+                  <p className="text-sm text-muted-foreground">Your quiz has been submitted automatically.</p>
                 ) : (
-                  <Button onClick={() => { antiCheat.dismissWarning(); antiCheat.requestFullscreen(); }}>
-                    Okay, Return to Quiz
+                  <Button 
+                    onClick={() => { antiCheat.dismissWarning(); antiCheat.requestFullscreen(); }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8"
+                  >
+                    OK
                   </Button>
                 )}
               </div>

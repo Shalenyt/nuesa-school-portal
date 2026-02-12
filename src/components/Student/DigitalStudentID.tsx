@@ -12,12 +12,8 @@ export function DigitalStudentID() {
 
   if (!profile) return null;
 
-  const qrData = JSON.stringify({
-    id: profile.id,
-    student_id: profile.student_id,
-    name: profile.full_name,
-    status: profile.status,
-  });
+  // QR code links to verification page
+  const verifyUrl = `${window.location.origin}/verify?id=${profile.id}`;
 
   return (
     <Card className="max-w-sm mx-auto overflow-hidden">
@@ -41,7 +37,7 @@ export function DigitalStudentID() {
           </div>
         </div>
         <div className="flex justify-center pt-2">
-          <QRCodeSVG value={qrData} size={120} level="M" includeMargin />
+          <QRCodeSVG value={verifyUrl} size={120} level="M" includeMargin />
         </div>
         <p className="text-center text-[10px] text-muted-foreground">Scan QR code to verify enrollment status</p>
       </CardContent>

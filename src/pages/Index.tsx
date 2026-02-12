@@ -25,7 +25,7 @@ const Index = () => {
       </div>
       
       <div className="text-center space-y-6">
-        <div className="flex items-center justify-center gap-3 mb-8">
+        <a href="/" className="flex items-center justify-center gap-3 mb-8 cursor-pointer hover:opacity-80 transition-opacity no-underline">
           <img 
             src={schoolSettings?.logo_url || oaustechLogo} 
             alt={`${schoolSettings?.school_name || 'OAUSTECH'} Logo`} 
@@ -34,7 +34,7 @@ const Index = () => {
           <h1 className="text-5xl font-black text-primary">
             {schoolSettings?.portal_name || schoolSettings?.school_name || 'OAUSTECH Portal'}
           </h1>
-        </div>
+        </a>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Welcome to the {schoolSettings?.portal_name || schoolSettings?.school_name || 'OAUSTECH'} School Management Portal. Access your academic information, 
           manage courses, and stay connected with the university community.

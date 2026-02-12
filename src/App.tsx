@@ -57,9 +57,14 @@ import StudentNotifications from "./pages/Student/Notifications";
 import StudentAttendance from "./pages/Student/Attendance";
 import StudentQuizzes from "./pages/Student/Quizzes";
 import StudentID from "./pages/Student/StudentID";
+import StudentAnalytics from "./pages/Student/Analytics";
+
+import Verify from "./pages/Verify";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+
+import TeacherAnalytics from "./pages/Teacher/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +82,9 @@ function AppRoutes() {
       <Route path="/auth/recover-password" element={<Navigate to="/auth/forgot-password" replace />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
       <Route path="/auth/success" element={<Success />} />
+      
+      {/* Verification Route (public) */}
+      <Route path="/verify" element={<Verify />} />
       
       {/* Admin Routes */}
       <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
@@ -104,6 +112,7 @@ function AppRoutes() {
       <Route path="/teacher/quizzes" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherQuizzes /></ProtectedRoute>} />
       <Route path="/teacher/quiz-security" element={<ProtectedRoute allowedRoles={['teacher']}><QuizSecurity /></ProtectedRoute>} />
       <Route path="/teacher/notifications" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherNotifications /></ProtectedRoute>} />
+      <Route path="/teacher/analytics" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherAnalytics /></ProtectedRoute>} />
       
       {/* Student Routes */}
       <Route path="/student/profile" element={<ProtectedRoute allowedRoles={['student']}><StudentProfile /></ProtectedRoute>} />
@@ -116,6 +125,7 @@ function AppRoutes() {
       <Route path="/student/attendance" element={<ProtectedRoute allowedRoles={['student']}><StudentAttendance /></ProtectedRoute>} />
       <Route path="/student/quizzes" element={<ProtectedRoute allowedRoles={['student']}><StudentQuizzes /></ProtectedRoute>} />
       <Route path="/student/student-id" element={<ProtectedRoute allowedRoles={['student']}><StudentID /></ProtectedRoute>} />
+      <Route path="/student/analytics" element={<ProtectedRoute allowedRoles={['student']}><StudentAnalytics /></ProtectedRoute>} />
       
       <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />

@@ -20,7 +20,7 @@ export default function TeacherAnnouncements() {
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: '',
     content: '',
-    type: 'global' as any // Using any to match the actual DB enum
+    type: 'general' as any
   });
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function TeacherAnnouncements() {
         description: "Your announcement has been posted successfully.",
       });
 
-      setNewAnnouncement({ title: '', content: '', type: 'global' });
+      setNewAnnouncement({ title: '', content: '', type: 'general' });
       setIsCreating(false);
       fetchAnnouncements();
     } catch (error: any) {
@@ -123,11 +123,10 @@ export default function TeacherAnnouncements() {
                   <SelectValue placeholder="Select announcement type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="global">Global</SelectItem>
+                  <SelectItem value="general">General</SelectItem>
                   <SelectItem value="class">Class</SelectItem>
                   <SelectItem value="subject">Subject</SelectItem>
                   <SelectItem value="academic">Academic</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
                   <SelectItem value="urgent">Urgent</SelectItem>
                 </SelectContent>
               </Select>
