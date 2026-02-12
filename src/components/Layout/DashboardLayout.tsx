@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarMenu } from '@/components/Shared/SidebarMenu';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +7,7 @@ import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { LogOut } from 'lucide-react';
+import { LogOut, Download } from 'lucide-react';
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
 interface DashboardLayoutProps {
@@ -17,7 +17,35 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { signOut, profile } = useAuth();
   const { settings, ready } = useSchoolSettings();
-  
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+    window.addEventListener('appinstalled', () => setIsInstalled(true));
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setIsInstalled(true);
+    setDeferredPrompt(null);
+  };
+
 
   return (
     <SidebarProvider>
@@ -41,7 +69,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <h1 className="font-semibold text-sm sm:text-lg truncate">{settings?.portal_name || settings?.school_name || 'OAUSTECH Portal'}</h1>
               </a>
               
-              <div className="ml-auto flex items-center gap-1 sm:gap-4 shrink-0">
+              <div className="ml-auto flex items-center gap-1 sm:gap-3 shrink-0">
+                {deferredPrompt && !isInstalled && (
+                  <Button variant="outline" size="sm" onClick={handleInstall} className="px-2 sm:px-3 gap-1">
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">Install App</span>
+                  </Button>
+                )}
                 <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                   <AvatarImage src={profile?.profile_photo_url} />
                   <AvatarFallback className="text-xs">
