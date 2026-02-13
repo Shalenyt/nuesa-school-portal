@@ -4,13 +4,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Bell, MessageSquare, Calendar, Book, Trophy, ClipboardList, CheckCircle } from 'lucide-react';
+import { Bell, MessageSquare, Calendar, Book, Trophy, ClipboardList, CheckCircle, UserPlus, AlertCircle, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Notification {
   id: string;
-  type: 'schedule' | 'material' | 'assignment' | 'result' | 'announcement' | 'quiz' | 'attendance' | 'grade';
+  type: 'schedule' | 'material' | 'assignment' | 'result' | 'announcement' | 'quiz' | 'attendance' | 'grade' | 'user_registration' | 'submission' | 'system_alert';
   title: string;
   message: string;
   created_at: string;
@@ -28,6 +28,9 @@ const getNotificationIcon = (type: string) => {
     case 'quiz': return <Book className="h-4 w-4" />;
     case 'attendance': return <CheckCircle className="h-4 w-4" />;
     case 'grade': return <Trophy className="h-4 w-4" />;
+    case 'user_registration': return <UserPlus className="h-4 w-4" />;
+    case 'submission': return <FileText className="h-4 w-4" />;
+    case 'system_alert': return <AlertCircle className="h-4 w-4" />;
     default: return <Bell className="h-4 w-4" />;
   }
 };
