@@ -33,8 +33,8 @@ export function useSchoolSettings() {
       } else {
         setSettings({ 
           id: '', 
-          school_name: 'OAUSTECH Portal',
-          portal_name: 'OAUSTECH Portal',
+          school_name: 'UNIABUJA Portal',
+          portal_name: 'UNIABUJA Portal',
           theme_color: '#ef4444'
         });
       }
@@ -42,8 +42,8 @@ export function useSchoolSettings() {
       console.error('Error fetching school settings:', error);
       setSettings({ 
         id: '', 
-        school_name: 'OAUSTECH Portal',
-        portal_name: 'OAUSTECH Portal',
+        school_name: 'UNIABUJA Portal',
+        portal_name: 'UNIABUJA Portal',
         theme_color: '#ef4444'
       });
     } finally {

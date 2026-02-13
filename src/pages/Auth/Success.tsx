@@ -30,12 +30,12 @@ export default function Success() {
           <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4">
             <img 
               src={settings?.logo_url || oaustechLogo} 
-              alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
+              alt={`${settings?.school_name || 'UNIABUJA'} Logo`} 
               className="h-16 w-16 object-contain" 
             />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            {settings?.school_name || 'OAUSTECH Portal'}
+            {settings?.school_name || 'UNIABUJA Portal'}
           </h1>
         </div>
 

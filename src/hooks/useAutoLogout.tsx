@@ -64,5 +64,5 @@ export function useAutoLogout() {
     };
   }, [user, resetTimer]);
 
-  return { showWarning, countdown, extendSession };
+  return { showWarning, countdown, extendSession, signOut };
 }

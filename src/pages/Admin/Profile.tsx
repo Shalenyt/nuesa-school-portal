@@ -34,7 +34,7 @@ export default function AdminProfile() {
   
   // School settings state
   const [portalNameEdit, setPortalNameEdit] = useState(false);
-  const [portalName, setPortalName] = useState(settings?.portal_name || 'OAUSTECH Portal');
+  const [portalName, setPortalName] = useState(settings?.portal_name || 'UNIABUJA Portal');
   const [selectedThemeColor, setSelectedThemeColor] = useState(settings?.theme_color || '#ef4444');
   const [hasColorChanged, setHasColorChanged] = useState(false);
 
@@ -53,7 +53,7 @@ export default function AdminProfile() {
   // Update settings when they change
   useEffect(() => {
     if (settings) {
-      setPortalName(settings.portal_name || 'OAUSTECH Portal');
+      setPortalName(settings.portal_name || 'UNIABUJA Portal');
       setSelectedThemeColor(settings.theme_color || '#ef4444');
     }
   }, [settings]);

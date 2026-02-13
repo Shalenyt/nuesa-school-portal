@@ -18,7 +18,7 @@ export function DigitalStudentID() {
   return (
     <Card className="max-w-sm mx-auto overflow-hidden">
       <div className="bg-primary p-4 text-center">
-        <p className="text-primary-foreground font-bold text-lg">{settings?.school_name || 'School Portal'}</p>
+        <p className="text-primary-foreground font-bold text-lg">{settings?.school_name || 'UNIABUJA'}</p>
         <p className="text-primary-foreground/80 text-xs">Student Identification Card</p>
       </div>
       <CardContent className="p-6 space-y-4">

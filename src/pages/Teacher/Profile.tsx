@@ -214,12 +214,7 @@ export default function TeacherProfile() {
           </CardContent>
         </Card>
 
-        {/* Teacher Analytics */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <ClassAverageCard />
-          <HardestQuestions />
-        </div>
-        <AttendanceConsistency />
+        {/* Analytics moved to dedicated /teacher/analytics page */}
       </div>
     </DashboardLayout>
   );

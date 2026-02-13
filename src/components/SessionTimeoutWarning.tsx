@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Clock } from 'lucide-react';
 
 export function SessionTimeoutWarning() {
-  const { showWarning, countdown, extendSession } = useAutoLogout();
+  const { showWarning, countdown, extendSession, signOut } = useAutoLogout();
 
   if (!showWarning) return null;
 
   return (
-    <Dialog open={showWarning} onOpenChange={() => {}}>
+    <Dialog open={showWarning} onOpenChange={(open) => { if (!open) { signOut(); } }}>
       <DialogContent className="max-w-sm" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
