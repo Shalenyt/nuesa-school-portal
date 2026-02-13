@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Check, X, Users, Filter, Trash2 } from 'lucide-react';
+import { Check, X, Users, Filter, Trash2, Eye } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface Profile {
@@ -21,6 +22,7 @@ interface Profile {
 }
 
 export default function ManageUsers() {
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
@@ -218,28 +220,36 @@ export default function ManageUsers() {
                     </div>
 
                     {profile.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => updateUserStatus(profile.id, 'approved')}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => updateUserStatus(profile.id, 'rejected')}
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    )}
+                       <div className="flex gap-2">
+                         <Button
+                           size="sm"
+                           onClick={() => updateUserStatus(profile.id, 'approved')}
+                           className="bg-primary hover:bg-primary/90"
+                         >
+                           <Check className="h-4 w-4 mr-1" />
+                           Approve
+                         </Button>
+                         <Button
+                           size="sm"
+                           variant="destructive"
+                           onClick={() => updateUserStatus(profile.id, 'rejected')}
+                         >
+                           <X className="h-4 w-4 mr-1" />
+                           Reject
+                         </Button>
+                       </div>
+                     )}
 
                     {profile.status === 'approved' && (
-                      <div className="flex gap-2">
+                       <div className="flex gap-2">
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => navigate(`/admin/student-detail?id=${profile.id}`)}
+                         >
+                           <Eye className="h-4 w-4 mr-1" />
+                           View
+                         </Button>
                          <Button
                            size="sm"
                            variant="outline"
@@ -256,80 +266,80 @@ export default function ManageUsers() {
                                updateUserStatus(profile.id, 'rejected');
                              } catch (error) {
                                console.error('Failed to send suspension email:', error);
-                               updateUserStatus(profile.id, 'rejected'); // Still deactivate even if email fails
+                               updateUserStatus(profile.id, 'rejected');
                              }
                            }}
                          >
                            <X className="h-4 w-4 mr-1" />
                            Deactivate
                          </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive">
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete User Permanently</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete <strong>{profile.full_name}</strong> ({profile.email}) from the entire system. 
-                                This action cannot be undone and will free up their email and IDs for reuse.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => deleteUser(profile.id, profile.email)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete Permanently
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    )}
+                         <AlertDialog>
+                           <AlertDialogTrigger asChild>
+                             <Button size="sm" variant="destructive">
+                               <Trash2 className="h-4 w-4 mr-1" />
+                               Delete
+                             </Button>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                             <AlertDialogHeader>
+                               <AlertDialogTitle>Delete User Permanently</AlertDialogTitle>
+                               <AlertDialogDescription>
+                                 This will permanently delete <strong>{profile.full_name}</strong> ({profile.email}) from the entire system. 
+                                 This action cannot be undone and will free up their email and IDs for reuse.
+                               </AlertDialogDescription>
+                             </AlertDialogHeader>
+                             <AlertDialogFooter>
+                               <AlertDialogCancel>Cancel</AlertDialogCancel>
+                               <AlertDialogAction 
+                                 onClick={() => deleteUser(profile.id, profile.email)}
+                                 className="bg-destructive hover:bg-destructive/90"
+                               >
+                                 Delete Permanently
+                               </AlertDialogAction>
+                             </AlertDialogFooter>
+                           </AlertDialogContent>
+                         </AlertDialog>
+                       </div>
+                     )}
 
                     {profile.status === 'rejected' && (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateUserStatus(profile.id, 'approved')}
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Reactivate
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive">
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete User Permanently</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete <strong>{profile.full_name}</strong> ({profile.email}) from the entire system. 
-                                This action cannot be undone and will free up their email and IDs for reuse.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => deleteUser(profile.id, profile.email)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete Permanently
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    )}
+                       <div className="flex gap-2">
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => updateUserStatus(profile.id, 'approved')}
+                         >
+                           <Check className="h-4 w-4 mr-1" />
+                           Reactivate
+                         </Button>
+                         <AlertDialog>
+                           <AlertDialogTrigger asChild>
+                             <Button size="sm" variant="destructive">
+                               <Trash2 className="h-4 w-4 mr-1" />
+                               Delete
+                             </Button>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                             <AlertDialogHeader>
+                               <AlertDialogTitle>Delete User Permanently</AlertDialogTitle>
+                               <AlertDialogDescription>
+                                 This will permanently delete <strong>{profile.full_name}</strong> ({profile.email}) from the entire system. 
+                                 This action cannot be undone and will free up their email and IDs for reuse.
+                               </AlertDialogDescription>
+                             </AlertDialogHeader>
+                             <AlertDialogFooter>
+                               <AlertDialogCancel>Cancel</AlertDialogCancel>
+                               <AlertDialogAction 
+                                 onClick={() => deleteUser(profile.id, profile.email)}
+                                 className="bg-destructive hover:bg-destructive/90"
+                               >
+                                 Delete Permanently
+                               </AlertDialogAction>
+                             </AlertDialogFooter>
+                           </AlertDialogContent>
+                         </AlertDialog>
+                       </div>
+                     )}
                   </div>
                 ))}
               </div>
