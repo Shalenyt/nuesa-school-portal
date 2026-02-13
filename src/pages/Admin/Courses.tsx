@@ -12,11 +12,14 @@ import { toast } from '@/hooks/use-toast';
 
 export default function AdminCourses() {
   const [courses, setCourses] = useState<any[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [filterClass, setFilterClass] = useState('');
+  const [filterSubject, setFilterSubject] = useState('');
   const [newCourse, setNewCourse] = useState({
     name: '',
     description: '',
@@ -31,6 +34,21 @@ export default function AdminCourses() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [courses, filterClass, filterSubject]);
+
+  const applyFilters = () => {
+    let result = courses;
+    if (filterClass) {
+      result = result.filter(c => c.class_id === filterClass);
+    }
+    if (filterSubject) {
+      result = result.filter(c => c.subject_id === filterSubject);
+    }
+    setFilteredCourses(result);
+  };
 
   const fetchData = async () => {
     try {
@@ -140,6 +158,32 @@ export default function AdminCourses() {
           </Button>
         </div>
 
+        {/* Filters */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <Select value={filterClass} onValueChange={setFilterClass}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Levels</SelectItem>
+              {classes.map((cls) => (
+                <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterSubject} onValueChange={setFilterSubject}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Departments</SelectItem>
+              {subjects.map((subject) => (
+                <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {isCreating && (
           <Card>
             <CardHeader>
@@ -228,8 +272,8 @@ export default function AdminCourses() {
           </Card>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course) => (
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {filteredCourses.map((course) => (
             <Card key={course.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">

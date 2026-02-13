@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Settings, Camera, BookOpen } from 'lucide-react';
 import { PhotoUpload } from '@/components/Shared/PhotoUpload';
+import { DownloadAppButton } from '@/components/Shared/DownloadAppButton';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -100,11 +101,14 @@ export default function TeacherProfile() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Lecturer Profile</h1>
-          <p className="text-muted-foreground">
-            Manage your account information and view assigned courses
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Lecturer Profile</h1>
+            <p className="text-muted-foreground">
+              Manage your account information and view assigned courses
+            </p>
+          </div>
+          <DownloadAppButton />
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
