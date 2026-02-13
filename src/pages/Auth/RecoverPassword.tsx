@@ -46,11 +46,11 @@ export default function RecoverPassword() {
             <div className="flex items-center justify-center gap-3 mb-4">
               <img 
                 src={settings?.logo_url || oaustechLogo} 
-                alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
-                className="h-12 w-12 object-contain" 
-              />
+              alt={`${settings?.school_name || 'UNIABUJA'} Logo`} 
+              className="h-12 w-12 object-contain" 
+            />
               <h1 className="text-3xl font-black text-primary">
-                {settings?.portal_name || 'OAUSTECH Portal'}
+                {settings?.portal_name || 'UNIABUJA Portal'}
               </h1>
             </div>
           </div>
@@ -94,11 +94,11 @@ export default function RecoverPassword() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <img 
               src={settings?.logo_url || oaustechLogo} 
-              alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
+              alt={`${settings?.school_name || 'UNIABUJA'} Logo`} 
               className="h-12 w-12 object-contain" 
             />
               <h1 className="text-3xl font-black text-primary">
-                {settings?.portal_name || 'OAUSTECH Portal'}
+                {settings?.portal_name || 'UNIABUJA Portal'}
               </h1>
           </div>
           <p className="text-muted-foreground mt-2">Reset your password</p>

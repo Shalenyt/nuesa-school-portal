@@ -21,8 +21,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
       },
       manifest: {
-        name: 'OAUSTECH School Portal',
-        short_name: 'OAUSTECH',
+        name: 'UNIABUJA School Portal',
+        short_name: 'UNIABUJA',
         description: 'School management portal for students, teachers, and administrators',
         theme_color: '#ef4444',
         background_color: '#ffffff',

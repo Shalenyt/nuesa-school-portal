@@ -211,11 +211,11 @@ export default function ResetPassword() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <img 
               src={settings?.logo_url || oaustechLogo} 
-              alt={`${settings?.school_name || 'OAUSTECH'} Logo`} 
+              alt={`${settings?.school_name || 'UNIABUJA'} Logo`} 
               className="h-12 w-12 object-contain" 
             />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {settings?.portal_name || 'OAUSTECH Portal'}
+              {settings?.portal_name || 'UNIABUJA Portal'}
             </h1>
           </div>
           <p className="text-muted-foreground mt-2">Create a new password</p>

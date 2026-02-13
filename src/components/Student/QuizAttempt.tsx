@@ -21,10 +21,12 @@ export function QuizAttempt({ quiz, questions, onSubmit, studentId }: QuizAttemp
     quiz.duration_minutes ? quiz.duration_minutes * 60 : null
   );
   const hasAutoSubmitted = useRef(false);
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
 
   // Randomize question order per student (seeded by student+quiz id)
   const [randomizedQuestions] = useState(() => {
-    const seed = (studentId + quiz.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const seed = (studentId + quiz.id).split('').reduce((a: number, c: string) => a + c.charCodeAt(0), 0);
     const shuffled = [...questions];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = (seed * (i + 1)) % (i + 1);
@@ -33,23 +35,27 @@ export function QuizAttempt({ quiz, questions, onSubmit, studentId }: QuizAttemp
     return shuffled;
   });
 
-  const doSubmit = useCallback(async () => {
-    if (submitting || hasAutoSubmitted.current) return;
-    hasAutoSubmitted.current = true;
-    setSubmitting(true);
-    setConfirmOpen(false);
-    await onSubmit(answers, antiCheat.getDeviceFingerprint());
-    setSubmitting(false);
-  }, [answers, onSubmit, submitting]);
+  const doSubmitRef = useRef<() => Promise<void>>();
 
   const antiCheat = useAntiCheat({
     quizId: quiz.id,
     studentId,
     maxViolations: 3,
     onAutoSubmit: () => {
-      doSubmit();
+      doSubmitRef.current?.();
     },
   });
+
+  const doSubmit = useCallback(async () => {
+    if (submitting || hasAutoSubmitted.current) return;
+    hasAutoSubmitted.current = true;
+    setSubmitting(true);
+    setConfirmOpen(false);
+    await onSubmit(answersRef.current, antiCheat.getDeviceFingerprint());
+    setSubmitting(false);
+  }, [onSubmit, antiCheat, submitting]);
+
+  doSubmitRef.current = doSubmit;
 
   // Request fullscreen on start
   useEffect(() => {

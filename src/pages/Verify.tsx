@@ -91,7 +91,7 @@ export default function Verify() {
         <div className="bg-primary p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-1">
             <img src={settings?.logo_url || oaustechLogo} alt="Logo" className="h-8 w-8" />
-            <p className="text-primary-foreground font-bold text-lg">{settings?.school_name || 'OAUSTECH'}</p>
+            <p className="text-primary-foreground font-bold text-lg">{settings?.school_name || 'UNIABUJA'}</p>
           </div>
           <p className="text-primary-foreground/80 text-xs">Student Verification</p>
         </div>
@@ -139,7 +139,7 @@ export default function Verify() {
 
           <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground pt-2 border-t">
             <ShieldCheck className="h-3 w-3" />
-            <span>Verified by {settings?.portal_name || 'OAUSTECH Portal'}</span>
+            <span>Verified by {settings?.portal_name || 'UNIABUJA Portal'}</span>
           </div>
         </CardContent>
       </Card>
