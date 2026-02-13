@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Users, FileText, ClipboardList } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function TeacherCourses() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
   const [courseStats, setCourseStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
@@ -105,30 +108,39 @@ export default function TeacherCourses() {
                       </p>
                     )}
                     
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="text-lg font-semibold">{stats.enrollments}</div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex flex-col items-center h-auto py-2 gap-1 hover:bg-accent"
+                        onClick={() => navigate(`/teacher/view-students?course=${course.id}`)}
+                      >
+                        <Users className="h-4 w-4 text-primary" />
+                        <div className="text-lg font-semibold text-sm">{stats.enrollments}</div>
                         <div className="text-xs text-muted-foreground">Students</div>
-                      </div>
+                      </Button>
                       
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-accent" />
-                        </div>
-                        <div className="text-lg font-semibold">{stats.materials}</div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex flex-col items-center h-auto py-2 gap-1 hover:bg-accent"
+                        onClick={() => navigate(`/teacher/upload-materials?course=${course.id}`)}
+                      >
+                        <FileText className="h-4 w-4 text-accent" />
+                        <div className="text-lg font-semibold text-sm">{stats.materials}</div>
                         <div className="text-xs text-muted-foreground">Materials</div>
-                      </div>
+                      </Button>
                       
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-center">
-                          <ClipboardList className="h-4 w-4 text-secondary" />
-                        </div>
-                        <div className="text-lg font-semibold">{stats.assignments}</div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex flex-col items-center h-auto py-2 gap-1 hover:bg-accent"
+                        onClick={() => navigate(`/teacher/assignments?course=${course.id}`)}
+                      >
+                        <ClipboardList className="h-4 w-4 text-secondary" />
+                        <div className="text-lg font-semibold text-sm">{stats.assignments}</div>
                         <div className="text-xs text-muted-foreground">Assignments</div>
-                      </div>
+                      </Button>
                     </div>
                     
                     <div className="pt-2 border-t">

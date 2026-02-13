@@ -4,6 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, BookOpen, FileText } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +17,7 @@ export default function CourseLists() {
   const [isCreating, setIsCreating] = useState(false);
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedCourseList, setSelectedCourseList] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -245,24 +248,33 @@ export default function CourseLists() {
         )}
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {courseLists.map((courseList) => (
-            <Card key={courseList.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      {courseList.classes?.name}
-                    </CardTitle>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {courseList.subjects?.name}
+          {courseLists.map((courseList) => {
+            const courseListCourses = courseList.course_ids?.map(id => courses.find(c => c.id === id)).filter(Boolean) || [];
+            
+            return (
+              <Card 
+                key={courseList.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setSelectedCourseList({ ...courseList, courses: courseListCourses })}
+              >
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        {courseList.classes?.name}
+                      </CardTitle>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {courseList.subjects?.name}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-1">
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => deleteCourseList(courseList.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteCourseList(courseList.id);
+                      }}
                       className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     >
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,16 +282,58 @@ export default function CourseLists() {
                       </svg>
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground">
-                  {courseList.course_ids?.length || 0} courses in this list
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">
+                    {courseList.course_ids?.length || 0} courses in this list
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
+
+        {/* Course List Detail Modal */}
+        <Dialog open={!!selectedCourseList} onOpenChange={() => setSelectedCourseList(null)}>
+          <DialogContent className="max-w-2xl max-h-96 overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedCourseList?.classes?.name} - {selectedCourseList?.subjects?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {selectedCourseList?.courses && selectedCourseList.courses.length > 0 ? (
+                ['FIRST', 'SECOND'].map(semester => {
+                  const semesterCourses = selectedCourseList.courses.filter((c: any) => c.semester === semester);
+                  if (semesterCourses.length === 0) return null;
+                  
+                  return (
+                    <div key={semester} className="space-y-2">
+                      <h3 className="font-semibold">{semester} Semester</h3>
+                      <div className="space-y-2">
+                        {semesterCourses.map((course: any) => (
+                          <Card key={course.id} className="p-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className="font-medium">{course.name}</p>
+                                <p className="text-sm text-muted-foreground">{course.description}</p>
+                              </div>
+                              <div className="text-right">
+                                <Badge variant="outline">{course.credit_unit} Units</Badge>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-muted-foreground">No courses in this list.</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

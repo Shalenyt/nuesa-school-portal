@@ -10,6 +10,7 @@ import { User, Mail, Settings, Camera, BookOpen } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { DownloadAppButton } from '@/components/Shared/DownloadAppButton';
 import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 
 export default function StudentProfile() {
@@ -170,11 +171,14 @@ export default function StudentProfile() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Student Profile</h1>
-          <p className="text-muted-foreground">
-            Manage your personal information and view enrolled courses
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Student Profile</h1>
+            <p className="text-muted-foreground">
+              Manage your personal information and view enrolled courses
+            </p>
+          </div>
+          <DownloadAppButton />
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">

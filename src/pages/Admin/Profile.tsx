@@ -9,6 +9,7 @@ import { User, Mail, Settings, Camera } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { PhotoUpload } from '@/components/Shared/PhotoUpload';
+import { DownloadAppButton } from '@/components/Shared/DownloadAppButton';
 import { SchoolLogoUpload } from '@/components/Shared/SchoolLogoUpload';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { useToast } from '@/hooks/use-toast';
@@ -171,11 +172,14 @@ export default function AdminProfile() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account information
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
+            <p className="text-muted-foreground">
+              Manage your account information
+            </p>
+          </div>
+          <DownloadAppButton />
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
