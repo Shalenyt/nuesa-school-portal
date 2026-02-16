@@ -47,7 +47,7 @@ export default function AdminNotifications() {
         fetchSystemNotifications();
       })
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
 
