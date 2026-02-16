@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -34,13 +34,14 @@ interface StudentDetail {
 
 export default function StudentDetail() {
   const [searchParams] = useSearchParams();
+  const { id: paramId } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSuspend, setShowSuspend] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
 
-  const studentId = searchParams.get('id');
+  const studentId = paramId || searchParams.get('id');
 
   useEffect(() => {
     if (studentId) fetchStudent();

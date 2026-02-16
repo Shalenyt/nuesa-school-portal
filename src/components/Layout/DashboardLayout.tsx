@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarMenu } from '@/components/Shared/SidebarMenu';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +16,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const navigate = useNavigate();
   const { signOut, profile } = useAuth();
   const { settings, ready } = useSchoolSettings();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -27,7 +29,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     };
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
     }
@@ -46,6 +47,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setDeferredPrompt(null);
   };
 
+  const getProfileUrl = () => {
+    switch (profile?.role) {
+      case 'admin': return '/admin/profile';
+      case 'teacher': return '/teacher/profile';
+      case 'student': return '/student/profile';
+      default: return '/';
+    }
+  };
+
+  const getDashboardUrl = () => {
+    switch (profile?.role) {
+      case 'admin': return '/admin/dashboard';
+      case 'teacher': return '/teacher/profile';
+      case 'student': return '/student/profile';
+      default: return '/';
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -58,7 +76,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <SidebarTrigger className="shrink-0" />
               
               <a 
-                href={profile?.role === 'admin' ? '/admin/dashboard' : profile?.role === 'teacher' ? '/teacher/profile' : '/student/profile'}
+                href={getDashboardUrl()}
+                onClick={(e) => { e.preventDefault(); navigate(getDashboardUrl()); }}
                 className="flex items-center gap-2 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
               >
                 <img 
@@ -76,16 +95,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <span className="hidden sm:inline">Install App</span>
                   </Button>
                 )}
-                <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                  <AvatarImage src={profile?.profile_photo_url} />
-                  <AvatarFallback className="text-xs">
-                    {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-sm hidden sm:block">
-                  <span className="text-muted-foreground">Welcome,</span>{' '}
-                  <span className="font-medium">{profile?.full_name}</span>
-                </div>
+                {!deferredPrompt && !isInstalled && (
+                  <Button variant="ghost" size="sm" className="px-2 sm:px-3 gap-1 text-xs text-muted-foreground" onClick={() => {
+                    import('@/hooks/use-toast').then(({ toast }) => toast({ title: "Install App", description: "Use your browser menu → 'Add to Home Screen' to install." }));
+                  }}>
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">Install</span>
+                  </Button>
+                )}
+                <button 
+                  onClick={() => navigate(getProfileUrl())}
+                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                    <AvatarImage src={profile?.profile_photo_url} />
+                    <AvatarFallback className="text-xs">
+                      {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-sm hidden sm:block text-left">
+                    <span className="text-muted-foreground">Welcome,</span>{' '}
+                    <span className="font-medium">{profile?.full_name}</span>
+                  </div>
+                </button>
                 
                 <ThemeToggle />
                 

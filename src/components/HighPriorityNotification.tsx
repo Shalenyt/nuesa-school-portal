@@ -14,22 +14,33 @@ export function HighPriorityNotification() {
   }, [profile]);
 
   const fetchUrgentAnnouncements = async () => {
-    // Fetch unread urgent announcements
+    if (!profile) return;
+
+    // Fetch urgent announcements that the user has NOT read
+    const { data: readIds } = await (supabase as any)
+      .from('announcement_reads')
+      .select('announcement_id')
+      .eq('user_id', profile.id);
+
+    const readSet = new Set((readIds || []).map((r: any) => r.announcement_id));
+
     const { data } = await supabase
       .from('announcements')
       .select('*')
       .eq('type', 'urgent')
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(10);
 
-    if (data) setAnnouncement(data);
+    const unread = (data || []).find((a: any) => !readSet.has(a.id));
+    if (unread) setAnnouncement(unread);
   };
 
   const markAsRead = async () => {
-    if (!announcement) return;
-    // In a real app, you'd track announcement reads per user
-    // For now, we just close the modal
+    if (!announcement || !profile) return;
+    await (supabase as any).from('announcement_reads').insert({
+      announcement_id: announcement.id,
+      user_id: profile.id,
+    });
     setAnnouncement(null);
   };
 

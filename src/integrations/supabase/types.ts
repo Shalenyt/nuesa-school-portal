@@ -14,14 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcement_reads: {
+        Row: {
+          announcement_id: string
+          id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          id?: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_reads_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           author_id: string
           content: string
           course_id: string | null
           created_at: string
+          department_id: string | null
           id: string
           is_pinned: boolean | null
+          level_id: string | null
           title: string
           type: Database["public"]["Enums"]["announcement_type"]
           updated_at: string
@@ -31,8 +69,10 @@ export type Database = {
           content: string
           course_id?: string | null
           created_at?: string
+          department_id?: string | null
           id?: string
           is_pinned?: boolean | null
+          level_id?: string | null
           title: string
           type?: Database["public"]["Enums"]["announcement_type"]
           updated_at?: string
@@ -42,8 +82,10 @@ export type Database = {
           content?: string
           course_id?: string | null
           created_at?: string
+          department_id?: string | null
           id?: string
           is_pinned?: boolean | null
+          level_id?: string | null
           title?: string
           type?: Database["public"]["Enums"]["announcement_type"]
           updated_at?: string
@@ -61,6 +103,20 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
             referencedColumns: ["id"]
           },
         ]
@@ -545,6 +601,150 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_records: {
+        Row: {
+          amount_paid: number
+          id: string
+          paid_at: string
+          payment_id: string
+          payment_method: string | null
+          receipt_number: string
+          reference: string
+          status: string
+          student_id: string
+          verified_by: string | null
+        }
+        Insert: {
+          amount_paid: number
+          id?: string
+          paid_at?: string
+          payment_id: string
+          payment_method?: string | null
+          receipt_number: string
+          reference: string
+          status?: string
+          student_id: string
+          verified_by?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          id?: string
+          paid_at?: string
+          payment_id?: string
+          payment_method?: string | null
+          receipt_number?: string
+          reference?: string
+          status?: string
+          student_id?: string
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_records_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_records_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          allow_partial: boolean | null
+          amount: number
+          course_id: string | null
+          created_at: string
+          created_by: string
+          department_id: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          late_penalty: number | null
+          level_id: string | null
+          payment_type: string
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          allow_partial?: boolean | null
+          amount: number
+          course_id?: string | null
+          created_at?: string
+          created_by: string
+          department_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          late_penalty?: number | null
+          level_id?: string | null
+          payment_type?: string
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          allow_partial?: boolean | null
+          amount?: number
+          course_id?: string | null
+          created_at?: string
+          created_by?: string
+          department_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          late_penalty?: number | null
+          level_id?: string | null
+          payment_type?: string
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
             referencedColumns: ["id"]
           },
         ]

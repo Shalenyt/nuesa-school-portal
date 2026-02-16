@@ -19,6 +19,7 @@ const adminMenuItems = [
   { title: "Announcements", url: "/admin/announcements", icon: MessageSquare },
   { title: "Courses", url: "/admin/courses", icon: BookOpen },
   { title: "Course Lists", url: "/admin/course-lists", icon: FileText },
+  { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Semester", url: "/admin/semester-settings", icon: Calendar },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Profile", url: "/admin/profile", icon: Settings }
@@ -50,6 +51,7 @@ const studentMenuItems = [
   { title: "Timetable", url: "/student/timetable", icon: Calendar },
   { title: "Courses", url: "/student/courses", icon: BookOpen },
   { title: "View Results", url: "/student/view-results", icon: GraduationCap },
+  { title: "Payments", url: "/student/payments", icon: CreditCard },
   { title: "Student ID", url: "/student/student-id", icon: QrCode },
   { title: "Notifications", url: "/student/notifications", icon: Bell }
 ];
