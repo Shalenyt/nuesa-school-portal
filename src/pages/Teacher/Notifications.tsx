@@ -47,7 +47,7 @@ export default function TeacherNotifications() {
         fetchTeacherNotifications();
       })
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
 
