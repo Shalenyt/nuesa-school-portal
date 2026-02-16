@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, CheckCircle, XCircle, Clock, ShieldCheck } from 'lucide-react';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
@@ -10,33 +9,35 @@ import oaustechLogo from '@/assets/oaustech-logo.png';
 
 export default function Verify() {
   const [searchParams] = useSearchParams();
+  const { id: paramId } = useParams();
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { settings } = useSchoolSettings();
 
   useEffect(() => {
-    const id = searchParams.get('id');
+    const id = paramId || searchParams.get('id');
     if (!id) {
       setError('No student ID provided');
       setLoading(false);
       return;
     }
     fetchStudent(id);
-  }, [searchParams]);
+  }, [searchParams, paramId]);
 
   const fetchStudent = async (id: string) => {
     try {
-      const { data, error: fetchError } = await supabase
+      // Use anon access - RLS policy allows public read for approved students
+      const { data, error: fetchError } = await (supabase as any)
         .from('profiles')
-        .select('*, subjects:department_id(name, code), classes:level_id(name)')
+        .select('id, full_name, email, student_id, status, profile_photo_url, role, department_id, level_id, subjects:department_id(name, code), classes:level_id(name)')
         .eq('id', id)
         .eq('role', 'student')
         .maybeSingle();
 
       if (fetchError) throw fetchError;
       if (!data) {
-        setError('Student not found');
+        setError('Student not found or not verified');
         return;
       }
       setStudent(data);
@@ -121,11 +122,11 @@ export default function Verify() {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="space-y-1">
               <p className="text-muted-foreground text-xs">Department</p>
-              <p className="font-medium">{(student as any).subjects?.name || 'N/A'}</p>
+              <p className="font-medium">{student.subjects?.name || 'N/A'}</p>
             </div>
             <div className="space-y-1">
               <p className="text-muted-foreground text-xs">Level</p>
-              <p className="font-medium">{(student as any).classes?.name || 'N/A'}</p>
+              <p className="font-medium">{student.classes?.name || 'N/A'}</p>
             </div>
             <div className="space-y-1">
               <p className="text-muted-foreground text-xs">Email</p>

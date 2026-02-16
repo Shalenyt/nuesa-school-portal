@@ -53,6 +53,10 @@ export function QuizAttempt({ quiz, questions, onSubmit, studentId }: QuizAttemp
     setConfirmOpen(false);
     await onSubmit(answersRef.current, antiCheat.getDeviceFingerprint());
     setSubmitting(false);
+    // Exit fullscreen after quiz submission
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
   }, [onSubmit, antiCheat, submitting]);
 
   doSubmitRef.current = doSubmit;

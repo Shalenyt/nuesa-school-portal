@@ -11,7 +11,7 @@ interface TeacherNotification {
   id: string;
   title: string;
   message: string;
-  type: 'submission' | 'system_alert';
+  type: string;
   created_at: string;
   read: boolean;
 }
@@ -21,25 +21,6 @@ export default function TeacherNotifications() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTeacherNotifications = async () => {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .in('type', ['submission', 'system_alert'])
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      setTeacherNotifications((data || []).map(n => ({
-        id: n.id,
-        title: n.title,
-        message: n.message,
-        type: n.type as any,
-        created_at: n.created_at,
-        read: n.is_read || false,
-      })));
-      setLoading(false);
-    };
-
     fetchTeacherNotifications();
     const channel = supabase
       .channel('teacher-notifications')
@@ -50,6 +31,24 @@ export default function TeacherNotifications() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const fetchTeacherNotifications = async () => {
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .in('type', ['submission', 'system_alert'])
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    setTeacherNotifications((data || []).map(n => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      type: n.type,
+      created_at: n.created_at,
+      read: n.is_read || false,
+    })));
+    setLoading(false);
+  };
 
   const markAsRead = async (id: string) => {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id);
@@ -74,7 +73,7 @@ export default function TeacherNotifications() {
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all">All Notifications</TabsTrigger>
+            <TabsTrigger value="all">Announcements & Notifications</TabsTrigger>
             <TabsTrigger value="activity">
               Activity Alerts
               {unreadCount > 0 && <Badge variant="destructive" className="ml-2">{unreadCount}</Badge>}
