@@ -23,6 +23,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    // Check for globally captured prompt
+    const globalPrompt = (window as any).__pwaInstallPrompt;
+    if (globalPrompt) {
+      setDeferredPrompt(globalPrompt);
+      (window as any).__pwaInstallPrompt = null;
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -97,7 +104,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 )}
                 {!deferredPrompt && !isInstalled && (
                   <Button variant="ghost" size="sm" className="px-2 sm:px-3 gap-1 text-xs text-muted-foreground" onClick={() => {
-                    import('@/hooks/use-toast').then(({ toast }) => toast({ title: "Install App", description: "Use your browser menu → 'Add to Home Screen' to install." }));
+                    // Try to get a globally captured prompt first
+                    const globalPrompt = (window as any).__pwaInstallPrompt;
+                    if (globalPrompt) {
+                      setDeferredPrompt(globalPrompt);
+                      (window as any).__pwaInstallPrompt = null;
+                      globalPrompt.prompt();
+                      globalPrompt.userChoice.then((choice: any) => {
+                        if (choice.outcome === 'accepted') setIsInstalled(true);
+                        setDeferredPrompt(null);
+                      });
+                    } else {
+                      // For browsers that don't support beforeinstallprompt (iOS Safari etc.)
+                      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                      const message = isIOS || isSafari
+                        ? "Tap the Share button (↑) at the bottom of Safari, then tap 'Add to Home Screen'"
+                        : "Open your browser menu (⋮) and tap 'Install App' or 'Add to Home Screen'";
+                      import('@/hooks/use-toast').then(({ toast }) => toast({ title: "Install App", description: message }));
+                    }
                   }}>
                     <Download className="h-4 w-4" />
                     <span className="hidden sm:inline">Install</span>

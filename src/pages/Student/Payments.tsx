@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CreditCard, CheckCircle, Clock, AlertTriangle, Download, QrCode } from 'lucide-react';
+import { CreditCard, CheckCircle, Clock, AlertTriangle, Download } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { toast } from '@/hooks/use-toast';
@@ -18,9 +19,21 @@ export default function StudentPayments() {
   const [myRecords, setMyRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) fetchPayments();
+  }, [profile]);
+
+  // Handle Paystack callback
+  useEffect(() => {
+    const [searchParams] = [new URLSearchParams(window.location.search)];
+    const reference = searchParams.get('reference') || searchParams.get('trxref');
+    if (reference && profile) {
+      verifyPayment(reference);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, [profile]);
 
   const fetchPayments = async () => {
@@ -30,7 +43,6 @@ export default function StudentPayments() {
         (supabase as any).from('payment_records').select('*').eq('student_id', profile?.id),
       ]);
 
-      // Filter payments relevant to student
       const allPayments = (paymentsRes.data || []).filter((p: any) => {
         if (p.visibility === 'all') return true;
         if (p.department_id && (profile as any)?.department_id !== p.department_id) return false;
@@ -51,41 +63,49 @@ export default function StudentPayments() {
     return { status: 'pending', record: null };
   };
 
-  const handleMarkAsPaid = async (payment: any) => {
-    // Generate receipt
-    const receiptNumber = `RCT-${Date.now().toString(36).toUpperCase()}`;
-    const reference = `REF-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-    
+  const handlePayNow = async (payment: any) => {
+    setPayingId(payment.id);
     try {
-      const { error } = await (supabase as any).from('payment_records').insert({
-        payment_id: payment.id,
-        student_id: profile?.id,
-        amount_paid: payment.amount,
-        reference,
-        receipt_number: receiptNumber,
-        payment_method: 'manual',
-        status: 'paid',
+      const callbackUrl = `${window.location.origin}/student/payments`;
+      const { data, error } = await supabase.functions.invoke('paystack-initialize', {
+        body: { payment_id: payment.id, callback_url: callbackUrl },
       });
-      if (error) throw error;
-      toast({ title: "Payment recorded", description: "Your payment has been recorded successfully." });
+
+      if (error) throw new Error(error.message || 'Failed to initialize payment');
+      if (data?.error) throw new Error(data.error);
+
+      // Redirect to Paystack checkout
+      if (data?.authorization_url) {
+        window.location.href = data.authorization_url;
+      }
+    } catch (error: any) {
+      console.error('Payment init error:', error);
+      toast({ title: "Payment Error", description: error.message || 'Could not start payment', variant: "destructive" });
+    } finally {
+      setPayingId(null);
+    }
+  };
+
+  const verifyPayment = async (reference: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('paystack-verify', {
+        body: { reference },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: "Payment Successful!", description: `Receipt: ${data.receipt_number}` });
       fetchPayments();
     } catch (error: any) {
-      if (error.message?.includes('duplicate')) {
-        toast({ title: "Already paid", description: "You have already made this payment.", variant: "destructive" });
-      } else {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      }
+      console.error('Verify error:', error);
+      toast({ title: "Verification Issue", description: error.message, variant: "destructive" });
     }
   };
 
   const viewReceipt = (payment: any) => {
     const { record } = getPaymentStatus(payment);
     if (record) setSelectedReceipt({ ...record, paymentTitle: payment.title, paymentAmount: payment.amount });
-  };
-
-  const downloadReceipt = () => {
-    if (!selectedReceipt) return;
-    window.print();
   };
 
   const verifyUrl = selectedReceipt ? `${window.location.origin}/verify/payment/${selectedReceipt.id}` : '';
@@ -100,7 +120,6 @@ export default function StudentPayments() {
 
         {loading ? <div className="text-center py-8">Loading payments...</div> : (
           <>
-            {/* Summary */}
             <div className="grid gap-4 md:grid-cols-3">
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-sm">Total Due</CardTitle></CardHeader>
@@ -116,7 +135,6 @@ export default function StudentPayments() {
               </Card>
             </div>
 
-            {/* Payment List */}
             <div className="space-y-4">
               {payments.length === 0 ? (
                 <Card><CardContent className="pt-6 text-center text-muted-foreground">No payments assigned to you.</CardContent></Card>
@@ -152,8 +170,8 @@ export default function StudentPayments() {
                               <Download className="h-4 w-4 mr-1" /> Receipt
                             </Button>
                           ) : (
-                            <Button size="sm" onClick={() => handleMarkAsPaid(payment)}>
-                              Pay Now
+                            <Button size="sm" onClick={() => handlePayNow(payment)} disabled={payingId === payment.id}>
+                              {payingId === payment.id ? 'Redirecting...' : 'Pay Now'}
                             </Button>
                           )}
                         </div>
@@ -176,7 +194,7 @@ export default function StudentPayments() {
               <div className="space-y-4 print:text-black" id="receipt">
                 <div className="text-center border-b pb-4">
                   <h2 className="text-lg font-bold">{settings?.school_name || 'UNIABUJA'}</h2>
-                  <p className="text-xs text-muted-foreground">NUESA - Faculty Dues Receipt</p>
+                  <p className="text-xs text-muted-foreground">NUESA - Payment Receipt</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div><span className="text-muted-foreground">Receipt No:</span></div>
@@ -192,7 +210,7 @@ export default function StudentPayments() {
                   <div><span className="text-muted-foreground">Date:</span></div>
                   <div className="font-medium">{new Date(selectedReceipt.paid_at).toLocaleDateString()}</div>
                   <div><span className="text-muted-foreground">Method:</span></div>
-                  <div className="font-medium">{selectedReceipt.payment_method}</div>
+                  <div className="font-medium capitalize">{selectedReceipt.payment_method}</div>
                   <div><span className="text-muted-foreground">Reference:</span></div>
                   <div className="font-medium">{selectedReceipt.reference}</div>
                 </div>
@@ -200,7 +218,7 @@ export default function StudentPayments() {
                   <QRCodeSVG value={verifyUrl} size={100} level="M" includeMargin />
                 </div>
                 <p className="text-center text-[10px] text-muted-foreground">Scan to verify this receipt</p>
-                <Button className="w-full print:hidden" onClick={downloadReceipt}>
+                <Button className="w-full print:hidden" onClick={() => window.print()}>
                   <Download className="h-4 w-4 mr-2" /> Print Receipt
                 </Button>
               </div>

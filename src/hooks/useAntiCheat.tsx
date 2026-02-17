@@ -14,14 +14,19 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
   const violationCountRef = useRef(0);
   const hasAutoSubmitted = useRef(false);
   const sessionId = useRef(crypto.randomUUID());
+  const lastViolationTime = useRef(0);
 
   const logViolation = useCallback(async (type: string, details: Record<string, any> = {}) => {
     if (hasAutoSubmitted.current) return;
 
-    // Only count tab_switch and focus_loss as strike violations
     const isStrikeViolation = type === 'tab_switch' || type === 'focus_loss';
-    
+
+    // Debounce strike violations - prevent double counting from blur+visibility firing together
     if (isStrikeViolation) {
+      const now = Date.now();
+      if (now - lastViolationTime.current < 1000) return; // ignore if within 1s of last strike
+      lastViolationTime.current = now;
+
       violationCountRef.current += 1;
       setViolations(violationCountRef.current);
     }
@@ -48,38 +53,28 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
   }, [quizId, studentId, maxViolations, onAutoSubmit]);
 
   useEffect(() => {
-    // Tab visibility change
     const handleVisibility = () => {
       if (document.hidden) {
         logViolation('tab_switch');
       }
     };
 
-    // Window blur
-    const handleBlur = () => {
-      logViolation('focus_loss');
-    };
-
-    // Copy prevention
+    // Only use visibilitychange - blur fires too aggressively and causes double counts
     const handleCopy = (e: ClipboardEvent) => {
       e.preventDefault();
       logViolation('copy_attempt');
     };
 
-    // Context menu prevention
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
       logViolation('copy_attempt', { method: 'context_menu' });
     };
 
-    // Text selection prevention
     const handleSelectStart = (e: Event) => {
       e.preventDefault();
     };
 
-    // Keyboard shortcuts prevention
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent Ctrl+C, Ctrl+U, Ctrl+S, Ctrl+P, PrintScreen
       if (
         (e.ctrlKey && ['c', 'u', 's', 'p'].includes(e.key.toLowerCase())) ||
         e.key === 'PrintScreen' ||
@@ -90,7 +85,6 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
       }
     };
 
-    // Fullscreen exit detection
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
         logViolation('fullscreen_exit');
@@ -98,14 +92,13 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('blur', handleBlur);
     document.addEventListener('copy', handleCopy);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('selectstart', handleSelectStart);
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
-    // Log device info at start
+    // Log device info at start (non-strike)
     const deviceInfo = {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
@@ -115,13 +108,12 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
       sessionId: sessionId.current,
     };
     logViolation('quiz_start', deviceInfo);
-    // Reset violations since quiz_start shouldn't count
+    // Reset since quiz_start is not a strike
     violationCountRef.current = 0;
     setViolations(0);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('blur', handleBlur);
       document.removeEventListener('copy', handleCopy);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('selectstart', handleSelectStart);
