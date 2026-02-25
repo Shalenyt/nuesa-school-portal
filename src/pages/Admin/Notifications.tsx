@@ -5,7 +5,8 @@ import { NotificationContent } from '@/components/Student/NotificationContent';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, AlertCircle } from 'lucide-react';
+import { UserPlus, AlertCircle, ShieldCheck, Bell } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SystemNotification {
   id: string;
@@ -17,29 +18,30 @@ interface SystemNotification {
 }
 
 export default function AdminNotifications() {
-  const [systemNotifications, setSystemNotifications] = useState<SystemNotification[]>([]);
+  const { profile } = useAuth();
+  const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSystemNotifications();
+    if (profile) fetchNotifications();
     const channel = supabase
-      .channel('admin-system-notifications')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `type=in.(user_registration,system_alert)` }, () => {
-        fetchSystemNotifications();
+      .channel('admin-notifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+        if (profile) fetchNotifications();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [profile]);
 
-  const fetchSystemNotifications = async () => {
+  const fetchNotifications = async () => {
     const { data } = await supabase
       .from('notifications')
       .select('*')
-      .in('type', ['user_registration', 'system_alert'])
+      .eq('user_id', profile!.id)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(50);
 
-    setSystemNotifications((data || []).map(n => ({
+    setNotifications((data || []).map(n => ({
       id: n.id,
       title: n.title,
       message: n.message,
@@ -52,14 +54,18 @@ export default function AdminNotifications() {
 
   const markAsRead = async (id: string) => {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id);
-    setSystemNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
   const getIcon = (type: string) => {
-    return type === 'user_registration' ? <UserPlus className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />;
+    switch (type) {
+      case 'user_registration': return <UserPlus className="h-4 w-4" />;
+      case 'system_alert': return <ShieldCheck className="h-4 w-4" />;
+      default: return <Bell className="h-4 w-4" />;
+    }
   };
 
-  const unreadCount = systemNotifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <DashboardLayout>
@@ -67,30 +73,30 @@ export default function AdminNotifications() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Notifications</h1>
           <p className="text-muted-foreground text-sm">
-            View announcements, system alerts, and user registration notifications
+            View announcements and system notifications
           </p>
         </div>
 
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs defaultValue="announcements" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all">Announcements & Notifications</TabsTrigger>
-            <TabsTrigger value="system">
-              System Alerts
+            <TabsTrigger value="announcements">Announcements</TabsTrigger>
+            <TabsTrigger value="notifications">
+              Notifications
               {unreadCount > 0 && <Badge variant="destructive" className="ml-2">{unreadCount}</Badge>}
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="all">
+          <TabsContent value="announcements">
             <NotificationContent />
           </TabsContent>
-          <TabsContent value="system">
+          <TabsContent value="notifications">
             {loading ? <div className="text-center">Loading...</div> : (
               <div className="space-y-4">
-                {systemNotifications.length === 0 ? (
+                {notifications.length === 0 ? (
                   <Card>
-                    <CardContent className="pt-6 text-center text-muted-foreground">No system notifications</CardContent>
+                    <CardContent className="pt-6 text-center text-muted-foreground">No notifications</CardContent>
                   </Card>
                 ) : (
-                  systemNotifications.map(n => (
+                  notifications.map(n => (
                     <Card key={n.id} className={`cursor-pointer hover:bg-muted/50 ${!n.read ? 'border-primary' : ''}`}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
@@ -102,6 +108,7 @@ export default function AdminNotifications() {
                                 {!n.read && <Badge variant="destructive" className="text-[10px]">New</Badge>}
                               </CardTitle>
                               <p className="text-sm text-muted-foreground mt-1">{n.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
                             </div>
                           </div>
                           {!n.read && <button onClick={() => markAsRead(n.id)} className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded">Mark as read</button>}

@@ -9,9 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CreditCard, Plus, DollarSign, Users, TrendingUp, Download, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { CreditCard, Plus, Download, Upload } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -24,6 +23,9 @@ export default function AdminPayments() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [showSignatureUpload, setShowSignatureUpload] = useState(false);
+  const [signatureType, setSignatureType] = useState<'president' | 'financial_secretary'>('president');
+  const [uploadingSignature, setUploadingSignature] = useState(false);
   const [newPayment, setNewPayment] = useState({
     title: '', description: '', amount: '', payment_type: 'general',
     department_id: '', level_id: '', due_date: '', late_penalty: '0',
@@ -74,12 +76,33 @@ export default function AdminPayments() {
         created_by: profile?.id,
       });
       if (error) throw error;
-      toast({ title: "Payment created", description: "New payment has been created." });
+      toast({ title: "Payment created" });
       setIsCreating(false);
       setNewPayment({ title: '', description: '', amount: '', payment_type: 'general', department_id: '', level_id: '', due_date: '', late_penalty: '0', allow_partial: false, visibility: 'all' });
       fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingSignature(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `signatures/${signatureType}_${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('school-assets').upload(path, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('school-assets').getPublicUrl(path);
+      const column = signatureType === 'president' ? 'president_signature_url' : 'financial_secretary_signature_url';
+      await (supabase as any).from('school_settings').update({ [column]: urlData.publicUrl }).eq('singleton', true);
+      toast({ title: "Signature uploaded", description: `${signatureType === 'president' ? 'President' : 'Financial Secretary'} signature updated.` });
+      setShowSignatureUpload(false);
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingSignature(false);
     }
   };
 
@@ -109,14 +132,19 @@ export default function AdminPayments() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Payments</h1>
             <p className="text-muted-foreground">Manage dues, fees, and payment tracking</p>
           </div>
-          <Button onClick={() => setIsCreating(true)}>
-            <Plus className="h-4 w-4 mr-2" /> New Payment
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowSignatureUpload(true)}>
+              <Upload className="h-4 w-4 mr-2" /> Upload Signature
+            </Button>
+            <Button onClick={() => setIsCreating(true)}>
+              <Plus className="h-4 w-4 mr-2" /> New Payment
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -140,7 +168,7 @@ export default function AdminPayments() {
           <Card>
             <CardHeader><CardTitle>Create New Payment</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <Input placeholder="Payment Title (e.g. Faculty Dues)" value={newPayment.title} onChange={(e) => setNewPayment(p => ({ ...p, title: e.target.value }))} />
+              <Input placeholder="Payment Title" value={newPayment.title} onChange={(e) => setNewPayment(p => ({ ...p, title: e.target.value }))} />
               <Textarea placeholder="Description" value={newPayment.description} onChange={(e) => setNewPayment(p => ({ ...p, description: e.target.value }))} rows={3} />
               <div className="grid gap-4 md:grid-cols-3">
                 <Input placeholder="Amount (₦)" type="number" value={newPayment.amount} onChange={(e) => setNewPayment(p => ({ ...p, amount: e.target.value }))} />
@@ -224,7 +252,6 @@ export default function AdminPayments() {
               <div className="flex gap-2">
                 <Badge>₦{parseFloat(selectedPayment?.amount || 0).toLocaleString()}</Badge>
                 <Badge variant="secondary">{selectedPayment?.payment_type}</Badge>
-                {selectedPayment?.due_date && <Badge variant="outline">Due: {new Date(selectedPayment.due_date).toLocaleDateString()}</Badge>}
               </div>
               <div className="flex justify-between items-center">
                 <p className="text-sm font-medium">{paymentRecords.length} payment(s) received</p>
@@ -250,6 +277,24 @@ export default function AdminPayments() {
                   ))}
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Signature Upload Dialog */}
+        <Dialog open={showSignatureUpload} onOpenChange={setShowSignatureUpload}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle>Upload Signature</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <Select value={signatureType} onValueChange={(v: any) => setSignatureType(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="president">President Signature</SelectItem>
+                  <SelectItem value="financial_secretary">Financial Secretary Signature</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input type="file" accept="image/*" onChange={handleSignatureUpload} disabled={uploadingSignature} />
+              {uploadingSignature && <p className="text-sm text-muted-foreground">Uploading...</p>}
             </div>
           </DialogContent>
         </Dialog>

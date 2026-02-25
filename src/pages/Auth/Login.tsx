@@ -66,11 +66,11 @@ export default function Login() {
           <Link to="/" className="flex flex-col items-center gap-2 no-underline hover:opacity-80 transition-opacity">
             <img 
               src={settings?.logo_url || oaustechLogo} 
-              alt={`${settings?.school_name || 'UNIABUJA'} Logo`} 
+              alt={`${settings?.school_name || 'NUESA'} Logo`} 
               className="h-16 w-16 object-contain" 
             />
             <h1 className="text-3xl font-black text-primary">
-              {settings?.portal_name || 'UNIABUJA Portal'}
+              {settings?.portal_name || 'NUESA Portal'}
             </h1>
           </Link>
           <p className="text-muted-foreground mt-2">Sign in to your account</p>

@@ -27,20 +27,35 @@ export default function Verify() {
 
   const fetchStudent = async (id: string) => {
     try {
-      // Use anon access - RLS policy allows public read for approved students
-      const { data, error: fetchError } = await (supabase as any)
+      // First try by UUID (from QR code)
+      const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, full_name, email, student_id, status, profile_photo_url, role, department_id, level_id, subjects:department_id(name, code), classes:level_id(name)')
+        .select('id, full_name, student_id, profile_photo_url, status, role, department_id, level_id, subjects:department_id(name), classes:level_id(name)')
         .eq('id', id)
         .eq('role', 'student')
         .maybeSingle();
 
-      if (fetchError) throw fetchError;
-      if (!data) {
-        setError('Student not found or not verified');
+      if (profileData) {
+        setStudent(profileData);
         return;
       }
-      setStudent(data);
+
+      // Fallback: try by matric number using the secure RPC function
+      const { data: rpcData } = await supabase.rpc('verify_student_public', { student_matric: id });
+      if (rpcData && rpcData.length > 0) {
+        const s = rpcData[0];
+        setStudent({
+          full_name: s.full_name,
+          student_id: s.student_id,
+          profile_photo_url: s.profile_photo_url,
+          status: s.status,
+          subjects: { name: s.department_name },
+          classes: { name: s.level_name },
+        });
+        return;
+      }
+
+      setError('Student not found or not verified');
     } catch (err: any) {
       setError(err.message || 'Failed to verify student');
     } finally {
@@ -51,13 +66,13 @@ export default function Verify() {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'approved':
-        return { label: 'Active', icon: CheckCircle, variant: 'default' as const, color: 'text-green-600' };
+        return { label: 'Active', icon: CheckCircle, color: 'text-green-600' };
       case 'pending':
-        return { label: 'Pending', icon: Clock, variant: 'secondary' as const, color: 'text-yellow-600' };
+        return { label: 'Pending', icon: Clock, color: 'text-yellow-600' };
       case 'rejected':
-        return { label: 'Inactive', icon: XCircle, variant: 'destructive' as const, color: 'text-red-600' };
+        return { label: 'Inactive', icon: XCircle, color: 'text-red-600' };
       default:
-        return { label: status, icon: Clock, variant: 'secondary' as const, color: 'text-muted-foreground' };
+        return { label: status, icon: Clock, color: 'text-muted-foreground' };
     }
   };
 
@@ -92,7 +107,7 @@ export default function Verify() {
         <div className="bg-primary p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-1">
             <img src={settings?.logo_url || oaustechLogo} alt="Logo" className="h-8 w-8" />
-            <p className="text-primary-foreground font-bold text-lg">{settings?.school_name || 'UNIABUJA'}</p>
+            <p className="text-primary-foreground font-bold text-lg">{settings?.school_name || 'NUESA'}</p>
           </div>
           <p className="text-primary-foreground/80 text-xs">Student Verification</p>
         </div>
@@ -128,11 +143,7 @@ export default function Verify() {
               <p className="text-muted-foreground text-xs">Level</p>
               <p className="font-medium">{student.classes?.name || 'N/A'}</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-muted-foreground text-xs">Email</p>
-              <p className="font-medium truncate">{student.email}</p>
-            </div>
-            <div className="space-y-1">
+            <div className="col-span-2 space-y-1">
               <p className="text-muted-foreground text-xs">Verified At</p>
               <p className="font-medium">{new Date().toLocaleString()}</p>
             </div>
@@ -140,7 +151,7 @@ export default function Verify() {
 
           <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground pt-2 border-t">
             <ShieldCheck className="h-3 w-3" />
-            <span>Verified by {settings?.portal_name || 'UNIABUJA Portal'}</span>
+            <span>Verified by {settings?.portal_name || 'NUESA Portal'}</span>
           </div>
         </CardContent>
       </Card>

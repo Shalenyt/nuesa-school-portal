@@ -1,28 +1,61 @@
 import { useState, useEffect } from 'react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useAuth } from '@/hooks/useAuth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
 
+const STORAGE_KEY = 'notification_permission_state';
+const DENIED_RETRY_DAYS = 5;
+
 export function PushNotificationPrompt() {
   const { permission, supported, requestPermission } = usePushNotifications();
+  const { profile } = useAuth();
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
-    if (!supported) return;
-    if (permission !== 'default') return;
+    if (!supported || !profile) return;
     
-    // Show prompt after 2 seconds for any user who hasn't granted/denied yet
-    const timer = setTimeout(() => setShowPrompt(true), 2000);
+    // Already granted or denied at browser level
+    if (permission === 'granted') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ status: 'granted', timestamp: Date.now() }));
+      return;
+    }
+
+    if (permission === 'denied') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ status: 'denied', timestamp: Date.now() }));
+      return;
+    }
+
+    // permission === 'default' - check localStorage
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.status === 'granted') return; // Already granted
+        if (parsed.status === 'denied' || parsed.status === 'dismissed') {
+          const daysSince = (Date.now() - parsed.timestamp) / (1000 * 60 * 60 * 24);
+          if (daysSince < DENIED_RETRY_DAYS) return; // Wait before asking again
+        }
+      } catch {}
+    }
+
+    // Show prompt after delay
+    const timer = setTimeout(() => setShowPrompt(true), 3000);
     return () => clearTimeout(timer);
-  }, [supported, permission]);
+  }, [supported, permission, profile]);
 
   const handleAllow = async () => {
-    await requestPermission();
+    const granted = await requestPermission();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
+      status: granted ? 'granted' : 'denied', 
+      timestamp: Date.now() 
+    }));
     setShowPrompt(false);
   };
 
   const handleDismiss = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ status: 'dismissed', timestamp: Date.now() }));
     setShowPrompt(false);
   };
 

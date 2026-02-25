@@ -33,6 +33,7 @@ import UserManagement from "./pages/Admin/UserManagement";
 import SemesterSettings from "./pages/Admin/SemesterSettings";
 import AdminStudentDetail from "./pages/Admin/StudentDetail";
 import AdminPayments from "./pages/Admin/Payments";
+import AdminVoting from "./pages/Admin/Voting";
 
 // Teacher pages
 import TeacherProfile from "./pages/Teacher/Profile";
@@ -62,6 +63,7 @@ import StudentQuizzes from "./pages/Student/Quizzes";
 import StudentID from "./pages/Student/StudentID";
 import StudentAnalytics from "./pages/Student/Analytics";
 import StudentPayments from "./pages/Student/Payments";
+import StudentVoting from "./pages/Student/Voting";
 
 import Verify from "./pages/Verify";
 import VerifyPayment from "./pages/VerifyPayment";
@@ -108,6 +110,7 @@ function AppRoutes() {
       <Route path="/admin/student-detail" element={<ProtectedRoute allowedRoles={['admin']}><AdminStudentDetail /></ProtectedRoute>} />
       <Route path="/admin/students/:id" element={<ProtectedRoute allowedRoles={['admin']}><AdminStudentDetail /></ProtectedRoute>} />
       <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['admin']}><AdminPayments /></ProtectedRoute>} />
+      <Route path="/admin/voting" element={<ProtectedRoute allowedRoles={['admin']}><AdminVoting /></ProtectedRoute>} />
       
       {/* Teacher Routes */}
       <Route path="/teacher/profile" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherProfile /></ProtectedRoute>} />
@@ -138,6 +141,7 @@ function AppRoutes() {
       <Route path="/student/student-id" element={<ProtectedRoute allowedRoles={['student']}><StudentID /></ProtectedRoute>} />
       <Route path="/student/analytics" element={<ProtectedRoute allowedRoles={['student']}><StudentAnalytics /></ProtectedRoute>} />
       <Route path="/student/payments" element={<ProtectedRoute allowedRoles={['student']}><StudentPayments /></ProtectedRoute>} />
+      <Route path="/student/voting" element={<ProtectedRoute allowedRoles={['student']}><StudentVoting /></ProtectedRoute>} />
       
       <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />

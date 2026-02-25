@@ -28,15 +28,15 @@ const Index = () => {
         <a href="/" className="flex items-center justify-center gap-3 mb-8 cursor-pointer hover:opacity-80 transition-opacity no-underline">
           <img 
             src={schoolSettings?.logo_url || oaustechLogo} 
-            alt={`${schoolSettings?.school_name || 'UNIABUJA'} Logo`} 
+            alt={`${schoolSettings?.school_name || 'NUESA'} Logo`} 
             className="h-16 w-16" 
           />
           <h1 className="text-5xl font-black text-primary">
-            {schoolSettings?.portal_name || schoolSettings?.school_name || 'UNIABUJA Portal'}
+            {schoolSettings?.portal_name || schoolSettings?.school_name || 'NUESA Portal'}
           </h1>
         </a>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Welcome to the {schoolSettings?.portal_name || schoolSettings?.school_name || 'UNIABUJA'} School Management Portal. Access your academic information, 
+          Welcome to the {schoolSettings?.portal_name || schoolSettings?.school_name || 'NUESA'} Management Portal. Access your academic information,
           manage courses, and stay connected with the university community.
         </p>
         <div className="flex gap-4 justify-center mt-8">

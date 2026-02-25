@@ -5,7 +5,8 @@ import { NotificationContent } from '@/components/Student/NotificationContent';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FileText, AlertCircle } from 'lucide-react';
+import { FileText, AlertCircle, Bell } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TeacherNotification {
   id: string;
@@ -17,27 +18,28 @@ interface TeacherNotification {
 }
 
 export default function TeacherNotifications() {
+  const { profile } = useAuth();
   const [teacherNotifications, setTeacherNotifications] = useState<TeacherNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTeacherNotifications();
+    if (profile) fetchTeacherNotifications();
     const channel = supabase
       .channel('teacher-notifications')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `type=in.(submission,system_alert)` }, () => {
-        fetchTeacherNotifications();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+        if (profile) fetchTeacherNotifications();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [profile]);
 
   const fetchTeacherNotifications = async () => {
     const { data } = await supabase
       .from('notifications')
       .select('*')
-      .in('type', ['submission', 'system_alert'])
+      .eq('user_id', profile!.id)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(50);
 
     setTeacherNotifications((data || []).map(n => ({
       id: n.id,
@@ -56,7 +58,11 @@ export default function TeacherNotifications() {
   };
 
   const getIcon = (type: string) => {
-    return type === 'submission' ? <FileText className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />;
+    switch (type) {
+      case 'submission': return <FileText className="h-4 w-4" />;
+      case 'system_alert': return <AlertCircle className="h-4 w-4" />;
+      default: return <Bell className="h-4 w-4" />;
+    }
   };
 
   const unreadCount = teacherNotifications.filter(n => !n.read).length;
@@ -67,27 +73,27 @@ export default function TeacherNotifications() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Notifications</h1>
           <p className="text-muted-foreground text-sm">
-            View announcements, assignment submissions, and system notifications
+            View announcements and notifications
           </p>
         </div>
 
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs defaultValue="announcements" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all">Announcements & Notifications</TabsTrigger>
-            <TabsTrigger value="activity">
-              Activity Alerts
+            <TabsTrigger value="announcements">Announcements</TabsTrigger>
+            <TabsTrigger value="notifications">
+              Notifications
               {unreadCount > 0 && <Badge variant="destructive" className="ml-2">{unreadCount}</Badge>}
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="all">
+          <TabsContent value="announcements">
             <NotificationContent />
           </TabsContent>
-          <TabsContent value="activity">
+          <TabsContent value="notifications">
             {loading ? <div className="text-center">Loading...</div> : (
               <div className="space-y-4">
                 {teacherNotifications.length === 0 ? (
                   <Card>
-                    <CardContent className="pt-6 text-center text-muted-foreground">No activity notifications</CardContent>
+                    <CardContent className="pt-6 text-center text-muted-foreground">No notifications</CardContent>
                   </Card>
                 ) : (
                   teacherNotifications.map(n => (
@@ -102,6 +108,7 @@ export default function TeacherNotifications() {
                                 {!n.read && <Badge variant="destructive" className="text-[10px]">New</Badge>}
                               </CardTitle>
                               <p className="text-sm text-muted-foreground mt-1">{n.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
                             </div>
                           </div>
                           {!n.read && <button onClick={() => markAsRead(n.id)} className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded">Mark as read</button>}
