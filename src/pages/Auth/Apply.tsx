@@ -125,11 +125,11 @@ export default function Apply() {
           <Link to="/" className="flex items-center justify-center gap-3 mb-4 no-underline hover:opacity-80 transition-opacity">
             <img 
               src={settings?.logo_url || oaustechLogo} 
-              alt={`${settings?.school_name || 'UNIABUJA'} Logo`} 
+              alt={`${settings?.school_name || 'NUESA'} Logo`} 
               className="h-12 w-12 object-contain" 
             />
             <h1 className="text-3xl font-black text-primary">
-              {settings?.portal_name || 'UNIABUJA Portal'}
+              {settings?.portal_name || 'NUESA Portal'}
             </h1>
           </Link>
           <p className="text-muted-foreground mt-2">Apply for access to the portal</p>

@@ -151,9 +151,9 @@ export default function AdminDashboard() {
       icon: BookOpen,
       description: "Available courses",
       onClick: () => navigate('/admin/courses'),
-      color: 'text-muted-foreground',
-      bg: '',
-      iconBg: ''
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bg: 'bg-indigo-50 dark:bg-indigo-950 border-indigo-200 dark:border-indigo-800',
+      iconBg: 'bg-indigo-100 dark:bg-indigo-900'
     }
   ];
 
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-muted-foreground">
-            Overview of the UNIABUJA management system
+            Overview of the NUESA management system
           </p>
         </div>
 

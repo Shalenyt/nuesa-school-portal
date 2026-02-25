@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, BarChart3, Settings, BookOpen, FileText, MessageSquare, Upload,
-  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode
+  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode, Vote
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -20,6 +20,7 @@ const adminMenuItems = [
   { title: "Courses", url: "/admin/courses", icon: BookOpen },
   { title: "Course Lists", url: "/admin/course-lists", icon: FileText },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
+  { title: "Voting", url: "/admin/voting", icon: Vote },
   { title: "Semester", url: "/admin/semester-settings", icon: Calendar },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Profile", url: "/admin/profile", icon: Settings }
@@ -52,6 +53,7 @@ const studentMenuItems = [
   { title: "Courses", url: "/student/courses", icon: BookOpen },
   { title: "View Results", url: "/student/view-results", icon: GraduationCap },
   { title: "Payments", url: "/student/payments", icon: CreditCard },
+  { title: "Voting", url: "/student/voting", icon: Vote },
   { title: "Student ID", url: "/student/student-id", icon: QrCode },
   { title: "Notifications", url: "/student/notifications", icon: Bell }
 ];

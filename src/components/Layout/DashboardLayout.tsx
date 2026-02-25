@@ -92,7 +92,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   alt="School Logo" 
                   className="h-7 w-7 sm:h-8 sm:w-8 object-contain shrink-0" 
                 />
-                <h1 className="font-semibold text-sm sm:text-lg truncate">{settings?.portal_name || settings?.school_name || 'UNIABUJA Portal'}</h1>
+                <h1 className="font-semibold text-sm sm:text-lg truncate">{settings?.portal_name || settings?.school_name || 'NUESA Portal'}</h1>
               </a>
               
               <div className="ml-auto flex items-center gap-1 sm:gap-3 shrink-0">

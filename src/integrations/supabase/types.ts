@@ -341,6 +341,54 @@ export type Database = {
           },
         ]
       }
+      candidates: {
+        Row: {
+          approved: boolean
+          created_at: string
+          id: string
+          manifesto: string | null
+          position_id: string
+          profile_pic: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved?: boolean
+          created_at?: string
+          id?: string
+          manifesto?: string | null
+          position_id: string
+          profile_pic?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved?: boolean
+          created_at?: string
+          id?: string
+          manifesto?: string | null
+          position_id?: string
+          profile_pic?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidates_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "electoral_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classes: {
         Row: {
           created_at: string
@@ -473,6 +521,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      electoral_positions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          published: boolean
+          updated_at: string
+          voting_end_time: string | null
+          voting_open: boolean
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          published?: boolean
+          updated_at?: string
+          voting_end_time?: string | null
+          voting_open?: boolean
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          published?: boolean
+          updated_at?: string
+          voting_end_time?: string | null
+          voting_open?: boolean
+        }
+        Relationships: []
       }
       grade_audit_logs: {
         Row: {
@@ -1075,9 +1156,11 @@ export type Database = {
       school_settings: {
         Row: {
           created_at: string
+          financial_secretary_signature_url: string | null
           id: string
           logo_url: string | null
           portal_name: string | null
+          president_signature_url: string | null
           school_name: string
           singleton: boolean
           theme_color: string | null
@@ -1085,9 +1168,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          financial_secretary_signature_url?: string | null
           id?: string
           logo_url?: string | null
           portal_name?: string | null
+          president_signature_url?: string | null
           school_name?: string
           singleton?: boolean
           theme_color?: string | null
@@ -1095,9 +1180,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          financial_secretary_signature_url?: string | null
           id?: string
           logo_url?: string | null
           portal_name?: string | null
+          president_signature_url?: string | null
           school_name?: string
           singleton?: boolean
           theme_color?: string | null
@@ -1239,6 +1326,52 @@ export type Database = {
           },
         ]
       }
+      votes: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          position_id: string
+          voter_id: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          position_id: string
+          voter_id: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          position_id?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "electoral_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_voter_id_fkey"
+            columns: ["voter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1250,6 +1383,17 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
+      verify_student_public: {
+        Args: { student_matric: string }
+        Returns: {
+          department_name: string
+          full_name: string
+          level_name: string
+          profile_photo_url: string
+          status: string
+          student_id: string
+        }[]
+      }
     }
     Enums: {
       announcement_type:

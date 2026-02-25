@@ -33,18 +33,18 @@ export function useSchoolSettings() {
       } else {
         setSettings({ 
           id: '', 
-          school_name: 'UNIABUJA Portal',
-          portal_name: 'UNIABUJA Portal',
-          theme_color: '#ef4444'
+          school_name: 'NUESA Portal',
+          portal_name: 'NUESA Portal',
+          theme_color: '#16a34a'
         });
       }
     } catch (error) {
       console.error('Error fetching school settings:', error);
       setSettings({ 
         id: '', 
-        school_name: 'UNIABUJA Portal',
-        portal_name: 'UNIABUJA Portal',
-        theme_color: '#ef4444'
+        school_name: 'NUESA Portal',
+        portal_name: 'NUESA Portal',
+        theme_color: '#16a34a'
       });
     } finally {
       setLoading(false);
