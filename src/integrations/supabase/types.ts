@@ -605,6 +605,7 @@ export type Database = {
           created_at: string
           id: string
           is_anonymous: boolean
+          is_read: boolean
           message: string
           subject: string
           type: string
@@ -615,6 +616,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_anonymous?: boolean
+          is_read?: boolean
           message: string
           subject: string
           type?: string
@@ -625,6 +627,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_anonymous?: boolean
+          is_read?: boolean
           message?: string
           subject?: string
           type?: string
@@ -1056,6 +1059,7 @@ export type Database = {
           id: string
           ip_address: string | null
           latitude: number | null
+          location_consent: boolean | null
           longitude: number | null
           quiz_id: string
           score: number | null
@@ -1071,6 +1075,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           latitude?: number | null
+          location_consent?: boolean | null
           longitude?: number | null
           quiz_id: string
           score?: number | null
@@ -1086,6 +1091,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           latitude?: number | null
+          location_consent?: boolean | null
           longitude?: number | null
           quiz_id?: string
           score?: number | null
