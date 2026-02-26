@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CreditCard, Plus, Download, Upload } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CreditCard, Plus, Download, Upload, Image } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -26,6 +27,10 @@ export default function AdminPayments() {
   const [showSignatureUpload, setShowSignatureUpload] = useState(false);
   const [signatureType, setSignatureType] = useState<'president' | 'financial_secretary'>('president');
   const [uploadingSignature, setUploadingSignature] = useState(false);
+  const [receiptTemplates, setReceiptTemplates] = useState<any[]>([]);
+  const [uploadingTemplate, setUploadingTemplate] = useState(false);
+  const [templateUploadType, setTemplateUploadType] = useState('general');
+  const [showTemplateUpload, setShowTemplateUpload] = useState(false);
   const [newPayment, setNewPayment] = useState({
     title: '', description: '', amount: '', payment_type: 'general',
     department_id: '', level_id: '', due_date: '', late_penalty: '0',
@@ -36,14 +41,16 @@ export default function AdminPayments() {
 
   const fetchData = async () => {
     try {
-      const [paymentsRes, classesRes, subjectsRes] = await Promise.all([
+      const [paymentsRes, classesRes, subjectsRes, templatesRes] = await Promise.all([
         (supabase as any).from('payments').select('*, subjects:department_id(name), classes:level_id(name)').order('created_at', { ascending: false }),
         supabase.from('classes').select('*').order('name'),
         supabase.from('subjects').select('*').order('name'),
+        (supabase as any).from('receipt_templates').select('*'),
       ]);
       setPayments(paymentsRes.data || []);
       setClasses(classesRes.data || []);
       setSubjects(subjectsRes.data || []);
+      setReceiptTemplates(templatesRes.data || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -97,13 +104,37 @@ export default function AdminPayments() {
       const { data: urlData } = supabase.storage.from('school-assets').getPublicUrl(path);
       const column = signatureType === 'president' ? 'president_signature_url' : 'financial_secretary_signature_url';
       await (supabase as any).from('school_settings').update({ [column]: urlData.publicUrl }).eq('singleton', true);
-      toast({ title: "Signature uploaded", description: `${signatureType === 'president' ? 'President' : 'Financial Secretary'} signature updated.` });
+      toast({ title: "Signature uploaded" });
       setShowSignatureUpload(false);
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally {
-      setUploadingSignature(false);
-    }
+    } finally { setUploadingSignature(false); }
+  };
+
+  const handleTemplateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingTemplate(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `receipt-templates/${templateUploadType}_${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('school-assets').upload(path, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('school-assets').getPublicUrl(path);
+
+      // Upsert: update if exists, insert if not
+      const existing = receiptTemplates.find(t => t.payment_type === templateUploadType);
+      if (existing) {
+        await (supabase as any).from('receipt_templates').update({ template_url: urlData.publicUrl }).eq('id', existing.id);
+      } else {
+        await (supabase as any).from('receipt_templates').insert({ payment_type: templateUploadType, template_url: urlData.publicUrl });
+      }
+      toast({ title: "Receipt template uploaded", description: `Template for ${templateUploadType} payments updated.` });
+      setShowTemplateUpload(false);
+      fetchData();
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally { setUploadingTemplate(false); }
   };
 
   const viewPaymentDetails = (payment: any) => {
@@ -137,11 +168,14 @@ export default function AdminPayments() {
             <h1 className="text-3xl font-bold tracking-tight">Payments</h1>
             <p className="text-muted-foreground">Manage dues, fees, and payment tracking</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowSignatureUpload(true)}>
-              <Upload className="h-4 w-4 mr-2" /> Upload Signature
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => setShowTemplateUpload(true)}>
+              <Image className="h-4 w-4 mr-2" /> Receipt Templates
             </Button>
-            <Button onClick={() => setIsCreating(true)}>
+            <Button variant="outline" size="sm" onClick={() => setShowSignatureUpload(true)}>
+              <Upload className="h-4 w-4 mr-2" /> Signatures
+            </Button>
+            <Button size="sm" onClick={() => setIsCreating(true)}>
               <Plus className="h-4 w-4 mr-2" /> New Payment
             </Button>
           </div>
@@ -158,10 +192,28 @@ export default function AdminPayments() {
             <CardContent><p className="text-2xl font-bold">₦{totalExpected.toLocaleString()}</p></CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Active Payments</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{payments.filter((p: any) => !p.due_date || new Date(p.due_date) >= new Date()).length}</p></CardContent>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Receipt Templates</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-bold">{receiptTemplates.length}</p></CardContent>
           </Card>
         </div>
+
+        {/* Uploaded Templates Preview */}
+        {receiptTemplates.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="text-base">Uploaded Receipt Templates</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-3">
+                {receiptTemplates.map(t => (
+                  <div key={t.id} className="border rounded-lg p-3 space-y-2">
+                    <Badge>{t.payment_type}</Badge>
+                    <img src={t.template_url} alt={`${t.payment_type} template`} className="w-full h-32 object-contain border rounded" />
+                    <p className="text-xs text-muted-foreground">Updated: {new Date(t.updated_at).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Create Form */}
         {isCreating && (
@@ -295,6 +347,41 @@ export default function AdminPayments() {
               </Select>
               <Input type="file" accept="image/*" onChange={handleSignatureUpload} disabled={uploadingSignature} />
               {uploadingSignature && <p className="text-sm text-muted-foreground">Uploading...</p>}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Receipt Template Upload Dialog */}
+        <Dialog open={showTemplateUpload} onOpenChange={setShowTemplateUpload}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Upload Receipt Template</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Upload the exact receipt image template. The system will overlay payment details on this image.
+              </p>
+              <Select value={templateUploadType} onValueChange={setTemplateUploadType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General Receipt Template</SelectItem>
+                  <SelectItem value="faculty">Faculty Receipt Template</SelectItem>
+                  <SelectItem value="department">Department Receipt Template</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleTemplateUpload} disabled={uploadingTemplate} />
+              {uploadingTemplate && <p className="text-sm text-muted-foreground">Uploading template...</p>}
+
+              {/* Show existing template for this type */}
+              {(() => {
+                const existing = receiptTemplates.find(t => t.payment_type === templateUploadType);
+                return existing ? (
+                  <div className="border rounded-lg p-3">
+                    <p className="text-xs font-medium mb-2">Current Template:</p>
+                    <img src={existing.template_url} alt="Current template" className="w-full h-40 object-contain border rounded" />
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No template uploaded for this type yet.</p>
+                );
+              })()}
             </div>
           </DialogContent>
         </Dialog>
