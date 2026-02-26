@@ -3,7 +3,8 @@ import { useSearchParams, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, CheckCircle, XCircle, Clock, ShieldCheck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { User, CheckCircle, XCircle, Clock, ShieldCheck, BookOpen, BarChart3 } from 'lucide-react';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
@@ -13,35 +14,21 @@ export default function Verify() {
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [stats, setStats] = useState({ attendance: 0, quizAvg: 0 });
   const { settings } = useSchoolSettings();
 
   useEffect(() => {
     const id = paramId || searchParams.get('id');
-    if (!id) {
-      setError('No student ID provided');
-      setLoading(false);
-      return;
-    }
+    if (!id) { setError('No student ID provided'); setLoading(false); return; }
     fetchStudent(id);
   }, [searchParams, paramId]);
 
   const fetchStudent = async (id: string) => {
     try {
-      // First try by UUID (from QR code)
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, full_name, student_id, profile_photo_url, status, role, department_id, level_id, subjects:department_id(name), classes:level_id(name)')
-        .eq('id', id)
-        .eq('role', 'student')
-        .maybeSingle();
-
-      if (profileData) {
-        setStudent(profileData);
-        return;
-      }
-
-      // Fallback: try by matric number using the secure RPC function
+      // Try by UUID first using the public RPC to avoid RLS issues
       const { data: rpcData } = await supabase.rpc('verify_student_public', { student_matric: id });
+      
       if (rpcData && rpcData.length > 0) {
         const s = rpcData[0];
         setStudent({
@@ -52,6 +39,23 @@ export default function Verify() {
           subjects: { name: s.department_name },
           classes: { name: s.level_name },
         });
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: try UUID lookup via profiles (will work if RLS allows)
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, full_name, student_id, profile_photo_url, status, role, department_id, level_id, subjects:department_id(name), classes:level_id(name)')
+        .eq('id', id)
+        .eq('role', 'student')
+        .maybeSingle();
+
+      if (profileData) {
+        setStudent(profileData);
+        // Fetch additional public stats
+        await fetchPublicStats(profileData.id);
+        setLoading(false);
         return;
       }
 
@@ -63,16 +67,23 @@ export default function Verify() {
     }
   };
 
+  const fetchPublicStats = async (userId: string) => {
+    try {
+      // These queries may fail due to RLS, that's OK - we just show what's available
+      const { data: enrollments } = await supabase
+        .from('student_enrollments')
+        .select('courses:course_id(name)')
+        .eq('student_id', userId);
+      setCourses((enrollments || []).map((e: any) => e.courses?.name).filter(Boolean));
+    } catch { /* silently fail */ }
+  };
+
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'approved':
-        return { label: 'Active', icon: CheckCircle, color: 'text-green-600' };
-      case 'pending':
-        return { label: 'Pending', icon: Clock, color: 'text-yellow-600' };
-      case 'rejected':
-        return { label: 'Inactive', icon: XCircle, color: 'text-red-600' };
-      default:
-        return { label: status, icon: Clock, color: 'text-muted-foreground' };
+      case 'approved': return { label: 'Active', icon: CheckCircle, color: 'text-green-600' };
+      case 'pending': return { label: 'Pending', icon: Clock, color: 'text-yellow-600' };
+      case 'rejected': return { label: 'Inactive', icon: XCircle, color: 'text-red-600' };
+      default: return { label: status, icon: Clock, color: 'text-muted-foreground' };
     }
   };
 
@@ -143,10 +154,24 @@ export default function Verify() {
               <p className="text-muted-foreground text-xs">Level</p>
               <p className="font-medium">{student.classes?.name || 'N/A'}</p>
             </div>
-            <div className="col-span-2 space-y-1">
-              <p className="text-muted-foreground text-xs">Verified At</p>
-              <p className="font-medium">{new Date().toLocaleString()}</p>
+          </div>
+
+          {courses.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                <BookOpen className="h-3 w-3" /> Registered Courses
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {courses.map((name, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
+                ))}
+              </div>
             </div>
+          )}
+
+          <div className="space-y-1">
+            <p className="text-muted-foreground text-xs">Verified At</p>
+            <p className="font-medium text-sm">{new Date().toLocaleString()}</p>
           </div>
 
           <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground pt-2 border-t">

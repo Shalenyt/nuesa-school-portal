@@ -600,6 +600,39 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          message: string
+          subject: string
+          type: string
+          user_id: string
+          user_role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          message: string
+          subject: string
+          type?: string
+          user_id: string
+          user_role?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          message?: string
+          subject?: string
+          type?: string
+          user_id?: string
+          user_role?: string
+        }
+        Relationships: []
+      }
       grade_audit_logs: {
         Row: {
           action: string

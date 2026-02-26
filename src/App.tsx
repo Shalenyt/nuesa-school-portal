@@ -34,6 +34,7 @@ import SemesterSettings from "./pages/Admin/SemesterSettings";
 import AdminStudentDetail from "./pages/Admin/StudentDetail";
 import AdminPayments from "./pages/Admin/Payments";
 import AdminVoting from "./pages/Admin/Voting";
+import AdminFeedback from "./pages/Admin/Feedback";
 
 // Teacher pages
 import TeacherProfile from "./pages/Teacher/Profile";
@@ -49,6 +50,7 @@ import QuizSecurity from "./pages/Teacher/QuizSecurity";
 import ViewStudents from "./pages/Teacher/ViewStudents";
 import TeacherNotifications from "./pages/Teacher/Notifications";
 import TeacherStudentDetail from "./pages/Teacher/StudentDetail";
+import TeacherFeedback from "./pages/Teacher/Feedback";
 
 // Student pages
 import StudentProfile from "./pages/Student/Profile";
@@ -64,6 +66,7 @@ import StudentID from "./pages/Student/StudentID";
 import StudentAnalytics from "./pages/Student/Analytics";
 import StudentPayments from "./pages/Student/Payments";
 import StudentVoting from "./pages/Student/Voting";
+import StudentFeedback from "./pages/Student/Feedback";
 
 import Verify from "./pages/Verify";
 import VerifyPayment from "./pages/VerifyPayment";
@@ -111,6 +114,7 @@ function AppRoutes() {
       <Route path="/admin/students/:id" element={<ProtectedRoute allowedRoles={['admin']}><AdminStudentDetail /></ProtectedRoute>} />
       <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['admin']}><AdminPayments /></ProtectedRoute>} />
       <Route path="/admin/voting" element={<ProtectedRoute allowedRoles={['admin']}><AdminVoting /></ProtectedRoute>} />
+      <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin']}><AdminFeedback /></ProtectedRoute>} />
       
       {/* Teacher Routes */}
       <Route path="/teacher/profile" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherProfile /></ProtectedRoute>} />
@@ -127,6 +131,7 @@ function AppRoutes() {
       <Route path="/teacher/notifications" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherNotifications /></ProtectedRoute>} />
       <Route path="/teacher/analytics" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherAnalytics /></ProtectedRoute>} />
       <Route path="/teacher/student-detail" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherStudentDetail /></ProtectedRoute>} />
+      <Route path="/teacher/feedback" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherFeedback /></ProtectedRoute>} />
       
       {/* Student Routes */}
       <Route path="/student/profile" element={<ProtectedRoute allowedRoles={['student']}><StudentProfile /></ProtectedRoute>} />
@@ -142,6 +147,7 @@ function AppRoutes() {
       <Route path="/student/analytics" element={<ProtectedRoute allowedRoles={['student']}><StudentAnalytics /></ProtectedRoute>} />
       <Route path="/student/payments" element={<ProtectedRoute allowedRoles={['student']}><StudentPayments /></ProtectedRoute>} />
       <Route path="/student/voting" element={<ProtectedRoute allowedRoles={['student']}><StudentVoting /></ProtectedRoute>} />
+      <Route path="/student/feedback" element={<ProtectedRoute allowedRoles={['student']}><StudentFeedback /></ProtectedRoute>} />
       
       <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />
