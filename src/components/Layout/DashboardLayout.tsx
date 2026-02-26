@@ -18,11 +18,17 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
-  const { settings, ready } = useSchoolSettings();
+  const { settings } = useSchoolSettings();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true) {
+      setIsInstalled(true);
+      return;
+    }
+
     // Check for globally captured prompt
     const globalPrompt = (window as any).__pwaInstallPrompt;
     if (globalPrompt) {
@@ -35,11 +41,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handler);
-
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-    window.addEventListener('appinstalled', () => setIsInstalled(true));
+    window.addEventListener('appinstalled', () => { setIsInstalled(true); setDeferredPrompt(null); });
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
@@ -47,7 +49,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      // Last attempt from global
+      const gp = (window as any).__pwaInstallPrompt;
+      if (gp) {
+        gp.prompt();
+        const { outcome } = await gp.userChoice;
+        if (outcome === 'accepted') setIsInstalled(true);
+        (window as any).__pwaInstallPrompt = null;
+        return;
+      }
+      // True fallback - only for iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        import('@/hooks/use-toast').then(({ toast }) => toast({
+          title: "Install App",
+          description: "Tap the Share button (↑) then 'Add to Home Screen'",
+        }));
+      }
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') setIsInstalled(true);
@@ -71,6 +92,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       default: return '/';
     }
   };
+
+  const showInstallButton = !isInstalled && (deferredPrompt || /iPad|iPhone|iPod/.test(navigator.userAgent));
 
   return (
     <SidebarProvider>
@@ -96,36 +119,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </a>
               
               <div className="ml-auto flex items-center gap-1 sm:gap-3 shrink-0">
-                {deferredPrompt && !isInstalled && (
+                {showInstallButton && (
                   <Button variant="outline" size="sm" onClick={handleInstall} className="px-2 sm:px-3 gap-1">
                     <Download className="h-4 w-4" />
                     <span className="hidden sm:inline">Install App</span>
-                  </Button>
-                )}
-                {!deferredPrompt && !isInstalled && (
-                  <Button variant="ghost" size="sm" className="px-2 sm:px-3 gap-1 text-xs text-muted-foreground" onClick={() => {
-                    // Try to get a globally captured prompt first
-                    const globalPrompt = (window as any).__pwaInstallPrompt;
-                    if (globalPrompt) {
-                      setDeferredPrompt(globalPrompt);
-                      (window as any).__pwaInstallPrompt = null;
-                      globalPrompt.prompt();
-                      globalPrompt.userChoice.then((choice: any) => {
-                        if (choice.outcome === 'accepted') setIsInstalled(true);
-                        setDeferredPrompt(null);
-                      });
-                    } else {
-                      // For browsers that don't support beforeinstallprompt (iOS Safari etc.)
-                      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-                      const message = isIOS || isSafari
-                        ? "Tap the Share button (↑) at the bottom of Safari, then tap 'Add to Home Screen'"
-                        : "Open your browser menu (⋮) and tap 'Install App' or 'Add to Home Screen'";
-                      import('@/hooks/use-toast').then(({ toast }) => toast({ title: "Install App", description: message }));
-                    }
-                  }}>
-                    <Download className="h-4 w-4" />
-                    <span className="hidden sm:inline">Install</span>
                   </Button>
                 )}
                 <button 
@@ -162,6 +159,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </footer>
         </div>
       </div>
+
+      {/* Floating install button for mobile */}
+      {showInstallButton && (
+        <button
+          onClick={handleInstall}
+          className="fixed bottom-4 right-4 z-50 sm:hidden bg-primary text-primary-foreground rounded-full p-3 shadow-lg hover:opacity-90 transition-opacity"
+          aria-label="Install App"
+        >
+          <Download className="h-5 w-5" />
+        </button>
+      )}
     </SidebarProvider>
   );
 }
