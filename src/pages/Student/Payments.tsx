@@ -33,10 +33,11 @@ export default function StudentPayments() {
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [signatures, setSignatures] = useState<{ president?: string; financial_secretary?: string }>({});
+  const [receiptTemplates, setReceiptTemplates] = useState<any[]>([]);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (profile) { fetchPayments(); fetchSignatures(); }
+    if (profile) { fetchPayments(); fetchSignatures(); fetchTemplates(); }
   }, [profile]);
 
   useEffect(() => {
@@ -51,6 +52,11 @@ export default function StudentPayments() {
   const fetchSignatures = async () => {
     const { data } = await (supabase as any).from('school_settings').select('president_signature_url, financial_secretary_signature_url').limit(1).maybeSingle();
     if (data) setSignatures({ president: data.president_signature_url, financial_secretary: data.financial_secretary_signature_url });
+  };
+
+  const fetchTemplates = async () => {
+    const { data } = await (supabase as any).from('receipt_templates').select('*');
+    setReceiptTemplates(data || []);
   };
 
   const fetchPayments = async () => {
@@ -107,23 +113,22 @@ export default function StudentPayments() {
 
   const viewReceipt = (payment: any) => {
     const { record } = getPaymentStatus(payment);
-    if (record) setSelectedReceipt({ ...record, paymentTitle: payment.title, paymentAmount: payment.amount, paymentDescription: payment.description });
+    if (record) setSelectedReceipt({ ...record, paymentTitle: payment.title, paymentAmount: payment.amount, paymentDescription: payment.description, paymentType: payment.payment_type });
   };
 
   const downloadReceipt = async () => {
     if (!receiptRef.current) return;
     try {
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(receiptRef.current, { useCORS: true, scale: 2 });
+      const canvas = await html2canvas(receiptRef.current, { useCORS: true, scale: 2, allowTaint: true });
       const link = document.createElement('a');
       link.download = `NUESA_Receipt_${selectedReceipt?.receipt_number || 'receipt'}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch {
-      // Fallback to print
       const printWindow = window.open('', '_blank');
       if (!printWindow || !receiptRef.current) return;
-      printWindow.document.write(`<html><head><title>NUESA Receipt</title><style>body{margin:0;padding:20px;}@media print{body{padding:0;}}</style></head><body>${receiptRef.current.innerHTML}</body></html>`);
+      printWindow.document.write(`<html><head><title>NUESA Receipt</title></head><body>${receiptRef.current.innerHTML}</body></html>`);
       printWindow.document.close();
       printWindow.print();
     }
@@ -135,6 +140,15 @@ export default function StudentPayments() {
   const naira = Math.floor(amountNum);
   const kobo = Math.round((amountNum - naira) * 100);
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // Find the matching receipt template
+  const getTemplate = () => {
+    if (!selectedReceipt) return null;
+    const paymentType = selectedReceipt.paymentType || 'general';
+    return receiptTemplates.find(t => t.payment_type === paymentType) || receiptTemplates.find(t => t.payment_type === 'general');
+  };
+
+  const template = selectedReceipt ? getTemplate() : null;
 
   return (
     <DashboardLayout>
@@ -203,7 +217,7 @@ export default function StudentPayments() {
           </>
         )}
 
-        {/* Receipt Dialog - CSS-based NUESA template */}
+        {/* Receipt Dialog */}
         <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -211,84 +225,133 @@ export default function StudentPayments() {
             </DialogHeader>
             {selectedReceipt && (
               <div className="space-y-4">
-                <div ref={receiptRef} style={{ fontFamily: "'Times New Roman', Georgia, serif", background: '#f5f3ef', border: '3px double #1a5c2e', padding: '24px', position: 'relative' }}>
-                  {/* Header */}
-                  <div style={{ textAlign: 'center', marginBottom: '16px', color: '#1a5c2e' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <img src={settings?.logo_url || oaustechLogo} alt="Logo" style={{ height: '50px', width: '50px', objectFit: 'contain' }} />
-                      <div style={{ flex: 1, padding: '0 12px' }}>
-                        <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, letterSpacing: '1px' }}>NIGERIA UNIVERSITIES ENGINEERING</h2>
-                        <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, letterSpacing: '1px' }}>STUDENT' ASSOCIATION (NUESA)</h2>
-                        <p style={{ fontSize: '13px', fontWeight: 'bold', margin: '4px 0 0' }}>UNIVERSITY OF ABUJA CHAPTER</p>
+                <div ref={receiptRef} style={{ position: 'relative', fontFamily: "'Times New Roman', Georgia, serif" }}>
+                  {template ? (
+                    /* === TEMPLATE MODE: Overlay text on uploaded image === */
+                    <div style={{ position: 'relative', width: '100%' }}>
+                      <img
+                        src={template.template_url}
+                        alt="Receipt Template"
+                        style={{ width: '100%', display: 'block' }}
+                        crossOrigin="anonymous"
+                      />
+                      {/* Text overlays with absolute positioning */}
+                      {/* Receipt Number - top right area */}
+                      <div style={{ position: 'absolute', top: '12%', right: '5%', fontSize: '12px', fontWeight: 'bold', color: '#1a1a1a' }}>
+                        {selectedReceipt.receipt_number}
                       </div>
-                      <img src={settings?.logo_url || oaustechLogo} alt="Logo" style={{ height: '50px', width: '50px', objectFit: 'contain' }} />
-                    </div>
-                    <div style={{ display: 'inline-block', background: '#1a5c2e', color: 'white', padding: '4px 20px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', marginTop: '8px' }}>
-                      FACULTY DUES RECEIPT
-                    </div>
-                  </div>
-
-                  {/* Date + Receipt No row */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', color: '#1a5c2e', fontSize: '13px' }}>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <span style={{ border: '1px solid #1a5c2e', padding: '2px 8px', fontWeight: 'bold', fontSize: '11px' }}>DAY</span>
-                      <span style={{ border: '1px solid #1a5c2e', padding: '2px 12px', fontWeight: 'bold' }}>{receiptDate.getDate().toString().padStart(2, '0')}</span>
-                      <span style={{ border: '1px solid #1a5c2e', padding: '2px 8px', fontWeight: 'bold', fontSize: '11px' }}>MONTH</span>
-                      <span style={{ border: '1px solid #1a5c2e', padding: '2px 12px', fontWeight: 'bold' }}>{months[receiptDate.getMonth()]}</span>
-                      <span style={{ border: '1px solid #1a5c2e', padding: '2px 8px', fontWeight: 'bold', fontSize: '11px' }}>YEAR</span>
-                      <span style={{ border: '1px solid #1a5c2e', padding: '2px 12px', fontWeight: 'bold' }}>{receiptDate.getFullYear()}</span>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ margin: 0 }}><strong>NO:</strong> {selectedReceipt.receipt_number}</p>
-                      <p style={{ margin: '2px 0 0' }}><strong>Matric No:</strong> <span style={{ border: '1px solid #1a5c2e', padding: '1px 8px' }}>{profile?.student_id || 'N/A'}</span></p>
-                    </div>
-                  </div>
-
-                  {/* Body fields */}
-                  <div style={{ color: '#1a5c2e', fontSize: '13px', lineHeight: '2.2' }}>
-                    <p style={{ margin: 0 }}><em style={{ fontWeight: 'bold' }}>Received from:</em> <span style={{ borderBottom: '1px solid #1a5c2e', paddingBottom: '1px', marginLeft: '8px' }}>{profile?.full_name}</span></p>
-                    <p style={{ margin: 0 }}><em style={{ fontWeight: 'bold' }}>Total sum of:</em> <span style={{ borderBottom: '1px solid #1a5c2e', paddingBottom: '1px', marginLeft: '8px' }}>{numberToWords(naira)} Naira{kobo > 0 ? ` and ${numberToWords(kobo)} Kobo` : ' Only'}</span></p>
-                    <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-                      <span style={{ borderBottom: '1px solid #1a5c2e', flex: 1, paddingBottom: '1px' }}></span>
-                      <em style={{ fontWeight: 'bold' }}>Naira</em>
-                      <span style={{ borderBottom: '1px solid #1a5c2e', minWidth: '80px', paddingBottom: '1px', textAlign: 'center' }}>{naira.toLocaleString()}</span>
-                      <em style={{ fontWeight: 'bold' }}>kobo</em>
-                      <span style={{ borderBottom: '1px solid #1a5c2e', minWidth: '40px', paddingBottom: '1px', textAlign: 'center' }}>{kobo.toString().padStart(2, '0')}</span>
-                    </div>
-                    <p style={{ margin: 0 }}><em style={{ fontWeight: 'bold' }}>Being payment for:</em> <span style={{ borderBottom: '1px solid #1a5c2e', paddingBottom: '1px', marginLeft: '8px' }}>{selectedReceipt.paymentDescription || selectedReceipt.paymentTitle}</span></p>
-                  </div>
-
-                  {/* Amount box + Signatures */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '20px', color: '#1a5c2e' }}>
-                    <div style={{ textAlign: 'center' }}>
-                      {signatures.president ? (
-                        <img src={signatures.president} alt="President" style={{ height: '40px', marginBottom: '4px' }} />
-                      ) : (
-                        <div style={{ height: '40px', width: '120px', borderBottom: '1px solid #1a5c2e', marginBottom: '4px' }} />
+                      {/* Date - upper area */}
+                      <div style={{ position: 'absolute', top: '18%', left: '10%', fontSize: '11px', fontWeight: 'bold', color: '#1a1a1a' }}>
+                        {receiptDate.getDate().toString().padStart(2, '0')} / {months[receiptDate.getMonth()]} / {receiptDate.getFullYear()}
+                      </div>
+                      {/* Matric Number */}
+                      <div style={{ position: 'absolute', top: '18%', right: '5%', fontSize: '11px', fontWeight: 'bold', color: '#1a1a1a' }}>
+                        {profile?.student_id || 'N/A'}
+                      </div>
+                      {/* Received From */}
+                      <div style={{ position: 'absolute', top: '30%', left: '30%', fontSize: '12px', fontWeight: 'bold', color: '#1a1a1a', maxWidth: '60%', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {profile?.full_name}
+                      </div>
+                      {/* Total sum in words */}
+                      <div style={{ position: 'absolute', top: '38%', left: '25%', fontSize: '11px', fontWeight: 'bold', color: '#1a1a1a', maxWidth: '70%', overflow: 'hidden' }}>
+                        {numberToWords(naira)} Naira{kobo > 0 ? ` and ${numberToWords(kobo)} Kobo` : ' Only'}
+                      </div>
+                      {/* Amount in figures */}
+                      <div style={{ position: 'absolute', top: '46%', right: '8%', fontSize: '13px', fontWeight: 'bold', color: '#1a1a1a' }}>
+                        ₦{naira.toLocaleString()}.{kobo.toString().padStart(2, '0')}
+                      </div>
+                      {/* Being payment for */}
+                      <div style={{ position: 'absolute', top: '54%', left: '30%', fontSize: '11px', fontWeight: 'bold', color: '#1a1a1a', maxWidth: '60%', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {selectedReceipt.paymentDescription || selectedReceipt.paymentTitle}
+                      </div>
+                      {/* Payment reference */}
+                      <div style={{ position: 'absolute', top: '62%', left: '30%', fontSize: '10px', color: '#555' }}>
+                        Ref: {selectedReceipt.reference}
+                      </div>
+                      {/* Signatures */}
+                      {signatures.president && (
+                        <img src={signatures.president} alt="President" crossOrigin="anonymous" style={{ position: 'absolute', bottom: '15%', left: '8%', height: '35px', opacity: 0.9 }} />
                       )}
-                      <p style={{ fontSize: '11px', fontWeight: 'bold', fontStyle: 'italic', margin: 0 }}>President's Signature</p>
-                    </div>
-
-                    <div style={{ border: '2px solid #1a5c2e', padding: '6px 16px', fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span>₦</span>
-                      <span>{amountNum.toLocaleString()}</span>
-                      <span style={{ margin: '0 4px' }}>:</span>
-                      <span>K</span>
-                      <span>{kobo.toString().padStart(2, '0')}</span>
-                    </div>
-
-                    <div style={{ textAlign: 'center' }}>
-                      {signatures.financial_secretary ? (
-                        <img src={signatures.financial_secretary} alt="Fin. Secretary" style={{ height: '40px', marginBottom: '4px' }} />
-                      ) : (
-                        <div style={{ height: '40px', width: '120px', borderBottom: '1px solid #1a5c2e', marginBottom: '4px' }} />
+                      {signatures.financial_secretary && (
+                        <img src={signatures.financial_secretary} alt="Fin. Sec." crossOrigin="anonymous" style={{ position: 'absolute', bottom: '15%', right: '8%', height: '35px', opacity: 0.9 }} />
                       )}
-                      <p style={{ fontSize: '11px', fontWeight: 'bold', fontStyle: 'italic', margin: 0 }}>Financial Secretary's Signature</p>
                     </div>
-                  </div>
+                  ) : (
+                    /* === FALLBACK: CSS-based receipt if no template uploaded === */
+                    <div style={{ background: '#f5f3ef', border: '3px double #1a5c2e', padding: '24px' }}>
+                      {/* Header */}
+                      <div style={{ textAlign: 'center', marginBottom: '16px', color: '#1a5c2e' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <img src={settings?.logo_url || oaustechLogo} alt="Logo" style={{ height: '50px', width: '50px', objectFit: 'contain' }} />
+                          <div style={{ flex: 1, padding: '0 12px' }}>
+                            <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, letterSpacing: '1px' }}>NIGERIA UNIVERSITIES ENGINEERING</h2>
+                            <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: 0, letterSpacing: '1px' }}>STUDENT' ASSOCIATION (NUESA)</h2>
+                            <p style={{ fontSize: '13px', fontWeight: 'bold', margin: '4px 0 0' }}>UNIVERSITY OF ABUJA CHAPTER</p>
+                          </div>
+                          <img src={settings?.logo_url || oaustechLogo} alt="Logo" style={{ height: '50px', width: '50px', objectFit: 'contain' }} />
+                        </div>
+                        <div style={{ display: 'inline-block', background: '#1a5c2e', color: 'white', padding: '4px 20px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', marginTop: '8px' }}>
+                          {(selectedReceipt.paymentType || 'GENERAL').toUpperCase()} DUES RECEIPT
+                        </div>
+                      </div>
+
+                      {/* Date + Receipt No row */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', color: '#1a5c2e', fontSize: '13px' }}>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <span style={{ border: '1px solid #1a5c2e', padding: '2px 8px', fontWeight: 'bold', fontSize: '11px' }}>DAY</span>
+                          <span style={{ border: '1px solid #1a5c2e', padding: '2px 12px', fontWeight: 'bold' }}>{receiptDate.getDate().toString().padStart(2, '0')}</span>
+                          <span style={{ border: '1px solid #1a5c2e', padding: '2px 8px', fontWeight: 'bold', fontSize: '11px' }}>MONTH</span>
+                          <span style={{ border: '1px solid #1a5c2e', padding: '2px 12px', fontWeight: 'bold' }}>{months[receiptDate.getMonth()]}</span>
+                          <span style={{ border: '1px solid #1a5c2e', padding: '2px 8px', fontWeight: 'bold', fontSize: '11px' }}>YEAR</span>
+                          <span style={{ border: '1px solid #1a5c2e', padding: '2px 12px', fontWeight: 'bold' }}>{receiptDate.getFullYear()}</span>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{ margin: 0 }}><strong>NO:</strong> {selectedReceipt.receipt_number}</p>
+                          <p style={{ margin: '2px 0 0' }}><strong>Matric No:</strong> <span style={{ border: '1px solid #1a5c2e', padding: '1px 8px' }}>{profile?.student_id || 'N/A'}</span></p>
+                        </div>
+                      </div>
+
+                      {/* Body fields */}
+                      <div style={{ color: '#1a5c2e', fontSize: '13px', lineHeight: '2.2' }}>
+                        <p style={{ margin: 0 }}><em style={{ fontWeight: 'bold' }}>Received from:</em> <span style={{ borderBottom: '1px solid #1a5c2e', paddingBottom: '1px', marginLeft: '8px' }}>{profile?.full_name}</span></p>
+                        <p style={{ margin: 0 }}><em style={{ fontWeight: 'bold' }}>Total sum of:</em> <span style={{ borderBottom: '1px solid #1a5c2e', paddingBottom: '1px', marginLeft: '8px' }}>{numberToWords(naira)} Naira{kobo > 0 ? ` and ${numberToWords(kobo)} Kobo` : ' Only'}</span></p>
+                        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                          <span style={{ borderBottom: '1px solid #1a5c2e', flex: 1 }}></span>
+                          <em style={{ fontWeight: 'bold' }}>Naira</em>
+                          <span style={{ borderBottom: '1px solid #1a5c2e', minWidth: '80px', textAlign: 'center' }}>{naira.toLocaleString()}</span>
+                          <em style={{ fontWeight: 'bold' }}>kobo</em>
+                          <span style={{ borderBottom: '1px solid #1a5c2e', minWidth: '40px', textAlign: 'center' }}>{kobo.toString().padStart(2, '0')}</span>
+                        </div>
+                        <p style={{ margin: 0 }}><em style={{ fontWeight: 'bold' }}>Being payment for:</em> <span style={{ borderBottom: '1px solid #1a5c2e', marginLeft: '8px' }}>{selectedReceipt.paymentDescription || selectedReceipt.paymentTitle}</span></p>
+                      </div>
+
+                      {/* Signatures + Amount */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '20px', color: '#1a5c2e' }}>
+                        <div style={{ textAlign: 'center' }}>
+                          {signatures.president ? (
+                            <img src={signatures.president} alt="President" style={{ height: '40px', marginBottom: '4px' }} />
+                          ) : (
+                            <div style={{ height: '40px', width: '120px', borderBottom: '1px solid #1a5c2e', marginBottom: '4px' }} />
+                          )}
+                          <p style={{ fontSize: '11px', fontWeight: 'bold', fontStyle: 'italic', margin: 0 }}>President's Signature</p>
+                        </div>
+                        <div style={{ border: '2px solid #1a5c2e', padding: '6px 16px', fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>₦</span><span>{amountNum.toLocaleString()}</span><span style={{ margin: '0 4px' }}>:</span><span>K</span><span>{kobo.toString().padStart(2, '0')}</span>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          {signatures.financial_secretary ? (
+                            <img src={signatures.financial_secretary} alt="Fin. Secretary" style={{ height: '40px', marginBottom: '4px' }} />
+                          ) : (
+                            <div style={{ height: '40px', width: '120px', borderBottom: '1px solid #1a5c2e', marginBottom: '4px' }} />
+                          )}
+                          <p style={{ fontSize: '11px', fontWeight: 'bold', fontStyle: 'italic', margin: 0 }}>Financial Secretary's Signature</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* QR Code for verification */}
+                {/* QR Code */}
                 <div className="flex justify-center">
                   <div className="text-center">
                     <QRCodeSVG value={verifyUrl} size={64} level="M" />

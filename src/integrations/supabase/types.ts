@@ -522,10 +522,53 @@ export type Database = {
           },
         ]
       }
+      election_results: {
+        Row: {
+          calculated_at: string
+          candidate_id: string
+          id: string
+          is_winner: boolean
+          position_id: string
+          vote_count: number
+        }
+        Insert: {
+          calculated_at?: string
+          candidate_id: string
+          id?: string
+          is_winner?: boolean
+          position_id: string
+          vote_count?: number
+        }
+        Update: {
+          calculated_at?: string
+          candidate_id?: string
+          id?: string
+          is_winner?: boolean
+          position_id?: string
+          vote_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "election_results_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "election_results_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "electoral_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       electoral_positions: {
         Row: {
           created_at: string
           description: string | null
+          election_status: string
           id: string
           name: string
           published: boolean
@@ -536,6 +579,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          election_status?: string
           id?: string
           name: string
           published?: boolean
@@ -546,6 +590,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          election_status?: string
           id?: string
           name?: string
           published?: boolean
@@ -1152,6 +1197,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      receipt_templates: {
+        Row: {
+          created_at: string
+          id: string
+          payment_type: string
+          template_url: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payment_type: string
+          template_url: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payment_type?: string
+          template_url?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       school_settings: {
         Row: {

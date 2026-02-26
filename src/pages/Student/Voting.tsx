@@ -10,9 +10,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Vote, User, Send, BarChart3 } from 'lucide-react';
+import { CheckCircle, Vote, User, Send, BarChart3, Trophy, Clock, StopCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+
+function CountdownTimer({ endTime }: { endTime: string }) {
+  const [remaining, setRemaining] = useState('');
+
+  useEffect(() => {
+    const update = () => {
+      const diff = new Date(endTime).getTime() - Date.now();
+      if (diff <= 0) { setRemaining('Ended'); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (h > 24) setRemaining(`${Math.floor(h / 24)}d ${h % 24}h ${m}m`);
+      else setRemaining(`${h}h ${m}m ${s}s`);
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [endTime]);
+
+  return (
+    <Badge variant="outline" className="flex items-center gap-1 text-xs">
+      <Clock className="h-3 w-3" /> {remaining}
+    </Badge>
+  );
+}
 
 export default function StudentVoting() {
   const { profile } = useAuth();
@@ -20,6 +45,7 @@ export default function StudentVoting() {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [myVotes, setMyVotes] = useState<any[]>([]);
   const [myCandidacies, setMyCandidacies] = useState<any[]>([]);
+  const [electionResults, setElectionResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [applyPosition, setApplyPosition] = useState('');
   const [manifesto, setManifesto] = useState('');
@@ -33,31 +59,32 @@ export default function StudentVoting() {
     const channel = supabase
       .channel('student-voting')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, () => { if (profile) fetchAll(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'electoral_positions' }, () => { if (profile) fetchAll(); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [profile]);
 
   const fetchAll = async () => {
-    const [posRes, candRes, myVotesRes, myCandRes] = await Promise.all([
+    const [posRes, candRes, myVotesRes, myCandRes, resultsRes] = await Promise.all([
       (supabase as any).from('electoral_positions').select('*').eq('published', true).order('created_at'),
       (supabase as any).from('candidates').select('*, profiles:student_id(full_name, student_id, profile_photo_url, subjects:department_id(name), classes:level_id(name))').eq('approved', true),
       (supabase as any).from('votes').select('*').eq('voter_id', profile?.id),
       (supabase as any).from('candidates').select('*, electoral_positions:position_id(name)').eq('student_id', profile?.id),
+      (supabase as any).from('election_results').select('*').order('vote_count', { ascending: false }),
     ]);
     setPositions(posRes.data || []);
     setCandidates(candRes.data || []);
     setMyVotes(myVotesRes.data || []);
     setMyCandidacies(myCandRes.data || []);
+    setElectionResults(resultsRes.data || []);
 
-    // Fetch vote counts per candidate for published positions
-    // We aggregate from candidates perspective
+    // Fetch vote counts
     const counts: Record<string, Record<string, number>> = {};
     if (posRes.data) {
       for (const pos of posRes.data) {
         counts[pos.id] = {};
         const posCands = (candRes.data || []).filter((c: any) => c.position_id === pos.id);
         for (const cand of posCands) {
-          // Count from votes table - we can see our own + real-time updates
           const { count } = await (supabase as any).from('votes').select('*', { count: 'exact', head: true }).eq('position_id', pos.id).eq('candidate_id', cand.id);
           counts[pos.id][cand.id] = count || 0;
         }
@@ -73,18 +100,14 @@ export default function StudentVoting() {
     if (!applyPosition || !profile) return;
     setApplying(true);
     const { error } = await (supabase as any).from('candidates').insert({
-      student_id: profile.id,
-      position_id: applyPosition,
-      manifesto: manifesto.trim() || null,
-      profile_pic: profile.profile_photo_url,
+      student_id: profile.id, position_id: applyPosition,
+      manifesto: manifesto.trim() || null, profile_pic: profile.profile_photo_url,
     });
     if (error) {
       toast({ title: "Error", description: error.message.includes('duplicate') ? 'You already applied for this position' : error.message, variant: "destructive" });
     } else {
       toast({ title: "Application submitted!", description: "Awaiting admin approval." });
-      setManifesto('');
-      setApplyPosition('');
-      fetchAll();
+      setManifesto(''); setApplyPosition(''); fetchAll();
     }
     setApplying(false);
   };
@@ -93,9 +116,7 @@ export default function StudentVoting() {
     if (!confirmVote || !profile) return;
     setVoting(true);
     const { error } = await (supabase as any).from('votes').insert({
-      voter_id: profile.id,
-      candidate_id: confirmVote.candidate.id,
-      position_id: confirmVote.position.id,
+      voter_id: profile.id, candidate_id: confirmVote.candidate.id, position_id: confirmVote.position.id,
     });
     if (error) {
       toast({ title: "Vote failed", description: error.message.includes('duplicate') ? 'You have already voted for this position' : error.message, variant: "destructive" });
@@ -103,13 +124,19 @@ export default function StudentVoting() {
       toast({ title: "Vote registered!", description: `You voted for ${confirmVote.candidate.profiles?.full_name}` });
       fetchAll();
     }
-    setConfirmVote(null);
-    setVoting(false);
+    setConfirmVote(null); setVoting(false);
   };
 
   const getTotalVotes = (posId: string) => {
     const posCounts = voteCounts[posId] || {};
     return Object.values(posCounts).reduce((a, b) => a + b, 0);
+  };
+
+  const getWinner = (posId: string) => {
+    const result = electionResults.find(r => r.position_id === posId && r.is_winner);
+    if (!result) return null;
+    const cand = candidates.find(c => c.id === result.candidate_id);
+    return { ...result, name: cand?.profiles?.full_name };
   };
 
   return (
@@ -136,7 +163,7 @@ export default function StudentVoting() {
                   <Select value={applyPosition} onValueChange={setApplyPosition}>
                     <SelectTrigger><SelectValue placeholder="Select position" /></SelectTrigger>
                     <SelectContent>
-                      {positions.filter(p => !myCandidacies.some(c => c.position_id === p.id)).map(p => (
+                      {positions.filter(p => !myCandidacies.some(c => c.position_id === p.id) && p.election_status !== 'closed').map(p => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -171,18 +198,21 @@ export default function StudentVoting() {
               <div className="space-y-6">
                 {positions.filter(p => p.voting_open).length === 0 ? (
                   <Card><CardContent className="pt-6 text-center text-muted-foreground">No active elections at the moment.</CardContent></Card>
-                ) : positions.filter(p => p.voting_open).map((pos, idx) => {
+                ) : positions.filter(p => p.voting_open).map(pos => {
                   const posCandidates = candidates.filter(c => c.position_id === pos.id);
                   const voted = hasVoted(pos.id);
                   return (
                     <Card key={pos.id}>
                       <CardHeader>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                           <CardTitle className="text-lg flex items-center gap-2">
                             <Vote className="h-5 w-5" />
                             {pos.name}
                           </CardTitle>
-                          {voted && <Badge className="bg-green-600"><CheckCircle className="h-3 w-3 mr-1" /> Voted</Badge>}
+                          <div className="flex items-center gap-2">
+                            {pos.voting_end_time && <CountdownTimer endTime={pos.voting_end_time} />}
+                            {voted && <Badge className="bg-green-600"><CheckCircle className="h-3 w-3 mr-1" /> Voted</Badge>}
+                          </div>
                         </div>
                         {pos.description && <p className="text-sm text-muted-foreground">{pos.description}</p>}
                       </CardHeader>
@@ -215,6 +245,17 @@ export default function StudentVoting() {
                     </Card>
                   );
                 })}
+
+                {/* Show closed elections banner */}
+                {positions.filter(p => p.election_status === 'closed').length > 0 && (
+                  <Card className="border-destructive/30 bg-destructive/5">
+                    <CardContent className="pt-6 text-center">
+                      <StopCircle className="h-8 w-8 mx-auto text-destructive mb-2" />
+                      <p className="font-semibold">Some elections have ended</p>
+                      <p className="text-sm text-muted-foreground">Check the Results tab to see winners</p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </TabsContent>
 
@@ -224,27 +265,42 @@ export default function StudentVoting() {
                 {positions.map(pos => {
                   const posCandidates = candidates.filter(c => c.position_id === pos.id);
                   const totalVotes = getTotalVotes(pos.id);
+                  const isClosed = pos.election_status === 'closed';
+                  const winner = getWinner(pos.id);
+
                   return (
-                    <Card key={pos.id}>
+                    <Card key={pos.id} className={isClosed && winner ? 'border-yellow-500/30' : ''}>
                       <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <BarChart3 className="h-4 w-4" /> {pos.name}
-                        </CardTitle>
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <BarChart3 className="h-4 w-4" /> {pos.name}
+                            {isClosed && <Badge variant="destructive" className="ml-1">Closed</Badge>}
+                          </CardTitle>
+                          {isClosed && winner && (
+                            <Badge className="bg-yellow-500 text-black flex items-center gap-1">
+                              <Trophy className="h-3 w-3" /> {winner.name}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">Total votes: {totalVotes}</p>
                       </CardHeader>
                       <CardContent className="space-y-3">
                         {posCandidates.map(cand => {
                           const count = voteCounts[pos.id]?.[cand.id] || 0;
                           const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                          const isWinner = isClosed && winner?.candidate_id === cand.id;
                           return (
-                            <div key={cand.id} className="flex items-center gap-3">
+                            <div key={cand.id} className={`flex items-center gap-3 p-2 rounded-lg ${isWinner ? 'bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-500/30' : ''}`}>
                               <Avatar className="h-8 w-8">
                                 <AvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
                                 <AvatarFallback>{cand.profiles?.full_name?.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1">
                                 <div className="flex justify-between text-sm mb-1">
-                                  <span className="font-medium">{cand.profiles?.full_name}</span>
+                                  <span className="font-medium flex items-center gap-1">
+                                    {cand.profiles?.full_name}
+                                    {isWinner && <Trophy className="h-3 w-3 text-yellow-500" />}
+                                  </span>
                                   <span className="text-muted-foreground">{count} ({pct}%)</span>
                                 </div>
                                 <Progress value={pct} className="h-2" />
