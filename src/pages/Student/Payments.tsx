@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { toast } from '@/hooks/use-toast';
 import { QRCodeSVG } from 'qrcode.react';
+import receiptBg from '@/assets/receipt-template.png';
 
 function numberToWords(num: number): string {
   const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
@@ -35,10 +36,7 @@ export default function StudentPayments() {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (profile) {
-      fetchPayments();
-      fetchSignatures();
-    }
+    if (profile) { fetchPayments(); fetchSignatures(); }
   }, [profile]);
 
   useEffect(() => {
@@ -61,14 +59,12 @@ export default function StudentPayments() {
         (supabase as any).from('payments').select('*, subjects:department_id(name), classes:level_id(name)').order('created_at', { ascending: false }),
         (supabase as any).from('payment_records').select('*').eq('student_id', profile?.id),
       ]);
-
       const allPayments = (paymentsRes.data || []).filter((p: any) => {
         if (p.visibility === 'all') return true;
         if (p.department_id && (profile as any)?.department_id !== p.department_id) return false;
         if (p.level_id && (profile as any)?.level_id !== p.level_id) return false;
         return true;
       });
-
       setPayments(allPayments);
       setMyRecords(recordsRes.data || []);
     } catch (e) { console.error(e); }
@@ -94,9 +90,7 @@ export default function StudentPayments() {
       if (data?.authorization_url) window.location.href = data.authorization_url;
     } catch (error: any) {
       toast({ title: "Payment Error", description: error.message || 'Could not start payment', variant: "destructive" });
-    } finally {
-      setPayingId(null);
-    }
+    } finally { setPayingId(null); }
   };
 
   const verifyPayment = async (reference: string) => {
@@ -116,27 +110,31 @@ export default function StudentPayments() {
     if (record) setSelectedReceipt({ ...record, paymentTitle: payment.title, paymentAmount: payment.amount, paymentDescription: payment.description });
   };
 
-  const printReceipt = () => {
+  const downloadReceipt = async () => {
     if (!receiptRef.current) return;
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <html><head><title>NUESA Receipt</title>
-      <style>
-        body { margin: 0; padding: 20px; font-family: 'Times New Roman', serif; }
-        @media print { body { padding: 0; } }
-      </style></head><body>${receiptRef.current.innerHTML}</body></html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const canvas = await html2canvas(receiptRef.current, { useCORS: true, scale: 2 });
+      const link = document.createElement('a');
+      link.download = `NUESA_Receipt_${selectedReceipt?.receipt_number || 'receipt'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch {
+      // Fallback to print
+      const printWindow = window.open('', '_blank');
+      if (!printWindow || !receiptRef.current) return;
+      printWindow.document.write(`<html><head><title>NUESA Receipt</title><style>body{margin:0;padding:20px;}@media print{body{padding:0;}}</style></head><body>${receiptRef.current.innerHTML}</body></html>`);
+      printWindow.document.close();
+      printWindow.print();
+    }
   };
 
   const verifyUrl = selectedReceipt ? `${window.location.origin}/verify/payment/${selectedReceipt.id}` : '';
-
   const receiptDate = selectedReceipt ? new Date(selectedReceipt.paid_at) : new Date();
   const amountNum = selectedReceipt ? parseFloat(selectedReceipt.amount_paid) : 0;
   const naira = Math.floor(amountNum);
   const kobo = Math.round((amountNum - naira) * 100);
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   return (
     <DashboardLayout>
@@ -149,18 +147,12 @@ export default function StudentPayments() {
         {loading ? <div className="text-center py-8">Loading payments...</div> : (
           <>
             <div className="grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Total Due</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold">{payments.filter(p => getPaymentStatus(p).status !== 'paid').length}</p></CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Paid</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold text-green-600">{payments.filter(p => getPaymentStatus(p).status === 'paid').length}</p></CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Overdue</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold text-destructive">{payments.filter(p => getPaymentStatus(p).status === 'overdue').length}</p></CardContent>
-              </Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Total Due</CardTitle></CardHeader>
+                <CardContent><p className="text-2xl font-bold">{payments.filter(p => getPaymentStatus(p).status !== 'paid').length}</p></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Paid</CardTitle></CardHeader>
+                <CardContent><p className="text-2xl font-bold text-green-600">{payments.filter(p => getPaymentStatus(p).status === 'paid').length}</p></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Overdue</CardTitle></CardHeader>
+                <CardContent><p className="text-2xl font-bold text-destructive">{payments.filter(p => getPaymentStatus(p).status === 'overdue').length}</p></CardContent></Card>
             </div>
 
             <div className="space-y-4">
@@ -174,8 +166,7 @@ export default function StudentPayments() {
                       <div className="flex items-center justify-between">
                         <div>
                           <CardTitle className="text-base flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            {payment.title}
+                            <CreditCard className="h-4 w-4" />{payment.title}
                           </CardTitle>
                           {payment.description && <p className="text-sm text-muted-foreground mt-1">{payment.description}</p>}
                         </div>
@@ -212,77 +203,85 @@ export default function StudentPayments() {
           </>
         )}
 
-        {/* Receipt Dialog */}
+        {/* Receipt Dialog with Image Template */}
         <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Payment Receipt</DialogTitle>
             </DialogHeader>
             {selectedReceipt && (
               <div className="space-y-4">
-                {/* Receipt Template */}
-                <div ref={receiptRef} className="border-2 border-foreground p-6 bg-background" style={{ fontFamily: "'Times New Roman', serif" }}>
-                  <div className="text-center mb-4">
-                    <h2 className="text-xl font-bold tracking-wide">NUESA</h2>
-                    <p className="text-xs">Nigerian Universities Engineering Students' Association</p>
-                    <p className="text-lg font-bold mt-1">OFFICIAL RECEIPT</p>
+                <div ref={receiptRef} className="relative w-full" style={{ aspectRatio: '1.6/1' }}>
+                  {/* Receipt background image */}
+                  <img src={receiptBg} alt="Receipt Template" className="w-full h-full object-contain" />
+                  
+                  {/* Overlay fields with absolute positioning */}
+                  <div className="absolute inset-0" style={{ fontFamily: "'Times New Roman', Georgia, serif", color: '#1a5c2e' }}>
+                    {/* DAY */}
+                    <span className="absolute font-bold text-[1.4vw]" style={{ top: '30.5%', left: '10.5%' }}>
+                      {receiptDate.getDate().toString().padStart(2, '0')}
+                    </span>
+                    {/* MONTH */}
+                    <span className="absolute font-bold text-[1.4vw]" style={{ top: '30.5%', left: '18%' }}>
+                      {months[receiptDate.getMonth()].substring(0, 3)}
+                    </span>
+                    {/* YEAR */}
+                    <span className="absolute font-bold text-[1.4vw]" style={{ top: '30.5%', left: '26%' }}>
+                      {receiptDate.getFullYear()}
+                    </span>
+                    {/* NO (receipt number) */}
+                    <span className="absolute font-bold text-[1.4vw]" style={{ top: '27%', left: '70%' }}>
+                      {selectedReceipt.receipt_number}
+                    </span>
+                    {/* MATRIC NO */}
+                    <span className="absolute font-bold text-[1.3vw]" style={{ top: '32%', left: '75%' }}>
+                      {profile?.student_id || 'N/A'}
+                    </span>
+                    {/* RECEIVED FROM */}
+                    <span className="absolute font-bold text-[1.4vw]" style={{ top: '41%', left: '18%' }}>
+                      {profile?.full_name}
+                    </span>
+                    {/* TOTAL SUM OF */}
+                    <span className="absolute font-bold text-[1.2vw] max-w-[60%] truncate" style={{ top: '49.5%', left: '18%' }}>
+                      {numberToWords(naira)} Naira{kobo > 0 ? ` ${numberToWords(kobo)} Kobo` : ' Only'}
+                    </span>
+                    {/* NAIRA amount */}
+                    <span className="absolute font-bold text-[1.4vw]" style={{ top: '58%', left: '8%' }}>
+                      {naira.toLocaleString()}
+                    </span>
+                    {/* KOBO */}
+                    <span className="absolute font-bold text-[1.4vw]" style={{ top: '58%', left: '85%' }}>
+                      {kobo.toString().padStart(2, '0')}
+                    </span>
+                    {/* BEING PAYMENT FOR */}
+                    <span className="absolute font-bold text-[1.2vw] max-w-[55%] truncate" style={{ top: '65%', left: '22%' }}>
+                      {selectedReceipt.paymentDescription || selectedReceipt.paymentTitle}
+                    </span>
+                    {/* Amount box (₦) */}
+                    <span className="absolute font-bold text-[1.6vw]" style={{ top: '79%', left: '42%' }}>
+                      {amountNum.toLocaleString()}
+                    </span>
+                    {/* President signature */}
+                    {signatures.president && (
+                      <img src={signatures.president} alt="President" className="absolute" style={{ top: '76%', left: '5%', height: '10%', maxWidth: '20%', objectFit: 'contain' }} />
+                    )}
+                    {/* Financial Secretary signature */}
+                    {signatures.financial_secretary && (
+                      <img src={signatures.financial_secretary} alt="Fin. Secretary" className="absolute" style={{ top: '76%', left: '75%', height: '10%', maxWidth: '20%', objectFit: 'contain' }} />
+                    )}
                   </div>
-
-                  <div className="flex justify-between text-sm mb-4">
-                    <div>
-                      <p>DAY: <span className="font-bold border-b border-foreground px-2">{receiptDate.getDate()}</span></p>
-                      <p>MONTH: <span className="font-bold border-b border-foreground px-2">{receiptDate.toLocaleString('default', { month: 'long' })}</span></p>
-                      <p>YEAR: <span className="font-bold border-b border-foreground px-2">{receiptDate.getFullYear()}</span></p>
-                    </div>
-                    <div className="text-right">
-                      <p>NO: <span className="font-bold border-b border-foreground px-2">{selectedReceipt.receipt_number}</span></p>
-                      <p>MATRIC NO: <span className="font-bold border-b border-foreground px-2">{profile?.student_id || 'N/A'}</span></p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 text-sm">
-                    <p>RECEIVED FROM: <span className="font-bold border-b border-foreground px-2">{profile?.full_name}</span></p>
-                    <p>TOTAL SUM OF: <span className="font-bold border-b border-foreground px-2">{numberToWords(naira)} Naira{kobo > 0 ? ` and ${numberToWords(kobo)} Kobo` : ' Only'}</span></p>
-                    
-                    <div className="flex gap-4">
-                      <p>NAIRA: <span className="font-bold border-b border-foreground px-4">{naira.toLocaleString()}</span></p>
-                      <p>KOBO: <span className="font-bold border-b border-foreground px-4">{kobo.toString().padStart(2, '0')}</span></p>
-                    </div>
-
-                    <p>BEING PAYMENT FOR: <span className="font-bold border-b border-foreground px-2">{selectedReceipt.paymentDescription || selectedReceipt.paymentTitle}</span></p>
-
-                    <div className="border-2 border-foreground inline-block px-4 py-2 mt-2">
-                      <p className="text-lg font-bold">₦{amountNum.toLocaleString()}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between mt-8 pt-4">
-                    <div className="text-center">
-                      {signatures.president ? (
-                        <img src={signatures.president} alt="President Signature" className="h-12 mx-auto mb-1" />
-                      ) : (
-                        <div className="h-12 w-32 border-b border-foreground mb-1" />
-                      )}
-                      <p className="text-xs font-bold">PRESIDENT</p>
-                    </div>
-                    <div className="text-center">
-                      {signatures.financial_secretary ? (
-                        <img src={signatures.financial_secretary} alt="Financial Secretary Signature" className="h-12 mx-auto mb-1" />
-                      ) : (
-                        <div className="h-12 w-32 border-b border-foreground mb-1" />
-                      )}
-                      <p className="text-xs font-bold">FINANCIAL SECRETARY</p>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center mt-4">
-                    <QRCodeSVG value={verifyUrl} size={80} level="M" />
-                  </div>
-                  <p className="text-center text-[8px] mt-1">Scan to verify</p>
                 </div>
 
-                <Button className="w-full" onClick={printReceipt}>
-                  <Download className="h-4 w-4 mr-2" /> Print Receipt
+                {/* QR Code for verification */}
+                <div className="flex justify-center">
+                  <div className="text-center">
+                    <QRCodeSVG value={verifyUrl} size={64} level="M" />
+                    <p className="text-[10px] text-muted-foreground mt-1">Scan to verify</p>
+                  </div>
+                </div>
+
+                <Button className="w-full" onClick={downloadReceipt}>
+                  <Download className="h-4 w-4 mr-2" /> Download Receipt
                 </Button>
               </div>
             )}

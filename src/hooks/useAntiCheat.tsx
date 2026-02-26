@@ -15,42 +15,52 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
   const hasAutoSubmitted = useRef(false);
   const sessionId = useRef(crypto.randomUUID());
   const lastViolationTime = useRef(0);
+  const onAutoSubmitRef = useRef(onAutoSubmit);
+  onAutoSubmitRef.current = onAutoSubmit;
 
   const logViolation = useCallback(async (type: string, details: Record<string, any> = {}) => {
     if (hasAutoSubmitted.current) return;
 
     const isStrikeViolation = type === 'tab_switch' || type === 'focus_loss';
 
-    // Debounce strike violations - prevent double counting from blur+visibility firing together
+    // Debounce strike violations - prevent double counting
     if (isStrikeViolation) {
       const now = Date.now();
-      if (now - lastViolationTime.current < 1000) return; // ignore if within 1s of last strike
+      if (now - lastViolationTime.current < 2000) return;
       lastViolationTime.current = now;
 
       violationCountRef.current += 1;
-      setViolations(violationCountRef.current);
-    }
+      const currentCount = violationCountRef.current;
+      setViolations(currentCount);
 
-    await (supabase as any).from('quiz_violation_logs').insert({
-      quiz_id: quizId,
-      student_id: studentId,
-      violation_type: type,
-      details: { ...details, session_id: sessionId.current, timestamp: new Date().toISOString() },
-    });
+      // Log to DB
+      await (supabase as any).from('quiz_violation_logs').insert({
+        quiz_id: quizId,
+        student_id: studentId,
+        violation_type: type,
+        details: { ...details, session_id: sessionId.current, timestamp: new Date().toISOString(), strike: currentCount },
+      });
 
-    if (isStrikeViolation) {
-      if (violationCountRef.current >= maxViolations) {
-        setWarningMessage(`You have exceeded the maximum number of warnings. Your quiz has been submitted.`);
+      if (currentCount >= maxViolations) {
+        setWarningMessage(`You have exceeded the maximum number of warnings (${maxViolations}/${maxViolations}). Your quiz has been submitted.`);
         hasAutoSubmitted.current = true;
-        onAutoSubmit();
+        setTimeout(() => onAutoSubmitRef.current(), 500);
       } else {
-        const remaining = maxViolations - violationCountRef.current;
+        const remaining = maxViolations - currentCount;
         setWarningMessage(
-          `Warning ${violationCountRef.current}/${maxViolations} – You have ${remaining} warning${remaining > 1 ? 's' : ''} remaining.`
+          `Warning ${currentCount}/${maxViolations} – You switched away from the quiz. You have ${remaining} warning${remaining > 1 ? 's' : ''} remaining before auto-submit.`
         );
       }
+    } else {
+      // Non-strike: just log
+      await (supabase as any).from('quiz_violation_logs').insert({
+        quiz_id: quizId,
+        student_id: studentId,
+        violation_type: type,
+        details: { ...details, session_id: sessionId.current, timestamp: new Date().toISOString() },
+      });
     }
-  }, [quizId, studentId, maxViolations, onAutoSubmit]);
+  }, [quizId, studentId, maxViolations]);
 
   useEffect(() => {
     const handleVisibility = () => {
@@ -59,7 +69,6 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
       }
     };
 
-    // Only use visibilitychange - blur fires too aggressively and causes double counts
     const handleCopy = (e: ClipboardEvent) => {
       e.preventDefault();
       logViolation('copy_attempt');
@@ -91,12 +100,18 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
       }
     };
 
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'You have an active quiz. Leaving will count as a violation.';
+    };
+
     document.addEventListener('visibilitychange', handleVisibility);
     document.addEventListener('copy', handleCopy);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('selectstart', handleSelectStart);
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     // Log device info at start (non-strike)
     const deviceInfo = {
@@ -108,9 +123,6 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
       sessionId: sessionId.current,
     };
     logViolation('quiz_start', deviceInfo);
-    // Reset since quiz_start is not a strike
-    violationCountRef.current = 0;
-    setViolations(0);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
@@ -119,6 +131,7 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
       document.removeEventListener('selectstart', handleSelectStart);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [logViolation]);
 
