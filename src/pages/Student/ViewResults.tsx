@@ -2,19 +2,15 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Trophy, Calendar, FileText } from 'lucide-react';
+import { BookOpen, Trophy, Calendar, FileText, GraduationCap } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { GPACard } from '@/components/Student/GPACard';
-import { AttendanceChart } from '@/components/Student/AttendanceChart';
-import { QuizPerformanceChart } from '@/components/Student/QuizPerformanceChart';
 
 export default function StudentViewResults() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchResults();
-  }, []);
+  useEffect(() => { fetchResults(); }, []);
 
   const fetchResults = async () => {
     try {
@@ -22,19 +18,13 @@ export default function StudentViewResults() {
       const userId = user.user?.id;
       if (!userId) { setLoading(false); return; }
 
-      const { data: submissions, error } = await supabase
+      const { data: submissions } = await supabase
         .from('assignment_submissions')
-        .select(`
-          id, grade, feedback, graded_at, submitted_at,
-          assignments(title, max_points, course_id, grades_locked, results_released, courses(name, subjects(name)))
-        `)
+        .select(`id, grade, feedback, graded_at, submitted_at, assignments(title, max_points, course_id, grades_locked, results_released, courses(name, subjects(name)))`)
         .eq('student_id', userId)
         .not('grade', 'is', null)
         .order('graded_at', { ascending: false });
 
-      if (error) console.error('Error fetching results:', error);
-
-      // Filter to only show released results
       const released = (submissions || []).filter((s: any) => s.assignments?.results_released !== false);
       setResults(released);
     } catch (error) {
@@ -65,15 +55,10 @@ export default function StudentViewResults() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Results</h1>
-          <p className="text-muted-foreground">View your assignment grades, GPA, and performance analytics</p>
+          <p className="text-muted-foreground">View your assignment grades and GPA summary</p>
         </div>
 
-        {/* Analytics Section */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <GPACard />
-          <AttendanceChart />
-          <QuizPerformanceChart />
-        </div>
+        <GPACard />
 
         {loading ? (
           <div className="text-center">Loading results...</div>
@@ -82,7 +67,7 @@ export default function StudentViewResults() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <Trophy className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-2 text-sm font-semibold text-foreground">No results available</h3>
+                <h3 className="mt-2 text-sm font-semibold">No results available</h3>
                 <p className="mt-1 text-sm text-muted-foreground">No graded assignments yet or results pending release.</p>
               </div>
             </CardContent>
@@ -142,9 +127,6 @@ export default function StudentViewResults() {
                         </div>
                       </div>
                     )}
-                    <div className="text-xs text-muted-foreground">
-                      Submitted: {new Date(result.submitted_at).toLocaleDateString()}
-                    </div>
                   </CardContent>
                 </Card>
               );

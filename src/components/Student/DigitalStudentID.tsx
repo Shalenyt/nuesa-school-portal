@@ -12,13 +12,13 @@ export function DigitalStudentID() {
 
   if (!profile) return null;
 
-  // QR code links to verification page
-  const verifyUrl = `${window.location.origin}/verify?id=${profile.id}`;
+  // QR code uses matric number for public verification via RPC (no login required)
+  const verifyUrl = `${window.location.origin}/verify/student/${profile.student_id || profile.id}`;
 
   return (
     <Card className="max-w-sm mx-auto overflow-hidden">
       <div className="bg-primary p-4 text-center">
-        <p className="text-primary-foreground font-bold text-lg">{settings?.school_name || 'UNIABUJA'}</p>
+        <p className="text-primary-foreground font-bold text-lg">{settings?.school_name || 'NUESA Portal'}</p>
         <p className="text-primary-foreground/80 text-xs">Student Identification Card</p>
       </div>
       <CardContent className="p-6 space-y-4">

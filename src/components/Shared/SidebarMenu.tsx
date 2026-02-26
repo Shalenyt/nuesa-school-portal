@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, BarChart3, Settings, BookOpen, FileText, MessageSquare, Upload,
-  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode, Vote
+  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode, Vote, MessageCircle
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -21,6 +21,7 @@ const adminMenuItems = [
   { title: "Course Lists", url: "/admin/course-lists", icon: FileText },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Voting", url: "/admin/voting", icon: Vote },
+  { title: "Feedback", url: "/admin/feedback", icon: MessageCircle },
   { title: "Semester", url: "/admin/semester-settings", icon: Calendar },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Profile", url: "/admin/profile", icon: Settings }
@@ -38,6 +39,7 @@ const lecturerMenuItems = [
   { title: "Class Schedule", url: "/teacher/class-schedule", icon: Calendar },
   { title: "View Students", url: "/teacher/view-students", icon: Users },
   { title: "Announcements", url: "/teacher/announcements", icon: MessageSquare },
+  { title: "Feedback", url: "/teacher/feedback", icon: MessageCircle },
   { title: "Notifications", url: "/teacher/notifications", icon: Bell },
   { title: "Courses", url: "/teacher/courses", icon: BookOpen }
 ];
@@ -54,6 +56,7 @@ const studentMenuItems = [
   { title: "View Results", url: "/student/view-results", icon: GraduationCap },
   { title: "Payments", url: "/student/payments", icon: CreditCard },
   { title: "Voting", url: "/student/voting", icon: Vote },
+  { title: "Feedback", url: "/student/feedback", icon: MessageCircle },
   { title: "Student ID", url: "/student/student-id", icon: QrCode },
   { title: "Notifications", url: "/student/notifications", icon: Bell }
 ];
