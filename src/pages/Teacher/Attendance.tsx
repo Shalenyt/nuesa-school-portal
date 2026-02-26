@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Users, CheckCircle, XCircle, MapPin } from 'lucide-react';
+import { Calendar, Users, CheckCircle, XCircle, MapPin, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function LecturerAttendance() {
   const { profile } = useAuth();
@@ -269,7 +270,7 @@ export default function LecturerAttendance() {
                       </div>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="flex gap-2">
+                  <CardContent className="flex gap-2 flex-wrap">
                     <Button variant="outline" size="sm" onClick={() => viewRecords(s)}>
                       <Users className="h-4 w-4 mr-1" /> View Records
                     </Button>
@@ -278,6 +279,29 @@ export default function LecturerAttendance() {
                         <XCircle className="h-4 w-4 mr-1" /> Close
                       </Button>
                     )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this attendance session?</AlertDialogTitle>
+                          <AlertDialogDescription>This will permanently remove the session and all student check-in records. This cannot be undone.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={async () => {
+                            await (supabase as any).from('attendance_records').delete().eq('session_id', s.id);
+                            await (supabase as any).from('attendance_sessions').delete().eq('id', s.id);
+                            toast({ title: 'Deleted', description: 'Attendance session removed.' });
+                            fetchSessions();
+                            fetchStudentStats();
+                          }}>Delete Permanently</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </CardContent>
                 </Card>
               ))}

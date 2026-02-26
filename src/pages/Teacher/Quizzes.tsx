@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Trash2, Eye, CheckCircle, ArrowLeft, BookOpen, Send, MapPin, Shield } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 
 interface QuestionForm {
@@ -269,6 +270,18 @@ export default function LecturerQuizzes() {
     fetchData();
   };
 
+  const deleteQuiz = async (quizId: string) => {
+    // Delete submissions, questions, violation logs, then the quiz
+    await Promise.all([
+      (supabase as any).from('quiz_submissions').delete().eq('quiz_id', quizId),
+      (supabase as any).from('quiz_questions').delete().eq('quiz_id', quizId),
+      (supabase as any).from('quiz_violation_logs').delete().eq('quiz_id', quizId),
+    ]);
+    await (supabase as any).from('quizzes').delete().eq('id', quizId);
+    toast({ title: 'Deleted', description: 'Quiz and all related data have been removed.' });
+    fetchData();
+  };
+
   // Render student answers with actual text
   const renderStudentAnswers = (submission: any) => {
     if (!quizQuestions.length) return <p className="text-muted-foreground">No questions found.</p>;
@@ -345,6 +358,23 @@ export default function LecturerQuizzes() {
                   <Button variant="outline" size="sm" onClick={() => toggleQuizStatus(q)}>
                     {q.status === 'published' ? 'Close' : 'Reopen'}
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this quiz permanently?</AlertDialogTitle>
+                        <AlertDialogDescription>This will remove the quiz, all submissions, questions, and violation logs. This action cannot be undone.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteQuiz(q.id)}>Delete Permanently</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardContent>
               </Card>
             ))}

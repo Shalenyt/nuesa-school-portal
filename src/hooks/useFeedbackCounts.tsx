@@ -12,7 +12,7 @@ export function useFeedbackCounts() {
 
     const channel = supabase
       .channel('feedback-count-changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feedback' }, () => fetchCount())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feedback' }, () => fetchCount())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -20,14 +20,10 @@ export function useFeedbackCounts() {
 
   const fetchCount = async () => {
     if (!profile || profile.role !== 'admin') return;
-    // Count feedback from last 7 days as "new"
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    
-    const { count } = await supabase
+    const { count } = await (supabase as any)
       .from('feedback')
       .select('id', { count: 'exact', head: true })
-      .gte('created_at', weekAgo.toISOString());
+      .eq('is_read', false);
 
     setUnreadCount(count || 0);
   };

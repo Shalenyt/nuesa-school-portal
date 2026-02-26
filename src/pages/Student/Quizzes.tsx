@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, BookOpen, Clock, MapPin, AlertTriangle } from 'lucide-react';
 import { QuizAttempt } from '@/components/Student/QuizAttempt';
+import { QuizConsentModal } from '@/components/Student/QuizConsentModal';
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
@@ -29,6 +30,9 @@ export default function StudentQuizzes() {
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [gpsChecking, setGpsChecking] = useState(false);
+  const [consentOpen, setConsentOpen] = useState(false);
+  const [pendingQuiz, setPendingQuiz] = useState<any>(null);
+  const locationConsentRef = useRef(false);
 
   useEffect(() => {
     if (profile) fetchData();
@@ -45,7 +49,7 @@ export default function StudentQuizzes() {
 
     const [{ data: quizzesData }, { data: subsData }] = await Promise.all([
       (supabase as any).from('quizzes').select('*, courses(name, subjects(name))').in('course_id', courseIds).in('status', ['published', 'closed']).order('created_at', { ascending: false }),
-      (supabase as any).from('quiz_submissions').select('*, quizzes(title, max_points, courses(name))').eq('student_id', profile?.id).order('submitted_at', { ascending: false })
+      (supabase as any).from('quiz_submissions').select('*, quizzes(title, max_points, courses(name), results_released)').eq('student_id', profile?.id).order('submitted_at', { ascending: false })
     ]);
 
     setQuizzes(quizzesData || []);
@@ -60,9 +64,7 @@ export default function StudentQuizzes() {
         return;
       }
       navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        enableHighAccuracy: true, timeout: 10000, maximumAge: 0
       });
     });
   };
@@ -74,8 +76,23 @@ export default function StudentQuizzes() {
       return;
     }
 
-    // GPS validation if enabled
+    // Show consent modal first
+    setPendingQuiz(quiz);
+    setConsentOpen(true);
+  };
+
+  const handleConsent = async (consent: boolean) => {
+    setConsentOpen(false);
+    locationConsentRef.current = consent;
+    const quiz = pendingQuiz;
+    if (!quiz) return;
+
+    // GPS validation if enabled and consent given
     if (quiz.gps_enabled && quiz.latitude && quiz.longitude) {
+      if (!consent) {
+        toast({ title: 'Location Required', description: 'This quiz requires GPS verification. You must consent to location tracking to proceed.', variant: 'destructive' });
+        return;
+      }
       setGpsChecking(true);
       try {
         const position = await getCurrentPosition();
@@ -84,22 +101,17 @@ export default function StudentQuizzes() {
           position.coords.latitude, position.coords.longitude
         );
         const allowedRadius = quiz.allowed_radius_meters || 100;
-
         if (distance > allowedRadius) {
           toast({
             title: 'Too far from exam location',
-            description: `You are ${Math.round(distance)}m away. You must be within ${allowedRadius}m to start this quiz.`,
+            description: `You are ${Math.round(distance)}m away. You must be within ${allowedRadius}m.`,
             variant: 'destructive'
           });
           setGpsChecking(false);
           return;
         }
-      } catch (err: any) {
-        toast({
-          title: 'GPS Required',
-          description: 'This quiz requires location access. Please enable GPS and try again.',
-          variant: 'destructive'
-        });
+      } catch {
+        toast({ title: 'GPS Required', description: 'Please enable GPS and try again.', variant: 'destructive' });
         setGpsChecking(false);
         return;
       }
@@ -120,13 +132,15 @@ export default function StudentQuizzes() {
   const submitQuiz = async (submittedAnswers: Record<string, number>, deviceInfo?: any) => {
     if (!selectedQuiz || !profile) return;
 
-    // Get student location for logging
     let lat: number | undefined, lng: number | undefined;
-    try {
-      const position = await getCurrentPosition();
-      lat = position.coords.latitude;
-      lng = position.coords.longitude;
-    } catch {}
+    // Only collect location if consent was given
+    if (locationConsentRef.current) {
+      try {
+        const position = await getCurrentPosition();
+        lat = position.coords.latitude;
+        lng = position.coords.longitude;
+      } catch {}
+    }
 
     const { error } = await (supabase as any)
       .from('quiz_submissions')
@@ -134,9 +148,10 @@ export default function StudentQuizzes() {
         quiz_id: selectedQuiz.id,
         student_id: profile.id,
         answers: submittedAnswers,
-        device_info: deviceInfo || {},
+        device_info: locationConsentRef.current ? (deviceInfo || {}) : {},
         latitude: lat,
         longitude: lng,
+        location_consent: locationConsentRef.current,
       });
 
     if (error) {
@@ -209,13 +224,20 @@ export default function StudentQuizzes() {
                         <p className="text-sm text-muted-foreground">{s.quizzes?.courses?.name}</p>
                       </CardHeader>
                       <CardContent>
-                        {!released ? (
-                          <Badge variant="secondary">Results Pending</Badge>
-                        ) : s.score !== null ? (
-                          <Badge variant="default">{s.score}/{s.quizzes?.max_points || 100}</Badge>
-                        ) : (
-                          <Badge variant="secondary">Awaiting grading</Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {!released ? (
+                            <Badge variant="secondary">Results Pending</Badge>
+                          ) : s.score !== null ? (
+                            <Badge variant="default">{s.score}/{s.quizzes?.max_points || 100}</Badge>
+                          ) : (
+                            <Badge variant="secondary">Awaiting grading</Badge>
+                          )}
+                          {s.location_consent ? (
+                            <span className="text-xs text-muted-foreground">Location recorded</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Location not recorded</span>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   );
@@ -236,6 +258,13 @@ export default function StudentQuizzes() {
             studentId={profile.id}
           />
         )}
+
+        {/* Consent modal */}
+        <QuizConsentModal
+          open={consentOpen}
+          onConsent={handleConsent}
+          gpsRequired={pendingQuiz?.gps_enabled || false}
+        />
 
         {/* GPS checking overlay */}
         {gpsChecking && (

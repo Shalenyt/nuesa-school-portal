@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Mail, Settings, Camera, BookOpen } from 'lucide-react';
+import { User, Mail, Settings, Camera, BookOpen, Shield, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -323,6 +324,45 @@ export default function StudentProfile() {
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Privacy Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" /> Privacy Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Manage your data collected during quizzes for academic integrity purposes.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete My Location History
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete location history?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove all GPS coordinates and device metadata from your quiz submissions. Your quiz scores and academic records will NOT be affected.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={async () => {
+                    if (!profile) return;
+                    await (supabase as any).from('quiz_submissions')
+                      .update({ latitude: null, longitude: null, device_info: {}, ip_address: null })
+                      .eq('student_id', profile.id);
+                    toast({ title: 'Deleted', description: 'Your location history has been removed.' });
+                  }}>Delete Location Data</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       </div>

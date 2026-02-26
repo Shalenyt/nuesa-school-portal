@@ -18,54 +18,77 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
   const onAutoSubmitRef = useRef(onAutoSubmit);
   onAutoSubmitRef.current = onAutoSubmit;
 
+  // Track if warning is currently being shown - prevent dismissal race conditions
+  const warningShown = useRef(false);
+
   const logViolation = useCallback(async (type: string, details: Record<string, any> = {}) => {
     if (hasAutoSubmitted.current) return;
 
     const isStrikeViolation = type === 'tab_switch' || type === 'focus_loss';
 
-    // Debounce strike violations - prevent double counting
     if (isStrikeViolation) {
+      // Debounce - prevent double counting from rapid visibility + blur events
       const now = Date.now();
-      if (now - lastViolationTime.current < 2000) return;
+      if (now - lastViolationTime.current < 3000) return;
       lastViolationTime.current = now;
+
+      // Don't count new violations while a warning is being shown
+      if (warningShown.current) return;
 
       violationCountRef.current += 1;
       const currentCount = violationCountRef.current;
       setViolations(currentCount);
 
       // Log to DB
-      await (supabase as any).from('quiz_violation_logs').insert({
-        quiz_id: quizId,
-        student_id: studentId,
-        violation_type: type,
-        details: { ...details, session_id: sessionId.current, timestamp: new Date().toISOString(), strike: currentCount },
-      });
+      try {
+        await (supabase as any).from('quiz_violation_logs').insert({
+          quiz_id: quizId,
+          student_id: studentId,
+          violation_type: type,
+          details: { ...details, session_id: sessionId.current, timestamp: new Date().toISOString(), strike: currentCount },
+        });
+      } catch {}
+
+      warningShown.current = true;
 
       if (currentCount >= maxViolations) {
-        setWarningMessage(`You have exceeded the maximum number of warnings (${maxViolations}/${maxViolations}). Your quiz has been submitted.`);
+        setWarningMessage(`You have exceeded the maximum number of warnings (${maxViolations}/${maxViolations}). Your quiz is being submitted automatically.`);
         hasAutoSubmitted.current = true;
-        setTimeout(() => onAutoSubmitRef.current(), 500);
+        // Delay to ensure modal is visible
+        setTimeout(() => {
+          onAutoSubmitRef.current();
+        }, 1500);
       } else {
         const remaining = maxViolations - currentCount;
         setWarningMessage(
-          `Warning ${currentCount}/${maxViolations} – You switched away from the quiz. You have ${remaining} warning${remaining > 1 ? 's' : ''} remaining before auto-submit.`
+          `⚠️ Warning ${currentCount} of ${maxViolations} – You switched away from the quiz. You have ${remaining} warning${remaining > 1 ? 's' : ''} remaining before your quiz is auto-submitted.`
         );
       }
     } else {
       // Non-strike: just log
-      await (supabase as any).from('quiz_violation_logs').insert({
-        quiz_id: quizId,
-        student_id: studentId,
-        violation_type: type,
-        details: { ...details, session_id: sessionId.current, timestamp: new Date().toISOString() },
-      });
+      try {
+        await (supabase as any).from('quiz_violation_logs').insert({
+          quiz_id: quizId,
+          student_id: studentId,
+          violation_type: type,
+          details: { ...details, session_id: sessionId.current, timestamp: new Date().toISOString() },
+        });
+      } catch {}
     }
   }, [quizId, studentId, maxViolations]);
 
   useEffect(() => {
+    // Use both visibilitychange and blur for maximum coverage
     const handleVisibility = () => {
       if (document.hidden) {
-        logViolation('tab_switch');
+        logViolation('tab_switch', { trigger: 'visibilitychange' });
+      }
+    };
+
+    const handleWindowBlur = () => {
+      // Only fire if document isn't already hidden (avoid double-counting)
+      if (!document.hidden) {
+        logViolation('focus_loss', { trigger: 'window_blur' });
       }
     };
 
@@ -106,6 +129,7 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('blur', handleWindowBlur);
     document.addEventListener('copy', handleCopy);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('selectstart', handleSelectStart);
@@ -126,6 +150,7 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('copy', handleCopy);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('selectstart', handleSelectStart);
@@ -135,7 +160,10 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
     };
   }, [logViolation]);
 
-  const dismissWarning = () => setWarningMessage(null);
+  const dismissWarning = useCallback(() => {
+    setWarningMessage(null);
+    warningShown.current = false;
+  }, []);
 
   const requestFullscreen = useCallback(() => {
     document.documentElement.requestFullscreen?.().catch(() => {});
