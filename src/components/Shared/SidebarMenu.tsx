@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Badge } from '@/components/ui/badge';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
+import { useFeedbackCounts } from '@/hooks/useFeedbackCounts';
 
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
@@ -65,6 +66,7 @@ export function SidebarMenu() {
   const { profile } = useAuth();
   const location = useLocation();
   const { counts } = useNotificationCounts();
+  const { unreadCount: feedbackCount } = useFeedbackCounts();
 
   const getRoleLabel = () => {
     switch (profile?.role) {
@@ -113,6 +115,11 @@ export function SidebarMenu() {
                       {item.title === 'Notifications' && counts.total > 0 && (
                         <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
                           {counts.total}
+                        </Badge>
+                      )}
+                      {item.title === 'Feedback' && feedbackCount > 0 && (
+                        <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
+                          {feedbackCount}
                         </Badge>
                       )}
                     </NavLink>
