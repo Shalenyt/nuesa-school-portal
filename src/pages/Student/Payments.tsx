@@ -202,7 +202,7 @@ export default function StudentPayments() {
 
         {/* Receipt Dialog - portrait rectangular layout */}
         <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-          <DialogContent className="max-w-[850px] w-[95vw] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogContent className="max-w-[920px] w-[96vw] max-h-[95vh] overflow-y-auto p-3 sm:p-4">
             <DialogHeader>
               <DialogTitle>Payment Receipt</DialogTitle>
             </DialogHeader>

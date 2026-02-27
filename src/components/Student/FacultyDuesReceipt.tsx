@@ -25,11 +25,11 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
     return (
       <div ref={ref} style={{
         width: '850px',
-        height: '620px',
+        height: 'auto',
         backgroundColor: '#f9fdfa',
         border: '1px solid #d1d5db',
         position: 'relative',
-        padding: '20px 24px',
+        padding: '18px 24px 20px',
         boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
         overflow: 'hidden',
         boxSizing: 'border-box',
@@ -45,11 +45,11 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
         <img src={nuesaLogo} alt="" crossOrigin="anonymous" style={{
           position: 'absolute', top: '50%', left: '50%',
           transform: 'translate(-50%, -50%)',
-          opacity: 0.08, width: '500px', zIndex: 0, pointerEvents: 'none',
+          opacity: 0.08, width: '400px', zIndex: 0, pointerEvents: 'none',
         }} />
 
         {/* Header */}
-        <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+        <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
           <img src={nuesaLogo} alt="NUESA" crossOrigin="anonymous" style={{ width: '100px', height: '100px', objectFit: 'contain' }} />
           <div style={{ textAlign: 'center', flex: 1, padding: '0 12px' }}>
             <h1 style={{ fontFamily: "'Times New Roman', Georgia, serif", fontSize: '16px', fontWeight: 'bold', color: '#1e633d', letterSpacing: '0.05em', margin: 0 }}>
@@ -73,7 +73,7 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
         </div>
 
         {/* Date + ID */}
-        <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '12px' }}>
+        <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
           <table style={{ borderCollapse: 'collapse', textAlign: 'center', fontSize: '11px' }}>
             <thead>
               <tr style={{ background: '#1e633d', color: 'white', fontWeight: 'bold' }}>
@@ -109,24 +109,21 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
 
         {/* Form fields */}
         <div style={{ position: 'relative', zIndex: 10 }}>
-          {/* Received from */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
             <span style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>Received from:</span>
             <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'left', paddingLeft: '6px' }}>
               <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px' }}>{data.fullName}</span>
             </div>
           </div>
 
-          {/* Total sum of */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
             <span style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>Total sum of:</span>
             <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'left', paddingLeft: '6px' }}>
               <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px' }}>{data.amountInWords}</span>
             </div>
           </div>
 
-          {/* Naira / Kobo row */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
             <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1 }} />
             <span style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '14px', margin: '0 10px' }}>Naira</span>
             <div style={{ width: '100px', borderBottom: '2px solid #1e633d', textAlign: 'center' }}>
@@ -138,8 +135,7 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
             </div>
           </div>
 
-          {/* Being payment for - single line only */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
             <span style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>Being payment for:</span>
             <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'left', paddingLeft: '6px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
               <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px' }}>{data.paymentFor}</span>
@@ -147,21 +143,22 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
           </div>
         </div>
 
-        {/* Footer / Signatures */}
+        {/* Signatures - positioned right after form fields with minimal gap */}
         <div style={{
-          position: 'absolute', bottom: '16px', left: '24px', right: '24px', zIndex: 10,
+          position: 'relative', zIndex: 10, marginTop: '16px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
         }}>
           {/* President Signature */}
           <div style={{ width: '30%', textAlign: 'center' }}>
             {data.presidentSignatureUrl ? (
               <img src={data.presidentSignatureUrl} alt="President" crossOrigin="anonymous" style={{
-                height: '80px', marginBottom: '4px', objectFit: 'contain',
+                height: '60px', objectFit: 'contain',
                 display: 'block', marginLeft: 'auto', marginRight: 'auto',
+                marginBottom: '-4px',
                 filter: 'contrast(1.8) brightness(0.9)',
               }} />
             ) : (
-              <div style={{ height: '80px', marginBottom: '4px' }} />
+              <div style={{ height: '60px' }} />
             )}
             <div style={{ borderBottom: '2px solid #1e633d', marginBottom: '4px' }} />
             <p style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '11px', margin: 0 }}>President's Signature</p>
@@ -186,12 +183,13 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
           <div style={{ width: '30%', textAlign: 'center' }}>
             {data.financialSecretarySignatureUrl ? (
               <img src={data.financialSecretarySignatureUrl} alt="Fin. Secretary" crossOrigin="anonymous" style={{
-                height: '80px', marginBottom: '4px', objectFit: 'contain',
+                height: '60px', objectFit: 'contain',
                 display: 'block', marginLeft: 'auto', marginRight: 'auto',
+                marginBottom: '-4px',
                 filter: 'contrast(1.8) brightness(0.9)',
               }} />
             ) : (
-              <div style={{ height: '80px', marginBottom: '4px' }} />
+              <div style={{ height: '60px' }} />
             )}
             <div style={{ borderBottom: '2px solid #1e633d', marginBottom: '4px' }} />
             <p style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '11px', margin: 0 }}>Financial Secretary's Signature</p>
