@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { toast } from '@/hooks/use-toast';
 import { QRCodeSVG } from 'qrcode.react';
-import oaustechLogo from '@/assets/oaustech-logo.png';
+import FacultyDuesReceipt from '@/components/Student/FacultyDuesReceipt';
 
 function numberToWords(num: number): string {
   const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
