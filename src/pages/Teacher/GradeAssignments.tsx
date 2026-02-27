@@ -11,6 +11,7 @@ import { ClipboardList, Download, Eye, CheckCircle, ArrowLeft, User } from 'luci
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { supabase as sb } from '@/integrations/supabase/client';
 
 export default function GradeAssignments() {
   const { profile } = useAuth();
@@ -109,6 +110,15 @@ export default function GradeAssignments() {
         .eq('id', selectedSubmission.id);
 
       if (error) throw error;
+
+      // Notify the student
+      await supabase.from('notifications').insert({
+        user_id: selectedSubmission.student_id,
+        title: 'Assignment Graded',
+        message: `Your submission for "${selectedAssignment?.title}" has been graded. Score: ${grade}/${selectedAssignment?.max_points || 100}.`,
+        type: 'grade',
+        is_read: false,
+      });
 
       toast({
         title: "Assignment graded",

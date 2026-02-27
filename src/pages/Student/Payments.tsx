@@ -9,7 +9,6 @@ import { CreditCard, CheckCircle, Clock, AlertTriangle, Download } from 'lucide-
 import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { toast } from '@/hooks/use-toast';
-import { QRCodeSVG } from 'qrcode.react';
 import FacultyDuesReceipt from '@/components/Student/FacultyDuesReceipt';
 
 function numberToWords(num: number): string {
@@ -53,7 +52,6 @@ export default function StudentPayments() {
     const { data } = await (supabase as any).from('school_settings').select('president_signature_url, financial_secretary_signature_url').limit(1).maybeSingle();
     if (data) setSignatures({ president: data.president_signature_url, financial_secretary: data.financial_secretary_signature_url });
   };
-
 
   const fetchPayments = async () => {
     try {
@@ -130,13 +128,10 @@ export default function StudentPayments() {
     }
   };
 
-  const verifyUrl = selectedReceipt ? `${window.location.origin}/verify/payment/${selectedReceipt.id}` : '';
   const receiptDate = selectedReceipt ? new Date(selectedReceipt.paid_at) : new Date();
   const amountNum = selectedReceipt ? parseFloat(selectedReceipt.amount_paid) : 0;
   const naira = Math.floor(amountNum);
   const kobo = Math.round((amountNum - naira) * 100);
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
 
   return (
     <DashboardLayout>
@@ -205,48 +200,42 @@ export default function StudentPayments() {
           </>
         )}
 
-        {/* Receipt Dialog */}
+        {/* Receipt Dialog - portrait rectangular layout */}
         <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[850px] w-[95vw] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Payment Receipt</DialogTitle>
             </DialogHeader>
             {selectedReceipt && (
               <div className="space-y-4">
-                <div ref={receiptRef} style={{ position: 'relative', fontFamily: "'Times New Roman', Georgia, serif" }}>
-                  {selectedReceipt.paymentType === 'faculty' ? (
-                    <FacultyDuesReceipt
-                      data={{
-                        receiptNumber: selectedReceipt.receipt_number,
-                        matricNumber: profile?.student_id || '',
-                        fullName: profile?.full_name || '',
-                        amountNaira: naira,
-                        amountKobo: kobo,
-                        amountInWords: numberToWords(naira) + ' Naira' + (kobo > 0 ? ` and ${numberToWords(kobo)} Kobo` : ' Only'),
-                        paymentFor: selectedReceipt.paymentDescription || selectedReceipt.paymentTitle,
-                        paymentDate: receiptDate,
-                        presidentSignatureUrl: signatures.president,
-                        financialSecretarySignatureUrl: signatures.financial_secretary,
-                      }}
-                    />
-                  ) : (
-                    <div className="p-6 border rounded-lg text-center space-y-3">
-                      <p className="font-bold text-lg">{selectedReceipt.paymentTitle}</p>
-                      <p className="text-sm">Receipt No: {selectedReceipt.receipt_number}</p>
-                      <p className="text-sm">Name: {profile?.full_name}</p>
-                      <p className="text-sm">Matric: {profile?.student_id}</p>
-                      <p className="text-2xl font-bold">₦{naira.toLocaleString()}.{kobo.toString().padStart(2, '0')}</p>
-                      <p className="text-xs text-muted-foreground">Ref: {selectedReceipt.reference}</p>
-                      <p className="text-xs text-muted-foreground">{receiptDate.toLocaleDateString()}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* QR Code */}
-                <div className="flex justify-center">
-                  <div className="text-center">
-                    <QRCodeSVG value={verifyUrl} size={64} level="M" />
-                    <p className="text-[10px] text-muted-foreground mt-1">Scan to verify</p>
+                <div className="flex justify-center overflow-x-auto">
+                  <div ref={receiptRef}>
+                    {selectedReceipt.paymentType === 'faculty' ? (
+                      <FacultyDuesReceipt
+                        data={{
+                          receiptNumber: selectedReceipt.receipt_number,
+                          matricNumber: profile?.student_id || '',
+                          fullName: profile?.full_name || '',
+                          amountNaira: naira,
+                          amountKobo: kobo,
+                          amountInWords: numberToWords(naira) + ' Naira' + (kobo > 0 ? ` and ${numberToWords(kobo)} Kobo` : ' Only'),
+                          paymentFor: selectedReceipt.paymentTitle || '',
+                          paymentDate: receiptDate,
+                          presidentSignatureUrl: signatures.president,
+                          financialSecretarySignatureUrl: signatures.financial_secretary,
+                        }}
+                      />
+                    ) : (
+                      <div className="p-6 border rounded-lg text-center space-y-3">
+                        <p className="font-bold text-lg">{selectedReceipt.paymentTitle}</p>
+                        <p className="text-sm">Receipt No: {selectedReceipt.receipt_number}</p>
+                        <p className="text-sm">Name: {profile?.full_name}</p>
+                        <p className="text-sm">Matric: {profile?.student_id}</p>
+                        <p className="text-2xl font-bold">₦{naira.toLocaleString()}.{kobo.toString().padStart(2, '0')}</p>
+                        <p className="text-xs text-muted-foreground">Ref: {selectedReceipt.reference}</p>
+                        <p className="text-xs text-muted-foreground">{receiptDate.toLocaleDateString()}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -8,6 +8,7 @@ import { Calendar, Clock, MapPin, Plus, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { notifyEnrolledStudents } from '@/lib/notifications';
 
 const DAYS_OF_WEEK = [
   { value: 1, label: 'Monday' },
@@ -165,6 +166,16 @@ export default function TeacherClassSchedule() {
         }]);
 
       if (error) throw error;
+
+      // Notify enrolled students
+      const course = courses.find(c => c.id === newSchedule.course_id);
+      const dayLabel = DAYS_OF_WEEK.find(d => d.value === parseInt(newSchedule.day_of_week))?.label || '';
+      await notifyEnrolledStudents(
+        newSchedule.course_id,
+        'New Class Schedule',
+        `${course?.name || 'A course'} has been scheduled for ${dayLabel} ${newSchedule.start_time} - ${newSchedule.end_time}${newSchedule.room.trim() ? ` in ${newSchedule.room.trim()}` : ''}.`,
+        'schedule'
+      );
 
       toast({
         title: "Schedule created",
