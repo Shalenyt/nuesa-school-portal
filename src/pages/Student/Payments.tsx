@@ -114,11 +114,33 @@ export default function StudentPayments() {
     if (!receiptRef.current) return;
     try {
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(receiptRef.current, { useCORS: true, scale: 2, allowTaint: true });
-      const link = document.createElement('a');
-      link.download = `NUESA_Receipt_${selectedReceipt?.receipt_number || 'receipt'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const { default: jsPDF } = await import('jspdf');
+      
+      // Freeze dimensions before capture
+      const el = receiptRef.current;
+      const origWidth = el.offsetWidth;
+      const origHeight = el.offsetHeight;
+      
+      const canvas = await html2canvas(el, {
+        useCORS: true,
+        scale: 2,
+        allowTaint: true,
+        width: origWidth,
+        height: origHeight,
+        windowWidth: origWidth,
+        windowHeight: origHeight,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = origWidth * 0.75; // px to pt (96dpi → 72dpi)
+      const pdfHeight = origHeight * 0.75;
+      const pdf = new jsPDF({
+        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+        unit: 'pt',
+        format: [pdfWidth, pdfHeight],
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`NUESA_Receipt_${selectedReceipt?.receipt_number || 'receipt'}.pdf`);
     } catch {
       const printWindow = window.open('', '_blank');
       if (!printWindow || !receiptRef.current) return;

@@ -111,15 +111,15 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
         <div style={{ position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
             <span style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>Received from:</span>
-            <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'left', paddingLeft: '6px' }}>
-              <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px' }}>{data.fullName}</span>
+            <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'center' }}>
+              <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px', textTransform: 'uppercase' as const }}>{data.fullName}</span>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
             <span style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>Total sum of:</span>
-            <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'left', paddingLeft: '6px' }}>
-              <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px' }}>{data.amountInWords}</span>
+            <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'center' }}>
+              <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px', textTransform: 'uppercase' as const }}>{data.amountInWords}</span>
             </div>
           </div>
 
@@ -137,8 +137,8 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
 
           <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: '6px' }}>
             <span style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap' }}>Being payment for:</span>
-            <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'left', paddingLeft: '6px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-              <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px' }}>{data.paymentFor}</span>
+            <div style={{ borderBottom: '2px solid #1e633d', flexGrow: 1, marginLeft: '8px', textAlign: 'center', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+              <span style={{ fontWeight: 'bold', color: '#000', fontSize: '14px', textTransform: 'uppercase' as const }}>{data.paymentFor}</span>
             </div>
           </div>
         </div>
