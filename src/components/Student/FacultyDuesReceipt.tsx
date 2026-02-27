@@ -24,8 +24,8 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
 
     return (
       <div ref={ref} style={{
-        width: '780px',
-        height: '520px',
+        width: '850px',
+        height: '750px',
         backgroundColor: '#f9fdfa',
         border: '1px solid #d1d5db',
         position: 'relative',
@@ -45,12 +45,12 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
         <img src={nuesaLogo} alt="" crossOrigin="anonymous" style={{
           position: 'absolute', top: '50%', left: '50%',
           transform: 'translate(-50%, -50%)',
-          opacity: 0.1, width: '300px', zIndex: 0, pointerEvents: 'none',
+          opacity: 0.08, width: '500px', zIndex: 0, pointerEvents: 'none',
         }} />
 
         {/* Header */}
         <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-          <img src={nuesaLogo} alt="NUESA" crossOrigin="anonymous" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+          <img src={nuesaLogo} alt="NUESA" crossOrigin="anonymous" style={{ width: '192px', height: '192px', objectFit: 'contain' }} />
           <div style={{ textAlign: 'center', flex: 1, padding: '0 12px' }}>
             <h1 style={{ fontFamily: "'Times New Roman', Georgia, serif", fontSize: '16px', fontWeight: 'bold', color: '#1e633d', letterSpacing: '0.05em', margin: 0 }}>
               NIGERIA UNIVERSITIES ENGINEERING
@@ -69,7 +69,7 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
               FACULTY DUES RECEIPT
             </div>
           </div>
-          <img src={uniabujaLogo} alt="UniAbuja" crossOrigin="anonymous" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+          <img src={uniabujaLogo} alt="UniAbuja" crossOrigin="anonymous" style={{ width: '192px', height: '192px', objectFit: 'contain' }} />
         </div>
 
         {/* Date + ID */}
@@ -154,11 +154,10 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
         }}>
           <div style={{ width: '30%' }}>
             {data.presidentSignatureUrl ? (
-              <img src={data.presidentSignatureUrl} alt="President" crossOrigin="anonymous" style={{ height: '40px', marginBottom: '4px', objectFit: 'contain' }} />
+              <img src={data.presidentSignatureUrl} alt="President" crossOrigin="anonymous" style={{ height: '160px', marginBottom: '4px', objectFit: 'contain', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
             ) : (
-              <div style={{ height: '40px', marginBottom: '4px' }} />
+              <div style={{ height: '160px', marginBottom: '4px' }} />
             )}
-            <div style={{ borderBottom: '2px solid #1e633d', marginBottom: '4px' }} />
             <p style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '11px', margin: 0 }}>President's Signature</p>
           </div>
 
@@ -178,9 +177,9 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
 
           <div style={{ width: '30%', textAlign: 'right' }}>
             {data.financialSecretarySignatureUrl ? (
-              <img src={data.financialSecretarySignatureUrl} alt="Fin. Secretary" crossOrigin="anonymous" style={{ height: '40px', marginBottom: '4px', marginLeft: 'auto', objectFit: 'contain' }} />
+              <img src={data.financialSecretarySignatureUrl} alt="Fin. Secretary" crossOrigin="anonymous" style={{ height: '160px', marginBottom: '4px', objectFit: 'contain', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
             ) : (
-              <div style={{ height: '40px', marginBottom: '4px' }} />
+              <div style={{ height: '160px', marginBottom: '4px' }} />
             )}
             <div style={{ borderBottom: '2px solid #1e633d', marginBottom: '4px' }} />
             <p style={{ color: '#1e633d', fontStyle: 'italic', fontWeight: 'bold', fontSize: '11px', margin: 0 }}>Financial Secretary's Signature</p>
