@@ -33,11 +33,11 @@ export default function StudentPayments() {
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [signatures, setSignatures] = useState<{ president?: string; financial_secretary?: string }>({});
-  const [receiptTemplates, setReceiptTemplates] = useState<any[]>([]);
+  
   const receiptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (profile) { fetchPayments(); fetchSignatures(); fetchTemplates(); }
+    if (profile) { fetchPayments(); fetchSignatures(); }
   }, [profile]);
 
   useEffect(() => {
@@ -54,10 +54,6 @@ export default function StudentPayments() {
     if (data) setSignatures({ president: data.president_signature_url, financial_secretary: data.financial_secretary_signature_url });
   };
 
-  const fetchTemplates = async () => {
-    const { data } = await (supabase as any).from('receipt_templates').select('*');
-    setReceiptTemplates(data || []);
-  };
 
   const fetchPayments = async () => {
     try {
@@ -141,14 +137,6 @@ export default function StudentPayments() {
   const kobo = Math.round((amountNum - naira) * 100);
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  // Find the matching receipt template
-  const getTemplate = () => {
-    if (!selectedReceipt) return null;
-    const paymentType = selectedReceipt.paymentType || 'general';
-    return receiptTemplates.find(t => t.payment_type === paymentType) || receiptTemplates.find(t => t.payment_type === 'general');
-  };
-
-  const template = selectedReceipt ? getTemplate() : null;
 
   return (
     <DashboardLayout>
@@ -226,57 +214,7 @@ export default function StudentPayments() {
             {selectedReceipt && (
               <div className="space-y-4">
                 <div ref={receiptRef} style={{ position: 'relative', fontFamily: "'Times New Roman', Georgia, serif" }}>
-                  {template ? (
-                    /* === TEMPLATE MODE: Overlay text on uploaded image === */
-                    <div style={{ position: 'relative', width: '100%' }}>
-                      <img
-                        src={template.template_url}
-                        alt="Receipt Template"
-                        style={{ width: '100%', display: 'block' }}
-                        crossOrigin="anonymous"
-                      />
-                      {/* Text overlays with absolute positioning */}
-                      {/* Receipt Number - top right area */}
-                      <div style={{ position: 'absolute', top: '12%', right: '5%', fontSize: '12px', fontWeight: 'bold', color: '#1a1a1a' }}>
-                        {selectedReceipt.receipt_number}
-                      </div>
-                      {/* Date - upper area */}
-                      <div style={{ position: 'absolute', top: '18%', left: '10%', fontSize: '11px', fontWeight: 'bold', color: '#1a1a1a' }}>
-                        {receiptDate.getDate().toString().padStart(2, '0')} / {months[receiptDate.getMonth()]} / {receiptDate.getFullYear()}
-                      </div>
-                      {/* Matric Number */}
-                      <div style={{ position: 'absolute', top: '18%', right: '5%', fontSize: '11px', fontWeight: 'bold', color: '#1a1a1a' }}>
-                        {profile?.student_id || 'N/A'}
-                      </div>
-                      {/* Received From */}
-                      <div style={{ position: 'absolute', top: '30%', left: '30%', fontSize: '12px', fontWeight: 'bold', color: '#1a1a1a', maxWidth: '60%', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                        {profile?.full_name}
-                      </div>
-                      {/* Total sum in words */}
-                      <div style={{ position: 'absolute', top: '38%', left: '25%', fontSize: '11px', fontWeight: 'bold', color: '#1a1a1a', maxWidth: '70%', overflow: 'hidden' }}>
-                        {numberToWords(naira)} Naira{kobo > 0 ? ` and ${numberToWords(kobo)} Kobo` : ' Only'}
-                      </div>
-                      {/* Amount in figures */}
-                      <div style={{ position: 'absolute', top: '46%', right: '8%', fontSize: '13px', fontWeight: 'bold', color: '#1a1a1a' }}>
-                        ₦{naira.toLocaleString()}.{kobo.toString().padStart(2, '0')}
-                      </div>
-                      {/* Being payment for */}
-                      <div style={{ position: 'absolute', top: '54%', left: '30%', fontSize: '11px', fontWeight: 'bold', color: '#1a1a1a', maxWidth: '60%', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                        {selectedReceipt.paymentDescription || selectedReceipt.paymentTitle}
-                      </div>
-                      {/* Payment reference */}
-                      <div style={{ position: 'absolute', top: '62%', left: '30%', fontSize: '10px', color: '#555' }}>
-                        Ref: {selectedReceipt.reference}
-                      </div>
-                      {/* Signatures */}
-                      {signatures.president && (
-                        <img src={signatures.president} alt="President" crossOrigin="anonymous" style={{ position: 'absolute', bottom: '15%', left: '8%', height: '35px', opacity: 0.9 }} />
-                      )}
-                      {signatures.financial_secretary && (
-                        <img src={signatures.financial_secretary} alt="Fin. Sec." crossOrigin="anonymous" style={{ position: 'absolute', bottom: '15%', right: '8%', height: '35px', opacity: 0.9 }} />
-                      )}
-                    </div>
-                  ) : (
+                  {selectedReceipt.paymentType === 'faculty' ? (
                     <FacultyDuesReceipt
                       data={{
                         receiptNumber: selectedReceipt.receipt_number,
@@ -291,6 +229,16 @@ export default function StudentPayments() {
                         financialSecretarySignatureUrl: signatures.financial_secretary,
                       }}
                     />
+                  ) : (
+                    <div className="p-6 border rounded-lg text-center space-y-3">
+                      <p className="font-bold text-lg">{selectedReceipt.paymentTitle}</p>
+                      <p className="text-sm">Receipt No: {selectedReceipt.receipt_number}</p>
+                      <p className="text-sm">Name: {profile?.full_name}</p>
+                      <p className="text-sm">Matric: {profile?.student_id}</p>
+                      <p className="text-2xl font-bold">₦{naira.toLocaleString()}.{kobo.toString().padStart(2, '0')}</p>
+                      <p className="text-xs text-muted-foreground">Ref: {selectedReceipt.reference}</p>
+                      <p className="text-xs text-muted-foreground">{receiptDate.toLocaleDateString()}</p>
+                    </div>
                   )}
                 </div>
 
