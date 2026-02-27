@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,24 +30,19 @@ export default function AdminVoting() {
   const [showVoters, setShowVoters] = useState(false);
   const [confirmClose, setConfirmClose] = useState<any>(null);
   const [closing, setClosing] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'position' | 'result'; id: string; name: string } | null>(null);
 
   useEffect(() => { fetchAll(); setupRealtime(); }, []);
 
-  // Auto-close checker - runs every 30 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      checkAutoClose();
-    }, 30000);
+    const interval = setInterval(() => { checkAutoClose(); }, 30000);
     return () => clearInterval(interval);
   }, [positions]);
 
   const checkAutoClose = async () => {
     const now = new Date();
-    const expiredPositions = positions.filter(
-      p => p.voting_open && p.voting_end_time && new Date(p.voting_end_time) <= now
-    );
+    const expiredPositions = positions.filter(p => p.voting_open && p.voting_end_time && new Date(p.voting_end_time) <= now);
     if (expiredPositions.length > 0) {
-      // Call edge function to close expired elections
       await supabase.functions.invoke('close-election', { body: {} });
       fetchAll();
     }
@@ -127,13 +123,51 @@ export default function AdminVoting() {
     }
   };
 
-  const deletePosition = async (id: string) => {
-    await (supabase as any).from('electoral_positions').delete().eq('id', id);
-    fetchAll();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      if (deleteTarget.type === 'position') {
+        // Delete results, votes, candidates, then position
+        const posCandidates = candidates.filter(c => c.position_id === deleteTarget.id);
+        const candIds = posCandidates.map(c => c.id);
+        if (candIds.length > 0) {
+          await (supabase as any).from('election_results').delete().in('candidate_id', candIds);
+          await (supabase as any).from('votes').delete().eq('position_id', deleteTarget.id);
+          await (supabase as any).from('candidates').delete().eq('position_id', deleteTarget.id);
+        }
+        await (supabase as any).from('election_results').delete().eq('position_id', deleteTarget.id);
+        await (supabase as any).from('electoral_positions').delete().eq('id', deleteTarget.id);
+        toast({ title: "Position deleted", description: `"${deleteTarget.name}" and all related data removed.` });
+      } else if (deleteTarget.type === 'result') {
+        await (supabase as any).from('election_results').delete().eq('position_id', deleteTarget.id);
+        toast({ title: "Results deleted", description: `Results for "${deleteTarget.name}" removed.` });
+      }
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
-  const approveCandidate = async (id: string, approved: boolean) => {
-    await (supabase as any).from('candidates').update({ approved }).eq('id', id);
+  const approveCandidate = async (cand: any, approved: boolean) => {
+    const posName = positions.find(p => p.id === cand.position_id)?.name || 'Unknown Position';
+    await (supabase as any).from('candidates').update({ approved }).eq('id', cand.id);
+
+    // Send notification to candidate
+    const title = approved ? 'Application Approved' : 'Application Rejected';
+    const message = approved
+      ? `Your application for "${posName}" has been approved. You are now an official candidate.`
+      : `Your application for "${posName}" has been rejected.`;
+
+    await supabase.from('notifications').insert({
+      user_id: cand.student_id,
+      title,
+      message,
+      type: 'voting',
+      is_read: false,
+    });
+
     toast({ title: approved ? "Candidate approved" : "Candidate rejected" });
     fetchAll();
   };
@@ -201,7 +235,6 @@ export default function AdminVoting() {
             <CardContent className="space-y-4">
               <Input placeholder="Position name (e.g. President)" value={newPosition.name} onChange={e => setNewPosition(p => ({ ...p, name: e.target.value }))} />
               <Textarea placeholder="Description (optional)" value={newPosition.description} onChange={e => setNewPosition(p => ({ ...p, description: e.target.value }))} />
-
               <div className="space-y-3">
                 <Label className="font-semibold">Election Closing Method</Label>
                 <RadioGroup value={newPosition.closingMode} onValueChange={(v: 'manual' | 'scheduled') => setNewPosition(p => ({ ...p, closingMode: v }))}>
@@ -214,7 +247,6 @@ export default function AdminVoting() {
                     <Label htmlFor="scheduled">Scheduled End Time — Auto-closes at set time</Label>
                   </div>
                 </RadioGroup>
-
                 {newPosition.closingMode === 'scheduled' && (
                   <div className="grid grid-cols-2 gap-4 ml-6">
                     <div>
@@ -228,7 +260,6 @@ export default function AdminVoting() {
                   </div>
                 )}
               </div>
-
               <div className="flex gap-2">
                 <Button onClick={createPosition}>Create</Button>
                 <Button variant="outline" onClick={() => setCreating(false)}>Cancel</Button>
@@ -283,6 +314,9 @@ export default function AdminVoting() {
                               </div>
                             ) : null;
                           })()}
+                          <Button variant="destructive" size="sm" onClick={() => setDeleteTarget({ type: 'position', id: pos.id, name: pos.name })}>
+                            <Trash2 className="h-3 w-3 mr-1" /> Delete Position
+                          </Button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-4 flex-wrap">
@@ -302,7 +336,7 @@ export default function AdminVoting() {
                           <p className="text-sm text-muted-foreground">
                             {candidates.filter(c => c.position_id === pos.id).length} applicants • {candidates.filter(c => c.position_id === pos.id && c.approved).length} approved • {getTotalVotes(pos.id)} votes
                           </p>
-                          <Button variant="destructive" size="sm" onClick={() => deletePosition(pos.id)} className="ml-auto">
+                          <Button variant="destructive" size="sm" onClick={() => setDeleteTarget({ type: 'position', id: pos.id, name: pos.name })} className="ml-auto">
                             <Trash2 className="h-3 w-3 mr-1" /> Delete
                           </Button>
                         </div>
@@ -337,12 +371,17 @@ export default function AdminVoting() {
                           <div className="flex items-center gap-2">
                             <Badge variant={cand.approved ? 'default' : 'secondary'}>{cand.approved ? 'Approved' : 'Pending'}</Badge>
                             {!cand.approved && (
-                              <Button size="sm" onClick={() => approveCandidate(cand.id, true)}>
-                                <CheckCircle className="h-3 w-3 mr-1" /> Approve
-                              </Button>
+                              <>
+                                <Button size="sm" onClick={() => approveCandidate(cand, true)}>
+                                  <CheckCircle className="h-3 w-3 mr-1" /> Approve
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => approveCandidate(cand, false)}>
+                                  <XCircle className="h-3 w-3 mr-1" /> Reject
+                                </Button>
+                              </>
                             )}
                             {cand.approved && (
-                              <Button size="sm" variant="destructive" onClick={() => approveCandidate(cand.id, false)}>
+                              <Button size="sm" variant="destructive" onClick={() => approveCandidate(cand, false)}>
                                 <XCircle className="h-3 w-3 mr-1" /> Revoke
                               </Button>
                             )}
@@ -385,6 +424,11 @@ export default function AdminVoting() {
                           <Button size="sm" variant="outline" onClick={() => exportVotes(pos.id)}>
                             <Download className="h-3 w-3 mr-1" /> Export
                           </Button>
+                          {isClosed && (
+                            <Button size="sm" variant="destructive" onClick={() => setDeleteTarget({ type: 'result', id: pos.id, name: pos.name })}>
+                              <Trash2 className="h-3 w-3 mr-1" /> Delete Results
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardHeader>
@@ -426,6 +470,24 @@ export default function AdminVoting() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Delete Confirmation */}
+        <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to delete this {deleteTarget?.type === 'position' ? 'position' : 'result'} permanently?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteTarget?.type === 'position'
+                  ? `This will permanently delete "${deleteTarget?.name}" along with all related candidates, votes, and results. This action cannot be undone.`
+                  : `This will permanently delete the results for "${deleteTarget?.name}". This action cannot be undone.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Close Election Confirmation */}
         <Dialog open={!!confirmClose} onOpenChange={() => setConfirmClose(null)}>

@@ -9,6 +9,7 @@ import { ClipboardList, Plus, Calendar, Users, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { notifyEnrolledStudents } from '@/lib/notifications';
 
 export default function TeacherAssignments() {
   const { profile } = useAuth();
@@ -88,6 +89,15 @@ export default function TeacherAssignments() {
         }]);
 
       if (error) throw error;
+
+      // Notify enrolled students
+      const course = courses.find(c => c.id === newAssignment.course_id);
+      await notifyEnrolledStudents(
+        newAssignment.course_id,
+        'New Assignment',
+        `"${newAssignment.title.trim()}" has been posted for ${course?.name || 'your course'}. Due: ${new Date(newAssignment.due_date).toLocaleDateString()}.`,
+        'assignment'
+      );
 
       toast({
         title: "Assignment created",
