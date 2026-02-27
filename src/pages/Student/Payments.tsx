@@ -278,7 +278,6 @@ export default function StudentPayments() {
                     </div>
                   ) : (
                     <FacultyDuesReceipt
-                      ref={receiptRef}
                       data={{
                         receiptNumber: selectedReceipt.receipt_number,
                         matricNumber: profile?.student_id || '',
