@@ -150,25 +150,41 @@ export default function AdminVoting() {
     }
   };
 
-  const approveCandidate = async (cand: any, approved: boolean) => {
-    const posName = positions.find(p => p.id === cand.position_id)?.name || 'Unknown Position';
-    await (supabase as any).from('candidates').update({ approved }).eq('id', cand.id);
+  const [rejectTarget, setRejectTarget] = useState<any>(null);
 
-    // Send notification to candidate
-    const title = approved ? 'Application Approved' : 'Application Rejected';
-    const message = approved
-      ? `Your application for "${posName}" has been approved. You are now an official candidate.`
-      : `Your application for "${posName}" has been rejected.`;
+  const approveCandidate = async (cand: any) => {
+    const posName = positions.find(p => p.id === cand.position_id)?.name || 'Unknown Position';
+    await (supabase as any).from('candidates').update({ approved: true }).eq('id', cand.id);
 
     await supabase.from('notifications').insert({
       user_id: cand.student_id,
-      title,
-      message,
+      title: 'Application Approved',
+      message: `Your application for "${posName}" has been approved. You are now an official candidate.`,
       type: 'voting',
       is_read: false,
     });
 
-    toast({ title: approved ? "Candidate approved" : "Candidate rejected" });
+    toast({ title: "Candidate approved" });
+    fetchAll();
+  };
+
+  const rejectCandidate = async () => {
+    if (!rejectTarget) return;
+    const posName = positions.find(p => p.id === rejectTarget.position_id)?.name || 'Unknown Position';
+    
+    // Delete the candidate application completely
+    await (supabase as any).from('candidates').delete().eq('id', rejectTarget.id);
+
+    await supabase.from('notifications').insert({
+      user_id: rejectTarget.student_id,
+      title: 'Application Rejected',
+      message: `Your application for "${posName}" has been rejected.`,
+      type: 'voting',
+      is_read: false,
+    });
+
+    toast({ title: "Candidate rejected and removed" });
+    setRejectTarget(null);
     fetchAll();
   };
 
@@ -372,16 +388,16 @@ export default function AdminVoting() {
                             <Badge variant={cand.approved ? 'default' : 'secondary'}>{cand.approved ? 'Approved' : 'Pending'}</Badge>
                             {!cand.approved && (
                               <>
-                                <Button size="sm" onClick={() => approveCandidate(cand, true)}>
+                                <Button size="sm" onClick={() => approveCandidate(cand)}>
                                   <CheckCircle className="h-3 w-3 mr-1" /> Approve
                                 </Button>
-                                <Button size="sm" variant="destructive" onClick={() => approveCandidate(cand, false)}>
+                                <Button size="sm" variant="destructive" onClick={() => setRejectTarget(cand)}>
                                   <XCircle className="h-3 w-3 mr-1" /> Reject
                                 </Button>
                               </>
                             )}
                             {cand.approved && (
-                              <Button size="sm" variant="destructive" onClick={() => approveCandidate(cand, false)}>
+                              <Button size="sm" variant="destructive" onClick={() => setRejectTarget(cand)}>
                                 <XCircle className="h-3 w-3 mr-1" /> Revoke
                               </Button>
                             )}
@@ -532,6 +548,22 @@ export default function AdminVoting() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Reject Candidate Confirmation */}
+        <AlertDialog open={!!rejectTarget} onOpenChange={() => setRejectTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to reject and delete this application?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove {rejectTarget?.profiles?.full_name}'s application. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={rejectCandidate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Reject & Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
