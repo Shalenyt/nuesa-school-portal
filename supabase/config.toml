@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.close-election]
 verify_jwt = false
+
+[functions.exam-notifications]
+verify_jwt = false

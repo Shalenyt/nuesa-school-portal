@@ -13,17 +13,18 @@ export default function TeacherExamTimetable() {
   const [entries, setEntries] = useState<any[]>([]);
   const [myCourses, setMyCourses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeSemester, setActiveSemester] = useState<any>(null);
 
-  useEffect(() => {
-    if (profile) fetchData();
-  }, [profile]);
+  useEffect(() => { if (profile) fetchData(); }, [profile]);
 
   const fetchData = async () => {
-    const [{ data: timetable }, { data: courses }] = await Promise.all([
+    const [{ data: timetable }, { data: courses }, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
       supabase.from('courses').select('id, name, subjects(code)').eq('teacher_id', profile?.id),
+      supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
     setEntries(timetable || []);
+    setActiveSemester(semRes.data);
     const codes = (courses || []).map((c: any) => c.subjects?.code?.toUpperCase()).filter(Boolean);
     setMyCourses(codes);
     setLoading(false);
@@ -31,6 +32,8 @@ export default function TeacherExamTimetable() {
 
   const isMyExam = (code: string) => myCourses.some(c => code.toUpperCase().includes(c));
   const isToday = (date: string) => new Date(date).toDateString() === new Date().toDateString();
+
+  const semesterLabel = activeSemester ? `${activeSemester.name} Academic Session` : 'Academic Session';
 
   const grouped = entries.reduce((acc: any, e: any) => {
     const dateObj = new Date(e.exam_date);
@@ -44,22 +47,11 @@ export default function TeacherExamTimetable() {
 
   const renderSlotCell = (items: any[], slotType: string, dateStr: string) => {
     if (slotType === 'afternoon' && new Date(dateStr).getDay() === 5) {
-      return (
-        <td className="border border-border p-2 text-center" colSpan={2}>
-          <span className="font-bold text-muted-foreground">FRIDAY PRAYER</span>
-        </td>
-      );
+      return (<td className="border border-border p-2 text-center" colSpan={2}><span className="font-bold text-muted-foreground">FRIDAY PRAYER</span></td>);
     }
-
     if (items.length === 0) {
-      return (
-        <>
-          <td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td>
-          <td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td>
-        </>
-      );
+      return (<><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td></>);
     }
-
     return (
       <>
         <td className="border border-border p-2">
@@ -74,11 +66,7 @@ export default function TeacherExamTimetable() {
         </td>
         <td className="border border-border p-2">
           <div className="space-y-1">
-            {items.map((e: any) => (
-              <div key={e.id} className="text-sm text-muted-foreground">
-                {e.venue || '—'}
-              </div>
-            ))}
+            {items.map((e: any) => (<div key={e.id} className="text-sm text-muted-foreground">{e.venue || '—'}</div>))}
           </div>
         </td>
       </>
@@ -88,14 +76,11 @@ export default function TeacherExamTimetable() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="text-center space-y-1 border-b border-border pb-4">
-          <h1 className="text-lg font-bold uppercase tracking-tight">
-            {settings?.school_name || 'University'}
-          </h1>
+          <h1 className="text-lg font-bold uppercase tracking-tight">{settings?.school_name || 'University'}</h1>
           <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
-          <p className="text-sm font-bold uppercase">Adjusted Final Examination Timetable</p>
-          <p className="text-xs text-muted-foreground uppercase">First Semester 2025/2026 Academic Session</p>
+          <p className="text-sm font-bold uppercase">Examination Timetable</p>
+          <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
         </div>
 
         {loading ? <p className="text-center text-muted-foreground">Loading...</p> : Object.keys(grouped).length === 0 ? (

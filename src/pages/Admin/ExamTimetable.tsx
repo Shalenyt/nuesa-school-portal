@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,16 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Calendar, Edit2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Trash2, Calendar, Edit2, Search } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 const TIME_SLOTS = {
   morning: { label: 'Morning (8:00 AM – 11:00 AM)', start: '08:00', end: '11:00' },
   afternoon: { label: 'Afternoon (11:30 AM – 2:30 PM)', start: '11:30', end: '14:30' },
   evening: { label: 'Evening (3:00 PM – 5:00 PM)', start: '15:00', end: '17:00' },
 };
-
-const FRIDAY_PRAYER_LABEL = 'FRIDAY PRAYER';
 
 export default function AdminExamTimetable() {
   const { profile } = useAuth();
@@ -27,13 +27,43 @@ export default function AdminExamTimetable() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeSemester, setActiveSemester] = useState<any>(null);
+  const [allCourses, setAllCourses] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
+  const [filterDept, setFilterDept] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
   const [form, setForm] = useState({
     day_label: '', exam_date: '', time_slot: 'morning',
     start_time: '08:00', end_time: '11:00',
     course_code: '', venue: '',
   });
 
-  useEffect(() => { fetchEntries(); }, []);
+  useEffect(() => {
+    fetchEntries();
+    fetchSemester();
+    fetchCoursesAndFilters();
+  }, []);
+
+  const fetchSemester = async () => {
+    const { data } = await supabase
+      .from('semester_config')
+      .select('*')
+      .eq('is_active', true)
+      .maybeSingle();
+    setActiveSemester(data);
+  };
+
+  const fetchCoursesAndFilters = async () => {
+    const [coursesRes, deptsRes, levelsRes] = await Promise.all([
+      supabase.from('courses').select('id, name, description, credit_unit, semester, academic_year, subjects(id, name, code), classes(id, name)').order('name'),
+      supabase.from('subjects').select('id, name, code').order('name'),
+      supabase.from('classes').select('id, name').order('name'),
+    ]);
+    setAllCourses(coursesRes.data || []);
+    setDepartments(deptsRes.data || []);
+    setLevels(levelsRes.data || []);
+  };
 
   const fetchEntries = async () => {
     const { data } = await (supabase as any)
@@ -44,6 +74,29 @@ export default function AdminExamTimetable() {
     setEntries(data || []);
     setLoading(false);
   };
+
+  // Filtered course options for dropdown
+  const courseOptions = useMemo(() => {
+    let filtered = allCourses;
+    if (filterDept) {
+      filtered = filtered.filter((c: any) => c.subjects?.id === filterDept);
+    }
+    if (filterLevel) {
+      filtered = filtered.filter((c: any) => c.classes?.id === filterLevel);
+    }
+    return filtered.map((c: any) => ({
+      value: c.subjects?.code || c.name || c.id,
+      label: `${c.subjects?.code || ''} – ${c.subjects?.name || c.name || ''}`,
+      description: `${c.classes?.name || ''} • ${c.credit_unit || 0} units`,
+    }));
+  }, [allCourses, filterDept, filterLevel]);
+
+  const deptOptions = [{ value: '', label: 'All Departments' }, ...departments.map((d: any) => ({ value: d.id, label: d.name }))];
+  const levelOptions = [{ value: '', label: 'All Levels' }, ...levels.map((l: any) => ({ value: l.id, label: l.name }))];
+
+  const semesterLabel = activeSemester
+    ? `${activeSemester.name} Academic Session`
+    : 'Academic Session';
 
   const resetForm = () => {
     setForm({ day_label: '', exam_date: '', time_slot: 'morning', start_time: '08:00', end_time: '11:00', course_code: '', venue: '' });
@@ -56,14 +109,10 @@ export default function AdminExamTimetable() {
     setForm(p => ({ ...p, time_slot: slot, start_time: s.start, end_time: s.end }));
   };
 
-  // Check if a date is Friday
   const isFriday = (dateStr: string) => {
     if (!dateStr) return false;
     return new Date(dateStr).getDay() === 5;
   };
-
-  // Check if afternoon is disabled (Friday)
-  const isAfternoonDisabled = form.time_slot === 'afternoon' && isFriday(form.exam_date);
 
   const saveEntry = async () => {
     if (!form.day_label || !form.exam_date || !form.course_code) {
@@ -81,6 +130,13 @@ export default function AdminExamTimetable() {
       const { error } = await (supabase as any).from('exam_timetables').insert([payload]);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       toast({ title: 'Created', description: 'Entry added.' });
+
+      // Send exam notifications via edge function
+      try {
+        await supabase.functions.invoke('exam-notifications', {
+          body: { type: 'exam_created', course_code: form.course_code, exam_date: form.exam_date, time_slot: form.time_slot, venue: form.venue, start_time: form.start_time, end_time: form.end_time },
+        });
+      } catch (e) { console.error('Notification error:', e); }
     }
     resetForm();
     fetchEntries();
@@ -101,7 +157,6 @@ export default function AdminExamTimetable() {
     setIsCreating(true);
   };
 
-  // Group entries by day
   const grouped = entries.reduce((acc: any, e: any) => {
     const dateObj = new Date(e.exam_date);
     const dayName = dateObj.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
@@ -113,7 +168,6 @@ export default function AdminExamTimetable() {
   }, {});
 
   const renderSlotCell = (items: any[], slotType: string, dateStr: string) => {
-    // Friday afternoon = FRIDAY PRAYER
     if (slotType === 'afternoon' && new Date(dateStr).getDay() === 5) {
       return (
         <td className="border border-border p-2 text-center" colSpan={2}>
@@ -121,7 +175,6 @@ export default function AdminExamTimetable() {
         </td>
       );
     }
-
     if (items.length === 0) {
       return (
         <>
@@ -130,7 +183,6 @@ export default function AdminExamTimetable() {
         </>
       );
     }
-
     return (
       <>
         <td className="border border-border p-2">
@@ -186,12 +238,8 @@ export default function AdminExamTimetable() {
             {settings?.school_name || 'University'}
           </h1>
           <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
-          <p className="text-sm font-bold uppercase">
-            Adjusted Final Examination Timetable
-          </p>
-          <p className="text-xs text-muted-foreground uppercase">
-            First Semester 2025/2026 Academic Session
-          </p>
+          <p className="text-sm font-bold uppercase">Examination Timetable</p>
+          <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
         </div>
 
         <div className="flex justify-end">
@@ -213,11 +261,11 @@ export default function AdminExamTimetable() {
                   <Label>Date</Label>
                   <Input type="date" value={form.exam_date} onChange={e => {
                     const val = e.target.value;
-                    setForm(p => ({ ...p, exam_date: val }));
-                    // If Friday and afternoon selected, warn
                     if (new Date(val).getDay() === 5 && form.time_slot === 'afternoon') {
                       toast({ title: 'Note', description: 'Friday afternoon is reserved for Friday Prayer.' });
                       setForm(p => ({ ...p, exam_date: val, time_slot: 'morning', start_time: '08:00', end_time: '11:00' }));
+                    } else {
+                      setForm(p => ({ ...p, exam_date: val }));
                     }
                   }} />
                 </div>
@@ -227,27 +275,50 @@ export default function AdminExamTimetable() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent position="popper" sideOffset={4} className="z-[9999]">
                       {Object.entries(TIME_SLOTS).map(([k, v]) => (
-                        <SelectItem
-                          key={k}
-                          value={k}
-                          disabled={k === 'afternoon' && isFriday(form.exam_date)}
-                        >
-                          {v.label}
-                          {k === 'afternoon' && isFriday(form.exam_date) ? ' (Friday Prayer)' : ''}
+                        <SelectItem key={k} value={k} disabled={k === 'afternoon' && isFriday(form.exam_date)}>
+                          {v.label}{k === 'afternoon' && isFriday(form.exam_date) ? ' (Friday Prayer)' : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1">
-                  <Label>Course Code</Label>
-                  <Input placeholder="e.g. CIE411" value={form.course_code} onChange={e => setForm(p => ({ ...p, course_code: e.target.value }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label>Venue</Label>
-                  <Input placeholder="e.g. TETFD E, F, G, H" value={form.venue} onChange={e => setForm(p => ({ ...p, venue: e.target.value }))} />
-                </div>
               </div>
+
+              {/* Course selection with filters */}
+              <div className="space-y-2">
+                <Label className="font-semibold">Course Selection</Label>
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+                  <SearchableSelect
+                    options={deptOptions}
+                    value={filterDept}
+                    onValueChange={(v) => setFilterDept(v)}
+                    placeholder="Filter by Department"
+                    searchPlaceholder="Search departments..."
+                  />
+                  <SearchableSelect
+                    options={levelOptions}
+                    value={filterLevel}
+                    onValueChange={(v) => setFilterLevel(v)}
+                    placeholder="Filter by Level"
+                    searchPlaceholder="Search levels..."
+                  />
+                  <SearchableSelect
+                    options={courseOptions}
+                    value={form.course_code}
+                    onValueChange={(v) => setForm(p => ({ ...p, course_code: v }))}
+                    placeholder="Select Course Code"
+                    searchPlaceholder="Search by code or name..."
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Or type manually:</p>
+                <Input placeholder="e.g. CIE411" value={form.course_code} onChange={e => setForm(p => ({ ...p, course_code: e.target.value }))} />
+              </div>
+
+              <div className="space-y-1">
+                <Label>Venue</Label>
+                <Input placeholder="e.g. TETFD E, F, G, H" value={form.venue} onChange={e => setForm(p => ({ ...p, venue: e.target.value }))} />
+              </div>
+
               <div className="flex gap-2">
                 <Button onClick={saveEntry}>{editingId ? 'Update' : 'Add'}</Button>
                 <Button variant="outline" onClick={resetForm}>Cancel</Button>
@@ -270,18 +341,10 @@ export default function AdminExamTimetable() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-primary text-primary-foreground">
-                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" rowSpan={2}>
-                    DAY & DATE
-                  </th>
-                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>
-                    MORNING (8:00 – 11:00)
-                  </th>
-                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>
-                    AFTERNOON (11:30 – 2:30)
-                  </th>
-                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>
-                    EVENING (3:00 – 5:00)
-                  </th>
+                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" rowSpan={2}>DAY & DATE</th>
+                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>MORNING (8:00 – 11:00)</th>
+                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>AFTERNOON (11:30 – 2:30)</th>
+                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>EVENING (3:00 – 5:00)</th>
                 </tr>
                 <tr className="bg-primary/90 text-primary-foreground text-xs">
                   <th className="border border-primary-foreground/30 p-1 text-center">COURSE CODE</th>
