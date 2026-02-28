@@ -15,13 +15,54 @@ serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } =
+      await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+
+    // Check admin role using service client
     const supabase = createClient(supabaseUrl, serviceKey);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (profile?.role !== "admin") {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: Admin access required" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     const body = await req.json().catch(() => ({}));
-    const { position_id, mode } = body; // mode: 'manual' | 'scheduled'
+    const { position_id, mode } = body;
 
-    // If position_id provided, close that specific one
-    // If not, check all positions with expired voting_end_time
     let positionsToClose: any[] = [];
 
     if (position_id) {
@@ -33,7 +74,6 @@ serve(async (req: Request) => {
         .single();
       if (data) positionsToClose = [data];
     } else {
-      // Auto-close: find all positions where voting_end_time has passed
       const { data } = await supabase
         .from("electoral_positions")
         .select("*")
@@ -52,20 +92,17 @@ serve(async (req: Request) => {
     const results: any[] = [];
 
     for (const pos of positionsToClose) {
-      // 1. Close voting
       await supabase
         .from("electoral_positions")
         .update({ voting_open: false, election_status: "closed" })
         .eq("id", pos.id);
 
-      // 2. Get approved candidates
       const { data: candidates } = await supabase
         .from("candidates")
         .select("id, student_id, profiles:student_id(full_name)")
         .eq("position_id", pos.id)
         .eq("approved", true);
 
-      // 3. Count votes per candidate
       const candidateResults: any[] = [];
       let maxVotes = 0;
 
@@ -86,8 +123,6 @@ serve(async (req: Request) => {
         });
       }
 
-      // 4. Determine winner(s) and store results
-      // Delete old results first
       await supabase.from("election_results").delete().eq("position_id", pos.id);
 
       for (const cr of candidateResults) {
@@ -111,7 +146,6 @@ serve(async (req: Request) => {
         total: totalVotes,
       });
 
-      // 5. Broadcast URGENT notification to ALL users
       const { data: allProfiles } = await supabase
         .from("profiles")
         .select("id")
@@ -129,7 +163,6 @@ serve(async (req: Request) => {
           is_read: false,
         }));
 
-        // Insert in batches of 500
         for (let i = 0; i < notifications.length; i += 500) {
           await supabase
             .from("notifications")

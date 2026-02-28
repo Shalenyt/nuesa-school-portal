@@ -12,6 +12,7 @@ export default function StudentExamTimetable() {
   const [entries, setEntries] = useState<any[]>([]);
   const [myCourses, setMyCourses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeSemester, setActiveSemester] = useState<any>(null);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -19,13 +20,15 @@ export default function StudentExamTimetable() {
     const { data: user } = await supabase.auth.getUser();
     const userId = user.user?.id;
 
-    const [{ data: timetable }, { data: enrollments }] = await Promise.all([
+    const [{ data: timetable }, enrollRes, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
       userId ? supabase.from('student_enrollments').select('course_id, courses(name, subjects(code))').eq('student_id', userId) : Promise.resolve({ data: [] }),
+      supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
 
     setEntries(timetable || []);
-    const codes = (enrollments || []).map((e: any) => e.courses?.subjects?.code?.toUpperCase()).filter(Boolean);
+    setActiveSemester(semRes.data);
+    const codes = (enrollRes.data || []).map((e: any) => e.courses?.subjects?.code?.toUpperCase()).filter(Boolean);
     setMyCourses(codes);
     setLoading(false);
   };
@@ -34,15 +37,12 @@ export default function StudentExamTimetable() {
   const today = new Date();
   const isToday = (date: string) => new Date(date).toDateString() === today.toDateString();
   const isTomorrow = (date: string) => {
-    const d = new Date(date);
-    const tom = new Date(today);
-    tom.setDate(tom.getDate() + 1);
-    return d.toDateString() === tom.toDateString();
+    const tom = new Date(today); tom.setDate(tom.getDate() + 1);
+    return new Date(date).toDateString() === tom.toDateString();
   };
   const isThisWeek = (date: string) => {
     const d = new Date(date);
-    const endOfWeek = new Date(today);
-    endOfWeek.setDate(today.getDate() + (7 - today.getDay()));
+    const endOfWeek = new Date(today); endOfWeek.setDate(today.getDate() + (7 - today.getDay()));
     return d >= today && d <= endOfWeek;
   };
 
@@ -58,24 +58,15 @@ export default function StudentExamTimetable() {
     return acc;
   }, {});
 
+  const semesterLabel = activeSemester ? `${activeSemester.name} Academic Session` : 'Academic Session';
+
   const renderSlotCell = (items: any[], slotType: string, dateStr: string) => {
     if (slotType === 'afternoon' && new Date(dateStr).getDay() === 5) {
-      return (
-        <td className="border border-border p-2 text-center" colSpan={2}>
-          <span className="font-bold text-muted-foreground">FRIDAY PRAYER</span>
-        </td>
-      );
+      return (<td className="border border-border p-2 text-center" colSpan={2}><span className="font-bold text-muted-foreground">FRIDAY PRAYER</span></td>);
     }
-
     if (items.length === 0) {
-      return (
-        <>
-          <td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td>
-          <td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td>
-        </>
-      );
+      return (<><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td></>);
     }
-
     return (
       <>
         <td className="border border-border p-2">
@@ -90,11 +81,7 @@ export default function StudentExamTimetable() {
         </td>
         <td className="border border-border p-2">
           <div className="space-y-1">
-            {items.map((e: any) => (
-              <div key={e.id} className="text-sm text-muted-foreground">
-                {e.venue || '—'}
-              </div>
-            ))}
+            {items.map((e: any) => (<div key={e.id} className="text-sm text-muted-foreground">{e.venue || '—'}</div>))}
           </div>
         </td>
       </>
@@ -148,14 +135,11 @@ export default function StudentExamTimetable() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="text-center space-y-1 border-b border-border pb-4">
-          <h1 className="text-lg font-bold uppercase tracking-tight">
-            {settings?.school_name || 'University'}
-          </h1>
+          <h1 className="text-lg font-bold uppercase tracking-tight">{settings?.school_name || 'University'}</h1>
           <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
-          <p className="text-sm font-bold uppercase">Adjusted Final Examination Timetable</p>
-          <p className="text-xs text-muted-foreground uppercase">First Semester 2025/2026 Academic Session</p>
+          <p className="text-sm font-bold uppercase">Examination Timetable</p>
+          <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
         </div>
 
         {loading ? <p className="text-center text-muted-foreground">Loading...</p> : entries.length === 0 ? (
@@ -166,11 +150,7 @@ export default function StudentExamTimetable() {
               <TabsTrigger value="all">Full Timetable</TabsTrigger>
               <TabsTrigger value="my">My Exams ({myExams.length})</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="all" className="mt-4">
-              {renderTable(grouped)}
-            </TabsContent>
-
+            <TabsContent value="all" className="mt-4">{renderTable(grouped)}</TabsContent>
             <TabsContent value="my" className="mt-4">
               {myExams.length === 0 ? (
                 <Card><CardContent className="text-center py-8"><BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-2" /><p className="text-muted-foreground">No exams matched to your enrolled courses.</p></CardContent></Card>
