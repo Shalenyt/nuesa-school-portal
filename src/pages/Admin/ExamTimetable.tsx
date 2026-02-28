@@ -2,24 +2,27 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
+import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Calendar, Edit2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const TIME_SLOTS = {
-  morning: { label: 'Morning (8:00 – 11:00)', start: '08:00', end: '11:00' },
-  afternoon: { label: 'Afternoon (11:30 – 14:30)', start: '11:30', end: '14:30' },
-  evening: { label: 'Evening (15:00 – 17:00)', start: '15:00', end: '17:00' },
+  morning: { label: 'Morning (8:00 AM – 11:00 AM)', start: '08:00', end: '11:00' },
+  afternoon: { label: 'Afternoon (11:30 AM – 2:30 PM)', start: '11:30', end: '14:30' },
+  evening: { label: 'Evening (3:00 PM – 5:00 PM)', start: '15:00', end: '17:00' },
 };
+
+const FRIDAY_PRAYER_LABEL = 'FRIDAY PRAYER';
 
 export default function AdminExamTimetable() {
   const { profile } = useAuth();
+  const { settings } = useSchoolSettings();
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -52,6 +55,15 @@ export default function AdminExamTimetable() {
     const s = TIME_SLOTS[slot as keyof typeof TIME_SLOTS];
     setForm(p => ({ ...p, time_slot: slot, start_time: s.start, end_time: s.end }));
   };
+
+  // Check if a date is Friday
+  const isFriday = (dateStr: string) => {
+    if (!dateStr) return false;
+    return new Date(dateStr).getDay() === 5;
+  };
+
+  // Check if afternoon is disabled (Friday)
+  const isAfternoonDisabled = form.time_slot === 'afternoon' && isFriday(form.exam_date);
 
   const saveEntry = async () => {
     if (!form.day_label || !form.exam_date || !form.course_code) {
@@ -91,20 +103,98 @@ export default function AdminExamTimetable() {
 
   // Group entries by day
   const grouped = entries.reduce((acc: any, e: any) => {
-    const key = `${e.day_label} – ${new Date(e.exam_date).toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}`;
-    if (!acc[key]) acc[key] = { morning: [], afternoon: [], evening: [] };
+    const dateObj = new Date(e.exam_date);
+    const dayName = dateObj.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
+    const dateFormatted = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const key = `${e.day_label}|${dayName}|${dateFormatted}`;
+    if (!acc[key]) acc[key] = { date: e.exam_date, morning: [], afternoon: [], evening: [] };
     acc[key][e.time_slot]?.push(e);
     return acc;
   }, {});
 
+  const renderSlotCell = (items: any[], slotType: string, dateStr: string) => {
+    // Friday afternoon = FRIDAY PRAYER
+    if (slotType === 'afternoon' && new Date(dateStr).getDay() === 5) {
+      return (
+        <td className="border border-border p-2 text-center" colSpan={2}>
+          <span className="font-bold text-muted-foreground">FRIDAY PRAYER</span>
+        </td>
+      );
+    }
+
+    if (items.length === 0) {
+      return (
+        <>
+          <td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td>
+          <td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <td className="border border-border p-2">
+          <div className="space-y-1">
+            {items.map((e: any) => (
+              <div key={e.id} className="flex items-center justify-between gap-1">
+                <span className="font-bold text-sm">{e.course_code}</span>
+                <div className="flex gap-0.5 shrink-0">
+                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => startEdit(e)}>
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+                        <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteEntry(e.id)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            ))}
+          </div>
+        </td>
+        <td className="border border-border p-2">
+          <div className="space-y-1">
+            {items.map((e: any) => (
+              <div key={e.id} className="text-sm text-muted-foreground">
+                {e.venue || '—'}
+              </div>
+            ))}
+          </div>
+        </td>
+      </>
+    );
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Exam Timetable</h1>
-            <p className="text-muted-foreground">Manage examination schedule</p>
-          </div>
+        {/* Header */}
+        <div className="text-center space-y-1 border-b border-border pb-4">
+          <h1 className="text-lg font-bold uppercase tracking-tight">
+            {settings?.school_name || 'University'}
+          </h1>
+          <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
+          <p className="text-sm font-bold uppercase">
+            Adjusted Final Examination Timetable
+          </p>
+          <p className="text-xs text-muted-foreground uppercase">
+            First Semester 2025/2026 Academic Session
+          </p>
+        </div>
+
+        <div className="flex justify-end">
           <Button onClick={() => { resetForm(); setIsCreating(true); }}>
             <Plus className="h-4 w-4 mr-2" /> Add Entry
           </Button>
@@ -121,7 +211,15 @@ export default function AdminExamTimetable() {
                 </div>
                 <div className="space-y-1">
                   <Label>Date</Label>
-                  <Input type="date" value={form.exam_date} onChange={e => setForm(p => ({ ...p, exam_date: e.target.value }))} />
+                  <Input type="date" value={form.exam_date} onChange={e => {
+                    const val = e.target.value;
+                    setForm(p => ({ ...p, exam_date: val }));
+                    // If Friday and afternoon selected, warn
+                    if (new Date(val).getDay() === 5 && form.time_slot === 'afternoon') {
+                      toast({ title: 'Note', description: 'Friday afternoon is reserved for Friday Prayer.' });
+                      setForm(p => ({ ...p, exam_date: val, time_slot: 'morning', start_time: '08:00', end_time: '11:00' }));
+                    }
+                  }} />
                 </div>
                 <div className="space-y-1">
                   <Label>Time Slot</Label>
@@ -129,7 +227,14 @@ export default function AdminExamTimetable() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent position="popper" sideOffset={4} className="z-[9999]">
                       {Object.entries(TIME_SLOTS).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                        <SelectItem
+                          key={k}
+                          value={k}
+                          disabled={k === 'afternoon' && isFriday(form.exam_date)}
+                        >
+                          {v.label}
+                          {k === 'afternoon' && isFriday(form.exam_date) ? ' (Friday Prayer)' : ''}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -140,15 +245,7 @@ export default function AdminExamTimetable() {
                 </div>
                 <div className="space-y-1">
                   <Label>Venue</Label>
-                  <Input placeholder="e.g. TETFD" value={form.venue} onChange={e => setForm(p => ({ ...p, venue: e.target.value }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label>Start Time</Label>
-                  <Input type="time" value={form.start_time} onChange={e => setForm(p => ({ ...p, start_time: e.target.value }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label>End Time</Label>
-                  <Input type="time" value={form.end_time} onChange={e => setForm(p => ({ ...p, end_time: e.target.value }))} />
+                  <Input placeholder="e.g. TETFD E, F, G, H" value={form.venue} onChange={e => setForm(p => ({ ...p, venue: e.target.value }))} />
                 </div>
               </div>
               <div className="flex gap-2">
@@ -173,58 +270,44 @@ export default function AdminExamTimetable() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-primary text-primary-foreground">
-                  <th className="border p-2 text-left min-w-[180px]">Day &amp; Date</th>
-                  <th className="border p-2 text-left min-w-[200px]">Morning (8:00–11:00)</th>
-                  <th className="border p-2 text-left min-w-[200px]">Afternoon (11:30–14:30)</th>
-                  <th className="border p-2 text-left min-w-[200px]">Evening (15:00–17:00)</th>
+                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" rowSpan={2}>
+                    DAY & DATE
+                  </th>
+                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>
+                    MORNING (8:00 – 11:00)
+                  </th>
+                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>
+                    AFTERNOON (11:30 – 2:30)
+                  </th>
+                  <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>
+                    EVENING (3:00 – 5:00)
+                  </th>
+                </tr>
+                <tr className="bg-primary/90 text-primary-foreground text-xs">
+                  <th className="border border-primary-foreground/30 p-1 text-center">COURSE CODE</th>
+                  <th className="border border-primary-foreground/30 p-1 text-center">VENUE</th>
+                  <th className="border border-primary-foreground/30 p-1 text-center">COURSE CODE</th>
+                  <th className="border border-primary-foreground/30 p-1 text-center">VENUE</th>
+                  <th className="border border-primary-foreground/30 p-1 text-center">COURSE CODE</th>
+                  <th className="border border-primary-foreground/30 p-1 text-center">VENUE</th>
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(grouped).map(([dayKey, slots]: [string, any]) => (
-                  <tr key={dayKey} className="border-b hover:bg-muted/50">
-                    <td className="border p-2 font-medium">{dayKey}</td>
-                    {['morning', 'afternoon', 'evening'].map(slot => (
-                      <td key={slot} className="border p-2">
-                        {slots[slot]?.length > 0 ? (
-                          <div className="space-y-1">
-                            {slots[slot].map((e: any) => (
-                              <div key={e.id} className="flex items-start justify-between gap-1">
-                                <div>
-                                  <span className="font-semibold">{e.course_code}</span>
-                                  {e.venue && <span className="text-muted-foreground text-xs ml-1">({e.venue})</span>}
-                                </div>
-                                <div className="flex gap-0.5 shrink-0">
-                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEdit(e)}>
-                                    <Edit2 className="h-3 w-3" />
-                                  </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                        <Trash2 className="h-3 w-3 text-destructive" />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
-                                        <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => deleteEntry(e.id)}>Delete</AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
+                {Object.entries(grouped).map(([dayKey, slots]: [string, any]) => {
+                  const [dayLabel, dayName, dateFormatted] = dayKey.split('|');
+                  return (
+                    <tr key={dayKey} className="border-b hover:bg-muted/50">
+                      <td className="border border-border p-2 font-bold text-center min-w-[120px]">
+                        <div className="text-sm">{dayLabel.toUpperCase()}</div>
+                        <div className="text-xs font-semibold">{dayName}</div>
+                        <div className="text-xs text-muted-foreground">{dateFormatted}</div>
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      {renderSlotCell(slots.morning, 'morning', slots.date)}
+                      {renderSlotCell(slots.afternoon, 'afternoon', slots.date)}
+                      {renderSlotCell(slots.evening, 'evening', slots.date)}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

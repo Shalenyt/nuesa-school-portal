@@ -4,12 +4,12 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Plus, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 export default function AdminAnnouncements() {
   const { profile } = useAuth();
@@ -21,7 +21,7 @@ export default function AdminAnnouncements() {
   const [courses, setCourses] = useState<any[]>([]);
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: '', content: '', type: 'general' as string,
-    audience: 'general', // general | department | course
+    audience: 'general',
     department_id: '', level_id: '', course_id: ''
   });
 
@@ -70,10 +70,10 @@ export default function AdminAnnouncements() {
       if (newAnnouncement.audience === 'department' && newAnnouncement.department_id) {
         insertData.department_id = newAnnouncement.department_id;
         if (newAnnouncement.level_id) insertData.level_id = newAnnouncement.level_id;
-        insertData.type = 'subject'; // department-based
+        insertData.type = 'subject';
       } else if (newAnnouncement.audience === 'course' && newAnnouncement.course_id) {
         insertData.course_id = newAnnouncement.course_id;
-        insertData.type = 'class'; // course-based
+        insertData.type = 'class';
       }
 
       const { error } = await (supabase as any).from('announcements').insert([insertData]);
@@ -99,6 +99,26 @@ export default function AdminAnnouncements() {
     }
   };
 
+  const typeOptions = [
+    { value: 'general', label: 'General' },
+    { value: 'academic', label: 'Academic' },
+    { value: 'urgent', label: 'Urgent' },
+  ];
+
+  const audienceOptions = [
+    { value: 'general', label: 'Everyone' },
+    { value: 'department', label: 'Department-based' },
+    { value: 'course', label: 'Course-based' },
+  ];
+
+  const departmentOptions = subjects.map((s: any) => ({ value: s.id, label: s.name, description: s.code }));
+  const levelOptions = [{ value: '', label: 'All Levels' }, ...classes.map((c: any) => ({ value: c.id, label: c.name }))];
+  const courseOptions = courses.map((c: any) => ({
+    value: c.id,
+    label: c.name || c.description || c.id,
+    description: `${c.subjects?.name || ''} • ${c.classes?.name || ''}`,
+  }));
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -121,51 +141,49 @@ export default function AdminAnnouncements() {
               
               <div className="space-y-4">
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                  <Select value={newAnnouncement.type} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, type: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
-                    <SelectContent position="popper" sideOffset={4} className="z-[9999]">
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="academic">Academic</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={newAnnouncement.audience} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, audience: v, department_id: '', level_id: '', course_id: '' }))}>
-                    <SelectTrigger><SelectValue placeholder="Audience" /></SelectTrigger>
-                    <SelectContent position="popper" sideOffset={4} className="z-[9999]">
-                      <SelectItem value="general">Everyone</SelectItem>
-                      <SelectItem value="department">Department-based</SelectItem>
-                      <SelectItem value="course">Course-based</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={typeOptions}
+                    value={newAnnouncement.type}
+                    onValueChange={(v) => setNewAnnouncement(p => ({ ...p, type: v || 'general' }))}
+                    placeholder="Select type"
+                    searchPlaceholder="Search type..."
+                  />
+                  <SearchableSelect
+                    options={audienceOptions}
+                    value={newAnnouncement.audience}
+                    onValueChange={(v) => setNewAnnouncement(p => ({ ...p, audience: v || 'general', department_id: '', level_id: '', course_id: '' }))}
+                    placeholder="Select audience"
+                    searchPlaceholder="Search audience..."
+                  />
                 </div>
 
                 {newAnnouncement.audience === 'department' && (
                   <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                    <Select value={newAnnouncement.department_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, department_id: v === 'none' ? '' : v }))}>
-                      <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
-                      <SelectContent position="popper" sideOffset={4} className="z-[9999]">
-                        <SelectItem value="none">Select...</SelectItem>
-                        {subjects.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Select value={newAnnouncement.level_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, level_id: v === 'none' ? '' : v }))}>
-                      <SelectTrigger><SelectValue placeholder="Level (optional)" /></SelectTrigger>
-                      <SelectContent position="popper" sideOffset={4} className="z-[9999]">
-                        <SelectItem value="none">All Levels</SelectItem>
-                        {classes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                      options={departmentOptions}
+                      value={newAnnouncement.department_id}
+                      onValueChange={(v) => setNewAnnouncement(p => ({ ...p, department_id: v }))}
+                      placeholder="Select Department"
+                      searchPlaceholder="Search departments..."
+                    />
+                    <SearchableSelect
+                      options={levelOptions}
+                      value={newAnnouncement.level_id}
+                      onValueChange={(v) => setNewAnnouncement(p => ({ ...p, level_id: v }))}
+                      placeholder="Level (optional)"
+                      searchPlaceholder="Search levels..."
+                    />
                   </div>
                 )}
 
                 {newAnnouncement.audience === 'course' && (
-                  <Select value={newAnnouncement.course_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, course_id: v === 'none' ? '' : v }))}>
-                    <SelectTrigger className="w-full"><SelectValue placeholder="Select Course" /></SelectTrigger>
-                    <SelectContent position="popper" sideOffset={4} className="z-[9999]">
-                      <SelectItem value="none">Select...</SelectItem>
-                      {courses.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name || c.description || c.id}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={courseOptions}
+                    value={newAnnouncement.course_id}
+                    onValueChange={(v) => setNewAnnouncement(p => ({ ...p, course_id: v }))}
+                    placeholder="Select Course"
+                    searchPlaceholder="Search courses..."
+                  />
                 )}
               </div>
 
