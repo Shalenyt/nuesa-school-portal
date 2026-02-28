@@ -290,6 +290,7 @@ export type Database = {
       attendance_sessions: {
         Row: {
           allowed_radius_meters: number | null
+          attendance_type: string
           course_id: string
           created_at: string
           id: string
@@ -302,6 +303,7 @@ export type Database = {
         }
         Insert: {
           allowed_radius_meters?: number | null
+          attendance_type?: string
           course_id: string
           created_at?: string
           id?: string
@@ -314,6 +316,7 @@ export type Database = {
         }
         Update: {
           allowed_radius_meters?: number | null
+          attendance_type?: string
           course_id?: string
           created_at?: string
           id?: string
@@ -599,6 +602,76 @@ export type Database = {
           voting_open?: boolean
         }
         Relationships: []
+      }
+      exam_timetables: {
+        Row: {
+          course_code: string
+          created_at: string
+          created_by: string
+          day_label: string
+          department_id: string | null
+          end_time: string
+          exam_date: string
+          id: string
+          level_id: string | null
+          start_time: string
+          time_slot: string
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          course_code: string
+          created_at?: string
+          created_by: string
+          day_label: string
+          department_id?: string | null
+          end_time: string
+          exam_date: string
+          id?: string
+          level_id?: string | null
+          start_time: string
+          time_slot: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          course_code?: string
+          created_at?: string
+          created_by?: string
+          day_label?: string
+          department_id?: string | null
+          end_time?: string
+          exam_date?: string
+          id?: string
+          level_id?: string | null
+          start_time?: string
+          time_slot?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_timetables_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_timetables_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_timetables_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feedback: {
         Row: {

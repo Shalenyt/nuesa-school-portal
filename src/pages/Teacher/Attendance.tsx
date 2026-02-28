@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Calendar, Users, CheckCircle, XCircle, MapPin, Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -26,6 +27,7 @@ export default function LecturerAttendance() {
   const [loading, setLoading] = useState(true);
   const [allowedRadius, setAllowedRadius] = useState('100');
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [useGps, setUseGps] = useState(true);
 
   useEffect(() => {
     if (profile) fetchCourses();
@@ -120,8 +122,14 @@ export default function LecturerAttendance() {
     if (!selectedCourse) return;
     setGpsLoading(true);
     try {
-      const position = await getCurrentPosition();
-      const { latitude, longitude } = position.coords;
+      let latitude: number | null = null;
+      let longitude: number | null = null;
+
+      if (useGps) {
+        const position = await getCurrentPosition();
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      }
 
       const { error } = await (supabase as any)
         .from('attendance_sessions')
@@ -131,19 +139,20 @@ export default function LecturerAttendance() {
           status: 'open',
           latitude,
           longitude,
-          allowed_radius_meters: parseInt(allowedRadius) || 100
+          allowed_radius_meters: useGps ? (parseInt(allowedRadius) || 100) : null,
+          attendance_type: useGps ? 'gps' : 'manual',
         });
       if (error) {
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
       } else {
-        toast({ title: 'Success', description: 'Attendance session opened with GPS location.' });
+        toast({ title: 'Success', description: useGps ? 'Attendance session opened with GPS location.' : 'Manual attendance session opened.' });
         const course = courses.find(c => c.id === selectedCourse);
         const courseName = course?.name || course?.subjects?.name || 'Course';
         await notifyEnrolledStudents(selectedCourse, 'Attendance Open', `Attendance is now open for ${courseName}. Mark your attendance now!`, 'attendance');
         fetchSessions();
       }
     } catch (err: any) {
-      toast({ title: 'GPS Error', description: err.message || 'Could not get your location. Please enable GPS.', variant: 'destructive' });
+      toast({ title: useGps ? 'GPS Error' : 'Error', description: err.message || 'Could not open session.', variant: 'destructive' });
     } finally {
       setGpsLoading(false);
     }
@@ -202,13 +211,19 @@ export default function LecturerAttendance() {
           </div>
           {selectedCourse && (
             <>
-              <div className="space-y-1">
-                <Label className="text-sm">Allowed Radius (meters)</Label>
-                <Input className="w-[140px]" type="number" value={allowedRadius} onChange={e => setAllowedRadius(e.target.value)} min="10" max="1000" />
+              <div className="flex items-center gap-2">
+                <Switch checked={useGps} onCheckedChange={setUseGps} />
+                <Label className="text-sm">{useGps ? 'GPS Attendance' : 'Manual Attendance'}</Label>
               </div>
+              {useGps && (
+                <div className="space-y-1">
+                  <Label className="text-sm">Allowed Radius (meters)</Label>
+                  <Input className="w-[140px]" type="number" value={allowedRadius} onChange={e => setAllowedRadius(e.target.value)} min="10" max="1000" />
+                </div>
+              )}
               <Button onClick={openSession} disabled={gpsLoading}>
                 <MapPin className="h-4 w-4 mr-2" />
-                {gpsLoading ? 'Getting GPS...' : 'Open Session (GPS)'}
+                {gpsLoading ? 'Opening...' : useGps ? 'Open Session (GPS)' : 'Open Session (Manual)'}
               </Button>
             </>
           )}
@@ -263,7 +278,9 @@ export default function LecturerAttendance() {
                     <CardTitle className="text-base flex items-center justify-between">
                       {new Date(s.session_date).toLocaleDateString()}
                       <div className="flex items-center gap-1">
-                        {s.latitude && <MapPin className="h-3 w-3 text-muted-foreground" />}
+                        <Badge variant="outline" className="text-xs">
+                          {s.attendance_type === 'manual' ? 'Manual' : 'GPS'}
+                        </Badge>
                         <Badge variant={s.status === 'open' ? 'default' : 'secondary'}>
                           {s.status === 'open' ? 'Open' : 'Closed'}
                         </Badge>

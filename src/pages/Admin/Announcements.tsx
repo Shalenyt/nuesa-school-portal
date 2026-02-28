@@ -119,53 +119,55 @@ export default function AdminAnnouncements() {
               <Input placeholder="Announcement title" value={newAnnouncement.title} onChange={(e) => setNewAnnouncement(p => ({ ...p, title: e.target.value }))} />
               <Textarea placeholder="Announcement content" value={newAnnouncement.content} onChange={(e) => setNewAnnouncement(p => ({ ...p, content: e.target.value }))} rows={4} />
               
-              <div className="grid gap-4 md:grid-cols-2">
-                <Select value={newAnnouncement.type} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, type: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="academic">Academic</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={newAnnouncement.audience} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, audience: v, department_id: '', level_id: '', course_id: '' }))}>
-                  <SelectTrigger><SelectValue placeholder="Audience" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">Everyone</SelectItem>
-                    <SelectItem value="department">Department-based</SelectItem>
-                    <SelectItem value="course">Course-based</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {newAnnouncement.audience === 'department' && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Select value={newAnnouncement.department_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, department_id: v === 'none' ? '' : v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Select...</SelectItem>
-                      {subjects.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              <div className="space-y-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                  <Select value={newAnnouncement.type} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, type: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                    <SelectContent position="popper" sideOffset={4} className="z-[9999]">
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="academic">Academic</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Select value={newAnnouncement.level_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, level_id: v === 'none' ? '' : v }))}>
-                    <SelectTrigger><SelectValue placeholder="Level (optional)" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">All Levels</SelectItem>
-                      {classes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  <Select value={newAnnouncement.audience} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, audience: v, department_id: '', level_id: '', course_id: '' }))}>
+                    <SelectTrigger><SelectValue placeholder="Audience" /></SelectTrigger>
+                    <SelectContent position="popper" sideOffset={4} className="z-[9999]">
+                      <SelectItem value="general">Everyone</SelectItem>
+                      <SelectItem value="department">Department-based</SelectItem>
+                      <SelectItem value="course">Course-based</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
-              {newAnnouncement.audience === 'course' && (
-                <Select value={newAnnouncement.course_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, course_id: v === 'none' ? '' : v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select Course" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Select...</SelectItem>
-                    {courses.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name || c.description || c.id}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
+                {newAnnouncement.audience === 'department' && (
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                    <Select value={newAnnouncement.department_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, department_id: v === 'none' ? '' : v }))}>
+                      <SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger>
+                      <SelectContent position="popper" sideOffset={4} className="z-[9999]">
+                        <SelectItem value="none">Select...</SelectItem>
+                        {subjects.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Select value={newAnnouncement.level_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, level_id: v === 'none' ? '' : v }))}>
+                      <SelectTrigger><SelectValue placeholder="Level (optional)" /></SelectTrigger>
+                      <SelectContent position="popper" sideOffset={4} className="z-[9999]">
+                        <SelectItem value="none">All Levels</SelectItem>
+                        {classes.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {newAnnouncement.audience === 'course' && (
+                  <Select value={newAnnouncement.course_id || 'none'} onValueChange={(v) => setNewAnnouncement(p => ({ ...p, course_id: v === 'none' ? '' : v }))}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select Course" /></SelectTrigger>
+                    <SelectContent position="popper" sideOffset={4} className="z-[9999]">
+                      <SelectItem value="none">Select...</SelectItem>
+                      {courses.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name || c.description || c.id}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
 
               <div className="flex gap-2">
                 <Button onClick={createAnnouncement}>Create</Button>
