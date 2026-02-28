@@ -4,12 +4,12 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Plus, Edit2, Trash2 } from 'lucide-react';
+import { MessageSquare, Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 export default function TeacherAnnouncements() {
   const { profile } = useAuth();
@@ -20,7 +20,7 @@ export default function TeacherAnnouncements() {
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: '',
     content: '',
-    type: 'general' as any
+    type: 'general' as string
   });
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function TeacherAnnouncements() {
     }
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('announcements')
         .insert([{
           title: newAnnouncement.title.trim(),
@@ -81,6 +81,14 @@ export default function TeacherAnnouncements() {
       });
     }
   };
+
+  const typeOptions = [
+    { value: 'general', label: 'General' },
+    { value: 'class', label: 'Class' },
+    { value: 'subject', label: 'Subject' },
+    { value: 'academic', label: 'Academic' },
+    { value: 'urgent', label: 'Urgent' },
+  ];
 
   return (
     <DashboardLayout>
@@ -115,21 +123,13 @@ export default function TeacherAnnouncements() {
                 onChange={(e) => setNewAnnouncement(prev => ({ ...prev, content: e.target.value }))}
                 rows={4}
               />
-              <Select
+              <SearchableSelect
+                options={typeOptions}
                 value={newAnnouncement.type}
-                onValueChange={(value: any) => setNewAnnouncement(prev => ({ ...prev, type: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select announcement type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="class">Class</SelectItem>
-                  <SelectItem value="subject">Subject</SelectItem>
-                  <SelectItem value="academic">Academic</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
+                onValueChange={(v) => setNewAnnouncement(prev => ({ ...prev, type: v || 'general' }))}
+                placeholder="Select announcement type"
+                searchPlaceholder="Search type..."
+              />
               <div className="flex gap-2">
                 <Button onClick={createAnnouncement}>Create</Button>
                 <Button variant="outline" onClick={() => setIsCreating(false)}>Cancel</Button>
