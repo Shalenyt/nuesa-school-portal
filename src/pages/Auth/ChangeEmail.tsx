@@ -20,33 +20,25 @@ export default function ChangeEmail() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Detect email change confirmation from query params or hash
+  // Detect email change confirmation from hash-based redirect (via {{ .ConfirmationURL }})
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenHash = params.get('token_hash') || params.get('access_token');
-    const type = params.get('type');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log('[ChangeEmail] auth event:', event);
+      if (event === 'USER_UPDATED') {
+        console.log('[ChangeEmail] Email change confirmed via USER_UPDATED event');
+        setShowSuccess(true);
+        // Clean the URL hash
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    });
 
-    if (tokenHash && (type === 'email_change' || type === 'change')) {
-      // Verify the token to complete the email change
-      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'email_change' })
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('[ChangeEmail] Token verification failed:', error);
-            toast({
-              title: "Verification failed",
-              description: "This email change link is invalid or has expired.",
-              variant: "destructive"
-            });
-          } else {
-            console.log('[ChangeEmail] Email change verified successfully');
-            setShowSuccess(true);
-            // Clean the URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        });
-    } else if (window.location.hash.includes('type=email_change')) {
-      setShowSuccess(true);
+    // Also check hash directly for email_change type
+    if (window.location.hash.includes('type=email_change')) {
+      // The auth state change listener above will handle it once the token is exchanged
+      console.log('[ChangeEmail] Detected email_change in URL hash, waiting for auth event...');
     }
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

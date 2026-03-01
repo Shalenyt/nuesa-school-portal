@@ -24,49 +24,39 @@ export default function ResetPassword() {
 
   useThemeSync();
 
-  // Verify token from URL query params (token_hash & type)
-  // or fall back to hash-based PASSWORD_RECOVERY event
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenHash = params.get('token_hash') || params.get('access_token');
-    const type = params.get('type');
-
-    if (tokenHash && (type === 'recovery' || type === 'signup')) {
-      // Verify the token to establish a session
-      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('[ResetPassword] Token verification failed:', error);
-            toast({
-              title: "Invalid reset link",
-              description: "This password reset link is invalid or has expired. Please request a new one.",
-              variant: "destructive"
-            });
-            navigate('/auth/forgot-password');
-          } else {
-            console.log('[ResetPassword] Token verified, session established');
-            setSessionReady(true);
-            // Clean the URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        });
-      return;
-    }
-
-    // Fallback: listen for hash-based PASSWORD_RECOVERY event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    // Listen for PASSWORD_RECOVERY event from hash-based redirect
+    // This fires when the user clicks {{ .ConfirmationURL }} in the email,
+    // which goes through Supabase's server to verify the token and redirect here
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[ResetPassword] auth event:', event);
       if (event === 'PASSWORD_RECOVERY') {
+        console.log('[ResetPassword] PASSWORD_RECOVERY event received, session ready');
         setSessionReady(true);
+      }
+      // Also handle if user arrives with a valid session from token exchange
+      if (event === 'SIGNED_IN' && session) {
+        // Check if we're on the reset password page with hash params
+        const hash = window.location.hash;
+        if (hash.includes('type=recovery')) {
+          console.log('[ResetPassword] SIGNED_IN with recovery type, session ready');
+          setSessionReady(true);
+        }
       }
     });
 
+    // Check if there's already a session (e.g., if the page was refreshed after token exchange)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setSessionReady(true);
+        // Check URL hash for recovery type
+        const hash = window.location.hash;
+        if (hash.includes('type=recovery')) {
+          setSessionReady(true);
+        }
       }
     });
 
+    // Timeout fallback — if no auth event fires within 8 seconds, redirect
     const timeout = setTimeout(() => {
       setSessionReady((prev) => {
         if (!prev) {
@@ -79,7 +69,7 @@ export default function ResetPassword() {
         }
         return prev;
       });
-    }, 5000);
+    }, 8000);
 
     return () => {
       subscription.unsubscribe();
