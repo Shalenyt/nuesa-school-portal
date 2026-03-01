@@ -147,12 +147,7 @@ export default function StudentExamTimetable() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="text-center space-y-1 border-b border-border pb-4">
-          <h1 className="text-lg font-bold uppercase tracking-tight">{settings?.school_name || 'University'}</h1>
-          <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
-          <p className="text-sm font-bold uppercase">Examination Timetable</p>
-          <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
-        </div>
+        {/* Heading is inside timetable ref only */}
 
         {loading ? <p className="text-center text-muted-foreground">Loading...</p> : entries.length === 0 ? (
           <Card><CardContent className="text-center py-8"><Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" /><p className="text-muted-foreground">No exam timetable available yet.</p></CardContent></Card>

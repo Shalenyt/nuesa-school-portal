@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2, Calendar, Edit2, Download, Eye, Search, X } from 'lucide-react';
+import { Plus, Trash2, Calendar, Edit2, Download, Eye, X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import html2canvas from 'html2canvas';
@@ -23,6 +23,30 @@ const TIME_SLOTS = {
   evening: { label: 'Evening (3:00 PM – 5:00 PM)', start: '15:00', end: '17:00' },
 };
 
+interface SessionData {
+  course_codes: string[];
+  venue: string;
+}
+
+interface FormState {
+  day_label: string;
+  exam_date: string;
+  sessions: {
+    morning: SessionData;
+    afternoon: SessionData;
+    evening: SessionData;
+  };
+}
+
+const emptyForm: FormState = {
+  day_label: '', exam_date: '',
+  sessions: {
+    morning: { course_codes: [], venue: '' },
+    afternoon: { course_codes: [], venue: '' },
+    evening: { course_codes: [], venue: '' },
+  },
+};
+
 export default function AdminExamTimetable() {
   const { profile } = useAuth();
   const { settings } = useSchoolSettings();
@@ -30,6 +54,7 @@ export default function AdminExamTimetable() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingSlot, setEditingSlot] = useState<string | null>(null);
   const [activeSemester, setActiveSemester] = useState<any>(null);
   const [allCourses, setAllCourses] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
@@ -43,11 +68,7 @@ export default function AdminExamTimetable() {
   const previewRef = useRef<HTMLDivElement>(null);
   const timetableRef = useRef<HTMLDivElement>(null);
 
-  const [form, setForm] = useState({
-    day_label: '', exam_date: '', time_slot: 'morning',
-    start_time: '08:00', end_time: '11:00',
-    course_codes: [] as string[], venue: '',
-  });
+  const [form, setForm] = useState<FormState>({ ...emptyForm });
 
   useEffect(() => {
     fetchEntries();
@@ -57,6 +78,8 @@ export default function AdminExamTimetable() {
   }, []);
 
   const fetchSemester = async () => {
+    // Auto-manage semester lifecycle on load
+    try { await supabase.rpc('auto_manage_semester_lifecycle'); } catch (e) { console.error(e); }
     const { data } = await supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle();
     setActiveSemester(data);
   };
@@ -100,62 +123,103 @@ export default function AdminExamTimetable() {
   const semesterLabel = activeSemester ? `${activeSemester.name} Academic Session` : 'Academic Session';
 
   const resetForm = () => {
-    setForm({ day_label: '', exam_date: '', time_slot: 'morning', start_time: '08:00', end_time: '11:00', course_codes: [], venue: '' });
+    setForm({ ...emptyForm, sessions: { morning: { course_codes: [], venue: '' }, afternoon: { course_codes: [], venue: '' }, evening: { course_codes: [], venue: '' } } });
     setEditingId(null);
+    setEditingSlot(null);
     setIsCreating(false);
-  };
-
-  const handleTimeSlotChange = (slot: string) => {
-    const s = TIME_SLOTS[slot as keyof typeof TIME_SLOTS];
-    setForm(p => ({ ...p, time_slot: slot, start_time: s.start, end_time: s.end }));
   };
 
   const isFriday = (dateStr: string) => dateStr ? new Date(dateStr).getDay() === 5 : false;
 
-  const addCourseCode = (code: string) => {
+  const addCourseToSession = (slot: 'morning' | 'afternoon' | 'evening', code: string) => {
     if (!code) return;
-    if (form.course_codes.includes(code)) {
-      toast({ title: 'Duplicate', description: 'This course is already added.', variant: 'destructive' });
+    if (form.sessions[slot].course_codes.includes(code)) {
+      toast({ title: 'Duplicate', description: 'This course is already added to this session.', variant: 'destructive' });
       return;
     }
-    setForm(p => ({ ...p, course_codes: [...p.course_codes, code] }));
+    setForm(p => ({
+      ...p,
+      sessions: {
+        ...p.sessions,
+        [slot]: { ...p.sessions[slot], course_codes: [...p.sessions[slot].course_codes, code] },
+      },
+    }));
   };
 
-  const removeCourseCode = (code: string) => {
-    setForm(p => ({ ...p, course_codes: p.course_codes.filter(c => c !== code) }));
+  const removeCourseFromSession = (slot: 'morning' | 'afternoon' | 'evening', code: string) => {
+    setForm(p => ({
+      ...p,
+      sessions: {
+        ...p.sessions,
+        [slot]: { ...p.sessions[slot], course_codes: p.sessions[slot].course_codes.filter(c => c !== code) },
+      },
+    }));
+  };
+
+  const setSessionVenue = (slot: 'morning' | 'afternoon' | 'evening', venue: string) => {
+    setForm(p => ({
+      ...p,
+      sessions: {
+        ...p.sessions,
+        [slot]: { ...p.sessions[slot], venue },
+      },
+    }));
   };
 
   const saveEntry = async () => {
-    if (!form.day_label || !form.exam_date || form.course_codes.length === 0) {
-      toast({ title: 'Error', description: 'Day, date and at least one course are required.', variant: 'destructive' });
+    if (!form.day_label || !form.exam_date) {
+      toast({ title: 'Error', description: 'Day label and date are required.', variant: 'destructive' });
       return;
     }
 
-    // Save each course as a separate entry
-    for (const code of form.course_codes) {
-      const payload = {
-        day_label: form.day_label, exam_date: form.exam_date, time_slot: form.time_slot,
-        start_time: form.start_time, end_time: form.end_time, course_code: code,
-        venue: form.venue, created_by: profile?.id,
-      };
-
-      if (editingId && form.course_codes.length === 1) {
-        const { created_by, ...updatePayload } = payload;
-        const { error } = await (supabase as any).from('exam_timetables').update(updatePayload).eq('id', editingId);
-        if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
-      } else {
-        const { error } = await (supabase as any).from('exam_timetables').insert([payload]);
-        if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
-      }
-
-      try {
-        await supabase.functions.invoke('exam-notifications', {
-          body: { type: 'exam_created', course_code: code, exam_date: form.exam_date, time_slot: form.time_slot, venue: form.venue, start_time: form.start_time, end_time: form.end_time },
-        });
-      } catch (e) { console.error('Notification error:', e); }
+    const totalCourses = Object.values(form.sessions).reduce((sum, s) => sum + s.course_codes.length, 0);
+    if (totalCourses === 0) {
+      toast({ title: 'Error', description: 'Add at least one course to any session.', variant: 'destructive' });
+      return;
     }
 
-    toast({ title: editingId ? 'Updated' : 'Created', description: editingId ? 'Entry updated.' : `${form.course_codes.length} entries added.` });
+    // If editing a single entry, update it
+    if (editingId && editingSlot) {
+      const session = form.sessions[editingSlot as keyof typeof form.sessions];
+      if (session.course_codes.length === 1) {
+        const slot = TIME_SLOTS[editingSlot as keyof typeof TIME_SLOTS];
+        const { error } = await (supabase as any).from('exam_timetables').update({
+          day_label: form.day_label, exam_date: form.exam_date, time_slot: editingSlot,
+          start_time: slot.start, end_time: slot.end, course_code: session.course_codes[0],
+          venue: session.venue,
+        }).eq('id', editingId);
+        if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
+        toast({ title: 'Updated', description: 'Entry updated.' });
+        resetForm();
+        fetchEntries();
+        return;
+      }
+    }
+
+    // Save each session's courses as separate entries
+    for (const [slotKey, session] of Object.entries(form.sessions)) {
+      if (session.course_codes.length === 0) continue;
+      const slot = TIME_SLOTS[slotKey as keyof typeof TIME_SLOTS];
+
+      for (const code of session.course_codes) {
+        const payload = {
+          day_label: form.day_label, exam_date: form.exam_date, time_slot: slotKey,
+          start_time: slot.start, end_time: slot.end, course_code: code,
+          venue: session.venue, created_by: profile?.id,
+        };
+
+        const { error } = await (supabase as any).from('exam_timetables').insert([payload]);
+        if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
+
+        try {
+          await supabase.functions.invoke('exam-notifications', {
+            body: { type: 'exam_created', course_code: code, exam_date: form.exam_date, time_slot: slotKey, venue: session.venue, start_time: slot.start, end_time: slot.end },
+          });
+        } catch (e) { console.error('Notification error:', e); }
+      }
+    }
+
+    toast({ title: 'Created', description: `${totalCourses} entries added.` });
     resetForm();
     fetchEntries();
   };
@@ -168,10 +232,15 @@ export default function AdminExamTimetable() {
 
   const startEdit = (e: any) => {
     setForm({
-      day_label: e.day_label, exam_date: e.exam_date, time_slot: e.time_slot,
-      start_time: e.start_time, end_time: e.end_time, course_codes: [e.course_code], venue: e.venue || '',
+      day_label: e.day_label, exam_date: e.exam_date,
+      sessions: {
+        morning: { course_codes: e.time_slot === 'morning' ? [e.course_code] : [], venue: e.time_slot === 'morning' ? (e.venue || '') : '' },
+        afternoon: { course_codes: e.time_slot === 'afternoon' ? [e.course_code] : [], venue: e.time_slot === 'afternoon' ? (e.venue || '') : '' },
+        evening: { course_codes: e.time_slot === 'evening' ? [e.course_code] : [], venue: e.time_slot === 'evening' ? (e.venue || '') : '' },
+      },
     });
     setEditingId(e.id);
+    setEditingSlot(e.time_slot);
     setIsCreating(true);
   };
 
@@ -181,10 +250,8 @@ export default function AdminExamTimetable() {
       return;
     }
     const { error } = await (supabase as any).from('timetable_history').insert([{
-      semester: activeSemester.name,
-      session: activeSemester.name,
-      timetable_data: entries,
-      created_by: profile?.id,
+      semester: activeSemester.name, session: activeSemester.name,
+      timetable_data: entries, created_by: profile?.id,
     }]);
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Saved', description: 'Timetable archived to history.' });
@@ -307,17 +374,60 @@ export default function AdminExamTimetable() {
     return h.semester?.toLowerCase().includes(q) || h.session?.toLowerCase().includes(q);
   });
 
+  // Get all selected course codes across all sessions (for filtering dropdown)
+  const allSelectedCodes = [
+    ...form.sessions.morning.course_codes,
+    ...form.sessions.afternoon.course_codes,
+    ...form.sessions.evening.course_codes,
+  ];
+
+  const renderSessionForm = (slot: 'morning' | 'afternoon' | 'evening', label: string) => {
+    const isDisabled = slot === 'afternoon' && isFriday(form.exam_date);
+    const session = form.sessions[slot];
+    const availableOptions = courseOptions.filter(o => !allSelectedCodes.includes(o.value));
+
+    if (isDisabled) {
+      return (
+        <div className="p-3 rounded-lg border bg-muted/30">
+          <Label className="font-semibold text-sm">{label}</Label>
+          <p className="text-sm text-muted-foreground mt-1">Reserved for Friday Prayer</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-3 rounded-lg border space-y-3">
+        <Label className="font-semibold text-sm">{label}</Label>
+        <SearchableSelect
+          options={availableOptions}
+          value=""
+          onValueChange={(code) => addCourseToSession(slot, code)}
+          placeholder="+ Add Course"
+          searchPlaceholder="Search by code or name..."
+        />
+        {session.course_codes.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {session.course_codes.map(code => (
+              <Badge key={code} variant="secondary" className="text-sm gap-1 pr-1">
+                {code}
+                <button onClick={() => removeCourseFromSession(slot, code)} className="ml-1 hover:text-destructive">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+        <div className="space-y-1">
+          <Label className="text-xs">Venue</Label>
+          <Input placeholder="e.g. TETFD E, F, G, H" value={session.venue} onChange={e => setSessionVenue(slot, e.target.value)} />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-1 border-b border-border pb-4">
-          <h1 className="text-lg font-bold uppercase tracking-tight">{settings?.school_name || 'University'}</h1>
-          <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
-          <p className="text-sm font-bold uppercase">Examination Timetable</p>
-          <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
-        </div>
-
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" onClick={saveTimetableHistory} disabled={entries.length === 0}>
             <Download className="h-4 w-4 mr-2" /> Save to History
@@ -332,92 +442,48 @@ export default function AdminExamTimetable() {
 
         {isCreating && (
           <Card>
-            <CardHeader><CardTitle>{editingId ? 'Edit Entry' : 'Add Exam Entry'}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{editingId ? 'Edit Entry' : 'Add Exam Entries'}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>Day Label</Label>
                   <Input placeholder="e.g. Day 1" value={form.day_label} onChange={e => setForm(p => ({ ...p, day_label: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
                   <Label>Date</Label>
-                  <Input type="date" value={form.exam_date} onChange={e => {
-                    const val = e.target.value;
-                    if (new Date(val).getDay() === 5 && form.time_slot === 'afternoon') {
-                      toast({ title: 'Note', description: 'Friday afternoon is reserved for Friday Prayer.' });
-                      setForm(p => ({ ...p, exam_date: val, time_slot: 'morning', start_time: '08:00', end_time: '11:00' }));
-                    } else {
-                      setForm(p => ({ ...p, exam_date: val }));
-                    }
-                  }} />
-                </div>
-                <div className="space-y-1">
-                  <Label>Time Slot</Label>
-                  <Select value={form.time_slot} onValueChange={handleTimeSlotChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent position="popper" sideOffset={4} className="z-[9999]">
-                      {Object.entries(TIME_SLOTS).map(([k, v]) => (
-                        <SelectItem key={k} value={k} disabled={k === 'afternoon' && isFriday(form.exam_date)}>
-                          {v.label}{k === 'afternoon' && isFriday(form.exam_date) ? ' (Friday Prayer)' : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input type="date" value={form.exam_date} onChange={e => setForm(p => ({ ...p, exam_date: e.target.value }))} />
                 </div>
               </div>
 
-              {/* Course selection */}
-              <div className="space-y-2">
-                <Label className="font-semibold">Course Selection</Label>
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-                  <SearchableSelect
-                    options={deptOptions}
-                    value={filterDept}
-                    onValueChange={setFilterDept}
-                    placeholder="Filter by Department"
-                    searchPlaceholder="Search departments..."
-                  />
-                  <SearchableSelect
-                    options={levelOptions}
-                    value={filterLevel}
-                    onValueChange={setFilterLevel}
-                    placeholder="Filter by Level"
-                    searchPlaceholder="Search levels..."
-                  />
-                  <SearchableSelect
-                    options={courseOptions.filter(o => !form.course_codes.includes(o.value))}
-                    value=""
-                    onValueChange={addCourseCode}
-                    placeholder="+ Add Course"
-                    searchPlaceholder="Search by code or name..."
-                  />
-                </div>
-
-                {/* Selected courses */}
-                {form.course_codes.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {form.course_codes.map(code => (
-                      <Badge key={code} variant="secondary" className="text-sm gap-1 pr-1">
-                        {code}
-                        <button onClick={() => removeCourseCode(code)} className="ml-1 hover:text-destructive">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                {form.course_codes.length === 0 && (
-                  <p className="text-xs text-muted-foreground">Select at least one course from the dropdown above.</p>
-                )}
+              {/* Department & Level filters */}
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                <SearchableSelect
+                  options={deptOptions}
+                  value={filterDept}
+                  onValueChange={setFilterDept}
+                  placeholder="Filter by Department"
+                  searchPlaceholder="Search departments..."
+                />
+                <SearchableSelect
+                  options={levelOptions}
+                  value={filterLevel}
+                  onValueChange={setFilterLevel}
+                  placeholder="Filter by Level"
+                  searchPlaceholder="Search levels..."
+                />
               </div>
 
-              <div className="space-y-1">
-                <Label>Venue</Label>
-                <Input placeholder="e.g. TETFD E, F, G, H" value={form.venue} onChange={e => setForm(p => ({ ...p, venue: e.target.value }))} />
+              {/* Per-session course selection */}
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+                {renderSessionForm('morning', 'Morning (8:00 – 11:00)')}
+                {renderSessionForm('afternoon', 'Afternoon (11:30 – 2:30)')}
+                {renderSessionForm('evening', 'Evening (3:00 – 5:00)')}
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={saveEntry} disabled={form.course_codes.length === 0}>{editingId ? 'Update' : 'Add'}</Button>
+                <Button onClick={saveEntry} disabled={Object.values(form.sessions).every(s => s.course_codes.length === 0)}>
+                  {editingId ? 'Update' : 'Add'}
+                </Button>
                 <Button variant="outline" onClick={resetForm}>Cancel</Button>
               </div>
             </CardContent>
@@ -457,7 +523,7 @@ export default function AdminExamTimetable() {
               <p className="text-sm text-muted-foreground">No archived timetables yet.</p>
             ) : (
               <div className="space-y-2">
-            {filteredHistory.map((h: any) => (
+                {filteredHistory.map((h: any) => (
                   <div key={h.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
                     <div>
                       <p className="font-semibold">{h.semester}</p>
@@ -476,7 +542,7 @@ export default function AdminExamTimetable() {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete this timetable?</AlertDialogTitle>
-                            <AlertDialogDescription>Are you sure you want to delete this timetable? This action cannot be undone.</AlertDialogDescription>
+                            <AlertDialogDescription>Are you sure? This action cannot be undone.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
