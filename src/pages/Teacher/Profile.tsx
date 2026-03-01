@@ -19,6 +19,7 @@ import { AttendanceConsistency } from '@/components/Teacher/AttendanceConsistenc
 export default function TeacherProfile() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',

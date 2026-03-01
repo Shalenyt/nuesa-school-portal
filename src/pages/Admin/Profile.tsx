@@ -21,6 +21,7 @@ import { Edit, Palette } from 'lucide-react';
 export default function AdminProfile() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { settings, refetch: refetchSettings } = useSchoolSettings();
   
   // Initialize theme sync

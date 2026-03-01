@@ -17,6 +17,7 @@ import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 export default function StudentProfile() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
