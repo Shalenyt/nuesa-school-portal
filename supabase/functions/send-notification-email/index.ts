@@ -10,7 +10,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 20;
 const RATE_WINDOW = 60_000;
@@ -36,13 +35,33 @@ interface NotificationEmailRequest {
 
 const VALID_TYPES = ['approved', 'rejected', 'suspended', 'promoted', 'deleted'];
 
+const LOGO_URL = "https://nuesauofa.vercel.app/logo.png";
+const LOGIN_URL = "https://nuesauofa.vercel.app/auth/login";
+const PORTAL_NAME = "NUESA Portal";
+const FOOTER_TEXT = "NUESA Portal • Faculty of Engineering • University of Abuja";
+
+function wrapInBrandedTemplate(title: string, titleColor: string, bodyHtml: string): string {
+  return `
+<div style="font-family: 'Segoe UI', sans-serif; background:#f6fff8; padding:40px;">
+  <div style="max-width:600px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
+    <img src="${LOGO_URL}" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
+    <h2 style="color:${titleColor}; margin-bottom:10px;">${title}</h2>
+    <div style="color:#444; font-size:15px; text-align:left;">
+      ${bodyHtml}
+    </div>
+    <p style="margin-top:30px; font-size:12px; color:#888;">
+      ${FOOTER_TEXT}
+    </p>
+  </div>
+</div>`;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Authenticate the caller
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -68,7 +87,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const userId = claimsData.claims.sub;
 
-    // Rate limit per admin user
     if (!checkRateLimit(userId)) {
       return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
         status: 429,
@@ -76,7 +94,6 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Verify caller is an admin
     const { data: callerProfile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
@@ -84,7 +101,6 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (profileError || callerProfile?.role !== "admin") {
-      console.log("Non-admin attempted to send notification email:", userId);
       return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -93,7 +109,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { to, name, type, role }: NotificationEmailRequest = await req.json();
 
-    // Validate inputs
     if (!to || !name || !type) {
       return new Response(JSON.stringify({ error: "Missing required fields: to, name, type" }), {
         status: 400,
@@ -108,19 +123,35 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Validate email exists in profiles table
     const { data: targetProfile, error: targetError } = await supabase
       .from("profiles")
-      .select("email")
+      .select("email, id")
       .eq("email", to)
       .maybeSingle();
 
     if (targetError || !targetProfile) {
-      console.log("Attempted to send email to non-existent profile:", to);
       return new Response(JSON.stringify({ error: "Target email not found in system" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
+    }
+
+    // When approving a user, auto-confirm their email in Supabase Auth
+    // This fixes the "email not confirmed" error for approved users
+    if (type === 'approved' && targetProfile.id) {
+      try {
+        const adminClient = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+        );
+        await adminClient.auth.admin.updateUserById(targetProfile.id, {
+          email_confirm: true,
+        });
+        console.log(`Auto-confirmed email for user ${targetProfile.id}`);
+      } catch (confirmError) {
+        console.error("Failed to auto-confirm email:", confirmError);
+        // Continue with the notification even if confirmation fails
+      }
     }
 
     console.log(`Admin ${userId} sending ${type} email to ${to} for ${name}`);
@@ -130,118 +161,124 @@ const handler = async (req: Request): Promise<Response> => {
 
     switch (type) {
       case 'approved':
-        subject = "Application Approved - Welcome!";
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #22c55e; text-align: center;">Application Approved!</h1>
-            <p>Dear ${name},</p>
-            <p>Congratulations! Your application has been <strong>approved</strong> and you can now access the portal.</p>
-            <div style="background: #f0fdf4; border: 1px solid #22c55e; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #166534;">✅ You can now log in to your account and access all features.</p>
-            </div>
-            <p><strong>Next Steps:</strong></p>
-            <ul>
-              <li>Log in to your account using your credentials</li>
-              <li>Complete your profile information</li>
-              <li>Explore the available features</li>
-            </ul>
-            <p>If you have any questions, please don't hesitate to contact the administration.</p>
-            <p>Best regards,<br>OAUSTECH Portal Team</p>
+        subject = `Welcome to ${PORTAL_NAME} – Account Approved 🎉`;
+        html = wrapInBrandedTemplate(
+          "Account Approved! 🎉",
+          "#16a34a",
+          `
+          <p>Dear <strong>${name}</strong>,</p>
+          <p>Congratulations! Your application to the <strong>${PORTAL_NAME}</strong> has been <strong>approved</strong>.</p>
+          <div style="background:#f0fdf4; border:1px solid #16a34a; padding:15px; border-radius:8px; margin:20px 0;">
+            <p style="margin:0; color:#166534;">✅ Your account is now active. You can log in and start using all portal features.</p>
           </div>
-        `;
+          <p><strong>Next Steps:</strong></p>
+          <ul style="color:#444;">
+            <li>Log in using your registered email and password</li>
+            <li>Complete your profile information</li>
+            <li>Explore courses, timetables, and more</li>
+          </ul>
+          <div style="text-align:center; margin-top:25px;">
+            <a href="${LOGIN_URL}" style="display:inline-block; padding:12px 25px; background:#16a34a; color:white; text-decoration:none; border-radius:8px; font-weight:600;">
+              Login to Portal
+            </a>
+          </div>
+          `
+        );
         break;
 
       case 'rejected':
-        subject = "Application Status Update";
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #dc2626; text-align: center;">Application Status Update</h1>
-            <p>Dear ${name},</p>
-            <p>We regret to inform you that your application has been <strong>rejected</strong>.</p>
-            <div style="background: #fef2f2; border: 1px solid #dc2626; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #991b1b;">⚠️ Please contact the faculty authorities to resolve any issues or for more information.</p>
-            </div>
-            <p><strong>What you can do:</strong></p>
-            <ul>
-              <li>Contact the admissions office for clarification</li>
-              <li>Review your application requirements</li>
-              <li>Consider reapplying after addressing any issues</li>
-            </ul>
-            <p>For assistance, please visit the faculty office during business hours or contact the administration.</p>
-            <p>Best regards,<br>OAUSTECH Portal Team</p>
+        subject = `${PORTAL_NAME} – Application Status Update`;
+        html = wrapInBrandedTemplate(
+          "Application Not Approved ❌",
+          "#dc2626",
+          `
+          <p>Dear <strong>${name}</strong>,</p>
+          <p>We regret to inform you that your application to the <strong>${PORTAL_NAME}</strong> has not been approved at this time.</p>
+          <div style="background:#fef2f2; border:1px solid #dc2626; padding:15px; border-radius:8px; margin:20px 0;">
+            <p style="margin:0; color:#991b1b;">⚠️ Please contact the NUESA administration for more information or to resolve any issues.</p>
           </div>
-        `;
+          <p><strong>What you can do:</strong></p>
+          <ul style="color:#444;">
+            <li>Contact the NUESA office for clarification</li>
+            <li>Review your application details</li>
+            <li>Consider reapplying after addressing any issues</li>
+          </ul>
+          `
+        );
         break;
 
       case 'suspended':
-        subject = "Account Suspended - Action Required";
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #dc2626; text-align: center;">Account Suspended</h1>
-            <p>Dear ${name},</p>
-            <p>Your account has been <strong>suspended</strong> temporarily.</p>
-            <div style="background: #fef2f2; border: 1px solid #dc2626; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #991b1b;">⚠️ Please contact the faculty authorities immediately to resolve this issue and reactivate your account.</p>
-            </div>
-            <p><strong>Important:</strong></p>
-            <ul>
-              <li>Your access to the portal has been temporarily restricted</li>
-              <li>Contact the administration office for clarification</li>
-              <li>Bring any required documentation for account restoration</li>
-            </ul>
-            <p>Please visit the faculty office during business hours to resolve this matter promptly.</p>
-            <p>Best regards,<br>OAUSTECH Portal Team</p>
+        subject = `${PORTAL_NAME} – Account Suspended`;
+        html = wrapInBrandedTemplate(
+          "Account Suspended ⚠️",
+          "#dc2626",
+          `
+          <p>Dear <strong>${name}</strong>,</p>
+          <p>Your <strong>${PORTAL_NAME}</strong> account has been <strong>temporarily suspended</strong>.</p>
+          <div style="background:#fef2f2; border:1px solid #dc2626; padding:15px; border-radius:8px; margin:20px 0;">
+            <p style="margin:0; color:#991b1b;">⚠️ Your access to the portal has been restricted. Please contact the NUESA administration immediately.</p>
           </div>
-        `;
+          <p><strong>Important:</strong></p>
+          <ul style="color:#444;">
+            <li>Your access to all portal features has been temporarily disabled</li>
+            <li>Contact the NUESA office for clarification</li>
+            <li>Bring any required documentation for account restoration</li>
+          </ul>
+          `
+        );
         break;
 
       case 'promoted':
-        subject = "Congratulations - Role Promotion!";
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #3b82f6; text-align: center;">Congratulations on Your Promotion!</h1>
-            <p>Dear ${name},</p>
-            <p>We are pleased to inform you that you have been promoted to <strong>${role || 'a new role'}</strong>!</p>
-            <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #1e40af;">🎉 Your new role and permissions are now active in the portal.</p>
-            </div>
-            <p><strong>What this means:</strong></p>
-            <ul>
-              <li>Access to additional features and permissions</li>
-              <li>New responsibilities within the system</li>
-              <li>Enhanced administrative capabilities</li>
-            </ul>
-            <p>Log in to your account to explore your new features and responsibilities.</p>
-            <p>Best regards,<br>OAUSTECH Portal Team</p>
+        subject = `${PORTAL_NAME} – Congratulations on Your Promotion! 🎉`;
+        html = wrapInBrandedTemplate(
+          "Role Promotion! 🎉",
+          "#3b82f6",
+          `
+          <p>Dear <strong>${name}</strong>,</p>
+          <p>We are pleased to inform you that you have been promoted to <strong>${role || 'a new role'}</strong> on the <strong>${PORTAL_NAME}</strong>!</p>
+          <div style="background:#eff6ff; border:1px solid #3b82f6; padding:15px; border-radius:8px; margin:20px 0;">
+            <p style="margin:0; color:#1e40af;">🎉 Your new role and permissions are now active.</p>
           </div>
-        `;
+          <p><strong>What this means:</strong></p>
+          <ul style="color:#444;">
+            <li>Access to additional features and permissions</li>
+            <li>New responsibilities within the system</li>
+            <li>Enhanced administrative capabilities</li>
+          </ul>
+          <div style="text-align:center; margin-top:25px;">
+            <a href="${LOGIN_URL}" style="display:inline-block; padding:12px 25px; background:#16a34a; color:white; text-decoration:none; border-radius:8px; font-weight:600;">
+              Access Portal
+            </a>
+          </div>
+          `
+        );
         break;
 
       case 'deleted':
-        subject = "Account Deletion Notice";
-        html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #dc2626; text-align: center;">Account Deletion Notice</h1>
-            <p>Dear ${name},</p>
-            <p>This is to inform you that your account has been <strong>permanently deleted</strong> from the OAUSTECH Portal.</p>
-            <div style="background: #fef2f2; border: 1px solid #dc2626; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #991b1b;">⚠️ All your data and access have been permanently removed from the system.</p>
-            </div>
-            <p><strong>What this means:</strong></p>
-            <ul>
-              <li>Your account and all associated data have been permanently deleted</li>
-              <li>You no longer have access to the portal</li>
-              <li>This email address can now be used to create a new account if needed</li>
-            </ul>
-            <p>If you believe this was done in error or need to create a new account, please contact the administration office.</p>
-            <p>Best regards,<br>OAUSTECH Portal Team</p>
+        subject = `${PORTAL_NAME} – Account Deletion Notice`;
+        html = wrapInBrandedTemplate(
+          "Account Deleted 🗑️",
+          "#dc2626",
+          `
+          <p>Dear <strong>${name}</strong>,</p>
+          <p>This is to inform you that your account has been <strong>permanently deleted</strong> from the <strong>${PORTAL_NAME}</strong>.</p>
+          <div style="background:#fef2f2; border:1px solid #dc2626; padding:15px; border-radius:8px; margin:20px 0;">
+            <p style="margin:0; color:#991b1b;">⚠️ All your data and access have been permanently removed from the system.</p>
           </div>
-        `;
+          <p><strong>What this means:</strong></p>
+          <ul style="color:#444;">
+            <li>Your account and all associated data have been permanently deleted</li>
+            <li>You no longer have access to the portal</li>
+            <li>This email address can be used to create a new account if needed</li>
+          </ul>
+          <p>If you believe this was done in error, please contact the NUESA administration.</p>
+          `
+        );
         break;
     }
 
     const emailResponse = await resend.emails.send({
-      from: "OAUSTECH Portal <onboarding@resend.dev>",
+      from: "NUESA Portal <noreply@notify.nuesa.com.ng>",
       to: [to],
       subject,
       html,
