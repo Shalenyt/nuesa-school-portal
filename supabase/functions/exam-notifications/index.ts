@@ -44,14 +44,14 @@ serve(async (req: Request) => {
     const { type, course_code, exam_date, time_slot, venue, start_time, end_time } = body;
 
     if (type === "exam_created" && course_code) {
-      // Find courses matching this code
+      // Find courses matching this code by course name
       const { data: courses } = await supabase
         .from("courses")
-        .select("id, teacher_id, subjects(code)")
+        .select("id, name, teacher_id")
         .order("created_at", { ascending: false });
 
       const matchingCourses = (courses || []).filter(
-        (c: any) => c.subjects?.code?.toUpperCase() === course_code.toUpperCase()
+        (c: any) => c.name?.toUpperCase() === course_code.toUpperCase()
       );
 
       const courseIds = matchingCourses.map((c: any) => c.id);
