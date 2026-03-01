@@ -70,7 +70,10 @@ const studentMenuItems = [
 export function SidebarMenu() {
   const { profile } = useAuth();
   const location = useLocation();
+  const { state } = useSidebar();
+  const collapsed = state === 'collapsed';
   const { counts } = useNotificationCounts();
+  const { unreadCount: feedbackCount } = useFeedbackCounts();
   const { unreadCount: feedbackCount } = useFeedbackCounts();
 
   const getRoleLabel = () => {
