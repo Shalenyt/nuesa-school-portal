@@ -7,8 +7,10 @@ import {
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu as SidebarMenuPrimitive, SidebarMenuButton, SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
 import { useFeedbackCounts } from '@/hooks/useFeedbackCounts';
 
