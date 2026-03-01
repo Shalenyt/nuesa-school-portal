@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { useThemeSync } from '@/hooks/useThemeSync';
@@ -8,7 +8,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { BookOpen, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from '@/hooks/use-toast';
 import oaustechLogo from '@/assets/oaustech-logo.png';
@@ -17,40 +17,36 @@ export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sessionEstablished, setSessionEstablished] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { settings } = useSchoolSettings();
-  
-  // Initialize theme sync
+
   useThemeSync();
 
-  // Check if we have the required tokens and establish session
+  // Listen for Supabase to establish the session from the hash fragment.
+  // When the user clicks the recovery email link, Supabase's JS client
+  // automatically picks up the tokens from the URL hash and fires
+  // PASSWORD_RECOVERY on onAuthStateChange.
   useEffect(() => {
-    const establishSession = async () => {
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      const tokenHash = searchParams.get('token_hash');
-      const type = searchParams.get('type');
-      
-      console.log('URL params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, tokenHash: !!tokenHash, type });
-      
-      // Handle different types of reset links
-      if (accessToken && refreshToken) {
-        // Handle session tokens from email link
-        try {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          
-          if (error) throw error;
-          setSessionEstablished(true);
-          setUser(data.user);
-        } catch (error: any) {
-          console.error('Session establishment failed:', error);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log('[ResetPassword] auth event:', event);
+      if (event === 'PASSWORD_RECOVERY') {
+        setSessionReady(true);
+      }
+    });
+
+    // Also check if a session already exists (e.g. page refresh after token was consumed)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setSessionReady(true);
+      }
+    });
+
+    // Timeout: if no session established after 5 seconds, the link is likely invalid
+    const timeout = setTimeout(() => {
+      setSessionReady((prev) => {
+        if (!prev) {
           toast({
             title: "Invalid reset link",
             description: "This password reset link is invalid or has expired. Please request a new one.",
@@ -58,37 +54,19 @@ export default function ResetPassword() {
           });
           navigate('/auth/forgot-password');
         }
-      } else if (tokenHash && type === 'recovery') {
-        // For recovery tokens, just validate the presence and set session as established
-        // The actual token verification will happen during password update
-        setSessionEstablished(true);
-        // We'll verify the token when updating the password
-      } else {
-        // No valid parameters found
-        toast({
-          title: "Invalid reset link",
-          description: "This password reset link is invalid or has expired. Please request a new one.",
-          variant: "destructive"
-        });
-        navigate('/auth/forgot-password');
-      }
-    };
+        return prev;
+      });
+    }, 5000);
 
-    establishSession();
-  }, [searchParams, navigate]);
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!sessionEstablished) {
-      toast({
-        title: "Session not established",
-        description: "Please use a valid password reset link.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+
     if (password !== confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -107,56 +85,13 @@ export default function ResetPassword() {
       return;
     }
 
-    // Check if user is trying to use the same password
-    try {
-      const { error: testError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '',
-        password: password
-      });
-      
-      if (!testError) {
-        toast({
-          title: "Invalid password",
-          description: "You cannot use your current password. Please choose a different password.",
-          variant: "destructive"
-        });
-        return;
-      }
-    } catch (error) {
-      // This is expected if the password is different, continue with reset
-    }
-
     setLoading(true);
 
     try {
-      const tokenHash = searchParams.get('token_hash');
-      const type = searchParams.get('type');
-      
-      if (tokenHash && type === 'recovery') {
-        // Use verifyOtp for recovery tokens
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: 'recovery',
-        });
-        
-        if (error) throw error;
-        
-        // Now update the password
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: password
-        });
-        
-        if (updateError) throw updateError;
-      } else {
-        // For session-based resets, just update the password
-        const { error } = await supabase.auth.updateUser({
-          password: password
-        });
+      const { error } = await supabase.auth.updateUser({ password });
 
-        if (error) throw error;
-      }
+      if (error) throw error;
 
-      // Show success popup
       setShowSuccessDialog(true);
     } catch (error: any) {
       console.error('Password update error:', error);
@@ -171,19 +106,16 @@ export default function ResetPassword() {
   };
 
   const handleSuccessOk = async () => {
-    // Sign out to ensure clean state and redirect to homepage
     await supabase.auth.signOut();
     navigate('/');
   };
 
-  // Show loading state while establishing session
-  if (!sessionEstablished) {
+  if (!sessionReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background relative p-4">
         <div className="absolute top-4 right-4">
           <ThemeToggle />
         </div>
-        
         <div className="w-full max-w-md">
           <Card>
             <CardContent className="pt-6">
@@ -203,14 +135,14 @@ export default function ResetPassword() {
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <img 
-              src={settings?.logo_url || oaustechLogo} 
-              alt={`${settings?.school_name || 'NUESA'} Logo`} 
-              className="h-12 w-12 object-contain" 
+            <img
+              src={settings?.logo_url || oaustechLogo}
+              alt={`${settings?.school_name || 'NUESA'} Logo`}
+              className="h-12 w-12 object-contain"
             />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {settings?.portal_name || 'NUESA Portal'}
@@ -222,9 +154,7 @@ export default function ResetPassword() {
         <Card>
           <CardHeader>
             <CardTitle>Reset Password</CardTitle>
-            <CardDescription>
-              Enter your new password below
-            </CardDescription>
+            <CardDescription>Enter your new password below</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -236,18 +166,6 @@ export default function ResetPassword() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter your new password"
-                  minLength={6}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <PasswordInput
-                  id="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="Confirm your new password"
                   minLength={6}
                 />
               </div>
@@ -283,7 +201,6 @@ export default function ResetPassword() {
         </Card>
       </div>
 
-      {/* Success Dialog */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
