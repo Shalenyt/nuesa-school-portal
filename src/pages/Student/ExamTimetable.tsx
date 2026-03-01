@@ -13,7 +13,7 @@ import jsPDF from 'jspdf';
 export default function StudentExamTimetable() {
   const { settings } = useSchoolSettings();
   const [entries, setEntries] = useState<any[]>([]);
-  const [myCourses, setMyCourses] = useState<string[]>([]);
+  const [myCourseCodes, setMyCourseCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSemester, setActiveSemester] = useState<any>(null);
   const timetableRef = useRef<HTMLDivElement>(null);
@@ -23,19 +23,34 @@ export default function StudentExamTimetable() {
   const fetchData = async () => {
     const { data: user } = await supabase.auth.getUser();
     const userId = user.user?.id;
+
     const [{ data: timetable }, enrollRes, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
-      userId ? supabase.from('student_enrollments').select('course_id, courses(name)').eq('student_id', userId) : Promise.resolve({ data: [] }),
+      userId
+        ? supabase
+            .from('student_enrollments')
+            .select('course_id, courses(name, subjects(code))')
+            .eq('student_id', userId)
+        : Promise.resolve({ data: [] }),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
+
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
-    const codes = (enrollRes.data || []).map((e: any) => e.courses?.name?.toUpperCase()).filter(Boolean);
-    setMyCourses(codes);
+
+    // Extract subject codes from enrolled courses for matching against exam_timetables.course_code
+    const codes = (enrollRes.data || [])
+      .map((e: any) => e.courses?.subjects?.code?.toUpperCase())
+      .filter(Boolean);
+    // Also include course names as fallback
+    const names = (enrollRes.data || [])
+      .map((e: any) => e.courses?.name?.toUpperCase())
+      .filter(Boolean);
+    setMyCourseCodes([...new Set([...codes, ...names])]);
     setLoading(false);
   };
 
-  const isMyExam = (code: string) => myCourses.includes(code.toUpperCase());
+  const isMyExam = (code: string) => myCourseCodes.includes(code.toUpperCase());
   const today = new Date();
   const isToday = (date: string) => new Date(date).toDateString() === today.toDateString();
   const isTomorrow = (date: string) => {
@@ -85,8 +100,8 @@ export default function StudentExamTimetable() {
         <td className="border border-border p-2">
           <div className="space-y-1">
             {items.map((e: any) => (
-              <div key={e.id}>
-                <span className={`font-bold text-sm ${isMyExam(e.course_code) ? 'text-red-600 dark:text-red-400' : ''}`}>{e.course_code}</span>
+              <div key={e.id} className={isMyExam(e.course_code) ? 'bg-green-100 dark:bg-green-900/30 rounded px-1' : ''}>
+                <span className={`font-bold text-sm ${isMyExam(e.course_code) ? 'text-green-700 dark:text-green-400' : ''}`}>{e.course_code}</span>
               </div>
             ))}
           </div>
@@ -147,8 +162,6 @@ export default function StudentExamTimetable() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Heading is inside timetable ref only */}
-
         {loading ? <p className="text-center text-muted-foreground">Loading...</p> : entries.length === 0 ? (
           <Card><CardContent className="text-center py-8"><Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" /><p className="text-muted-foreground">No exam timetable available yet.</p></CardContent></Card>
         ) : (
@@ -171,7 +184,7 @@ export default function StudentExamTimetable() {
                   <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
                 </div>
                 {renderTable(grouped)}
-                <p className="text-xs text-muted-foreground mt-2 text-center">Courses in <span className="text-red-600 font-semibold">red</span> are your registered courses.</p>
+                <p className="text-xs text-muted-foreground mt-2 text-center">Courses in <span className="text-green-600 font-semibold">green</span> are your registered courses.</p>
               </div>
             </TabsContent>
             <TabsContent value="my" className="mt-4">
@@ -186,9 +199,9 @@ export default function StudentExamTimetable() {
                         const examDate = new Date(e.exam_date);
                         const isPast = examDate < today && !isToday(e.exam_date);
                         return (
-                          <div key={e.id} className={`flex items-center justify-between p-3 rounded-lg border ${isToday(e.exam_date) ? 'border-primary bg-primary/10' : isTomorrow(e.exam_date) ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20' : isPast ? 'opacity-50' : ''}`}>
+                          <div key={e.id} className={`flex items-center justify-between p-3 rounded-lg border-l-4 border-l-green-500 ${isToday(e.exam_date) ? 'border border-green-500 bg-green-50 dark:bg-green-950/30' : isTomorrow(e.exam_date) ? 'border border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20' : isPast ? 'opacity-50 border bg-muted' : 'border bg-green-50/50 dark:bg-green-950/10'}`}>
                             <div>
-                              <p className="font-bold text-red-600 dark:text-red-400">{e.course_code}</p>
+                              <p className="font-bold text-green-700 dark:text-green-400">{e.course_code}</p>
                               <p className="text-sm text-muted-foreground">{e.day_label} – {examDate.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })}</p>
                               <p className="text-xs text-muted-foreground">{e.start_time} – {e.end_time}{e.venue ? ` | ${e.venue}` : ''}</p>
                             </div>
