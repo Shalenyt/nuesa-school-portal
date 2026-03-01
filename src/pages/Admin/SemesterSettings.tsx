@@ -16,7 +16,11 @@ export default function SemesterSettings() {
   const [form, setForm] = useState({ name: '', start_date: '', end_date: '' });
 
   useEffect(() => {
-    fetchSemesters();
+    const init = async () => {
+      try { await supabase.rpc('auto_manage_semester_lifecycle'); } catch (e) { console.error(e); }
+      fetchSemesters();
+    };
+    init();
   }, []);
 
   const fetchSemesters = async () => {

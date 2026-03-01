@@ -1783,6 +1783,7 @@ export type Database = {
       }
     }
     Functions: {
+      auto_manage_semester_lifecycle: { Args: never; Returns: undefined }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
