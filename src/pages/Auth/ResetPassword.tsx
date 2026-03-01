@@ -16,6 +16,7 @@ import oaustechLogo from '@/assets/oaustech-logo.png';
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [sessionEstablished, setSessionEstablished] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [user, setUser] = useState<any>(null);
