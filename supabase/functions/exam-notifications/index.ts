@@ -125,11 +125,11 @@ serve(async (req: Request) => {
       for (const exam of upcomingExams || []) {
         const { data: courses } = await supabase
           .from("courses")
-          .select("id, teacher_id, subjects(code)")
+          .select("id, name, teacher_id")
           .order("created_at", { ascending: false });
 
         const matching = (courses || []).filter(
-          (c: any) => c.subjects?.code?.toUpperCase() === exam.course_code.toUpperCase()
+          (c: any) => c.name?.toUpperCase() === exam.course_code.toUpperCase()
         );
         const cIds = matching.map((c: any) => c.id);
         const tIds = matching.map((c: any) => c.teacher_id).filter(Boolean);
