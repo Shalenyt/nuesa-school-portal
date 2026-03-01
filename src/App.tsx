@@ -96,6 +96,7 @@ function AppRoutes() {
       <Route path="/auth/recover-password" element={<Navigate to="/auth/forgot-password" replace />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
       <Route path="/auth/success" element={<Success />} />
+      <Route path="/dashboard/change-email" element={<ProtectedRoute allowedRoles={['admin','teacher','student']}><ChangeEmail /></ProtectedRoute>} />
       
       {/* Verification Routes (public) */}
       <Route path="/verify" element={<Verify />} />
