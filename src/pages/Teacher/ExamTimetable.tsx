@@ -29,7 +29,7 @@ export default function TeacherExamTimetable() {
     ]);
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
-    const codes = (courses || []).map((c: any) => c.subjects?.code?.toUpperCase()).filter(Boolean);
+    const codes = (courses || []).map((c: any) => c.name?.toUpperCase()).filter(Boolean);
     setMyCourses(codes);
     setLoading(false);
   };
