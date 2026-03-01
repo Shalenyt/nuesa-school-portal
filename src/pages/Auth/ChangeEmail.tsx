@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Mail, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
@@ -17,26 +17,10 @@ export default function ChangeEmail() {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [changedOldEmail, setChangedOldEmail] = useState('');
+  const [changedNewEmail, setChangedNewEmail] = useState('');
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  // Detect email change confirmation from redirect
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      console.log('[ChangeEmail] auth event:', event);
-      if (event === 'USER_UPDATED') {
-        console.log('[ChangeEmail] Email change confirmed via USER_UPDATED event');
-        setShowSuccess(true);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    });
-
-    if (window.location.hash.includes('type=email_change')) {
-      console.log('[ChangeEmail] Detected email_change in URL hash, waiting for auth event...');
-    }
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,23 +50,32 @@ export default function ChangeEmail() {
   const handleConfirm = async () => {
     setShowConfirm(false);
     setLoading(true);
+    const oldEmail = user?.email || '';
+
     try {
-      const { error } = await supabase.auth.updateUser({
-        email: newEmail,
-      }, {
-        emailRedirectTo: 'https://nuesauofa.vercel.app/dashboard/change-email'
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("You must be logged in to change your email.");
+
+      const response = await supabase.functions.invoke('change-email', {
+        body: { newEmail },
       });
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to change email.");
+      }
 
-      toast({
-        title: "Confirmation email sent ✉️",
-        description: `We've sent a confirmation link to your current email (${user?.email}). Please check your inbox.`,
-      });
+      const result = response.data;
+      if (!result.success) {
+        throw new Error(result.error || "Failed to change email.");
+      }
+
+      setChangedOldEmail(oldEmail);
+      setChangedNewEmail(newEmail);
       setNewEmail('');
+      setShowSuccess(true);
     } catch (error: any) {
       toast({
-        title: "Failed to update email",
+        title: "Failed to change email",
         description: error.message || "Something went wrong. Please try again.",
         variant: "destructive"
       });
@@ -93,7 +86,6 @@ export default function ChangeEmail() {
 
   const handleSuccessDismiss = async () => {
     setShowSuccess(false);
-    // Sign out so user can log in with new email
     await supabase.auth.signOut();
     navigate('/auth/login');
   };
@@ -117,7 +109,7 @@ export default function ChangeEmail() {
             </CardTitle>
             <CardDescription>
               Your current email is <span className="font-medium text-foreground">{user?.email}</span>.
-              Enter your new email below. A confirmation link will be sent to your <span className="font-semibold text-foreground">current email</span> for verification.
+              Enter your new email below. Your email will be changed instantly — no confirmation link required.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -158,14 +150,34 @@ export default function ChangeEmail() {
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Email Change</AlertDialogTitle>
-            <AlertDialogDescription>
-              We'll send a confirmation link to your current email (<span className="font-medium">{user?.email}</span>) to verify this change. Your new email will be <span className="font-medium">{newEmail}</span>.
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="h-7 w-7 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl">Confirm Email Change</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="text-center space-y-3 pt-2">
+                <p>Are you sure you want to change your email address?</p>
+                <div className="rounded-lg border bg-muted/50 p-3 text-left space-y-1.5">
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">From:</span>{' '}
+                    <span className="font-semibold text-foreground">{user?.email}</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">To:</span>{' '}
+                    <span className="font-semibold text-foreground">{newEmail}</span>
+                  </p>
+                </div>
+                <p className="text-sm font-medium text-destructive">
+                  ⚠️ This action is permanent. You will be logged out and must sign in with your new email.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="sm:justify-center gap-2 pt-2">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirm}>Send Confirmation</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirm} className="bg-destructive hover:bg-destructive/90">
+              Yes, Change My Email
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -177,12 +189,24 @@ export default function ChangeEmail() {
             <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
               <CheckCircle2 className="h-9 w-9 text-primary" />
             </div>
-            <DialogTitle className="text-xl">You're All Set! 🎉</DialogTitle>
-            <DialogDescription className="text-base pt-2 space-y-2">
-              <p>Your email address has been updated successfully.</p>
-              <p className="font-medium text-foreground">
-                Next time you log in, use your shiny new email — the old one is officially retired! 😎
-              </p>
+            <DialogTitle className="text-xl">Email Changed Successfully! 🎉</DialogTitle>
+            <DialogDescription asChild>
+              <div className="text-base pt-2 space-y-3">
+                <p>Your email has been successfully changed.</p>
+                <div className="rounded-lg border bg-muted/50 p-3 text-left space-y-1.5">
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Old email:</span>{' '}
+                    <span className="font-semibold text-foreground line-through">{changedOldEmail}</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">New email:</span>{' '}
+                    <span className="font-semibold text-foreground">{changedNewEmail}</span>
+                  </p>
+                </div>
+                <p className="font-medium text-foreground">
+                  You'll be logged out now. Next time, sign in with your shiny new email — the old one is officially retired! 😎
+                </p>
+              </div>
             </DialogDescription>
           </DialogHeader>
           <Button onClick={handleSuccessDismiss} className="w-full mt-4" size="lg">
