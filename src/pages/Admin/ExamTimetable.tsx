@@ -88,9 +88,9 @@ export default function AdminExamTimetable() {
     if (filterDept) filtered = filtered.filter((c: any) => c.subjects?.id === filterDept);
     if (filterLevel) filtered = filtered.filter((c: any) => c.classes?.id === filterLevel);
     return filtered.map((c: any) => ({
-      value: c.subjects?.code || c.name || c.id,
-      label: c.subjects?.code || c.name || '',
-      description: `${c.subjects?.name || c.name || ''} • ${c.classes?.name || ''} • ${c.credit_unit || 0} units`,
+      value: c.name || c.id,
+      label: `${c.name || ''}${c.description ? ' – ' + c.description : ''}`,
+      description: `${c.subjects?.name || ''} • ${c.classes?.name || ''} • ${c.credit_unit || 0} units`,
     }));
   }, [allCourses, filterDept, filterLevel]);
 
@@ -457,15 +457,39 @@ export default function AdminExamTimetable() {
               <p className="text-sm text-muted-foreground">No archived timetables yet.</p>
             ) : (
               <div className="space-y-2">
-                {filteredHistory.map((h: any) => (
+            {filteredHistory.map((h: any) => (
                   <div key={h.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
                     <div>
                       <p className="font-semibold">{h.semester}</p>
                       <p className="text-xs text-muted-foreground">Created: {new Date(h.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => { setPreviewData(h); setPreviewOpen(true); }}>
-                      <Eye className="h-4 w-4 mr-1" /> Preview
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => { setPreviewData(h); setPreviewOpen(true); }}>
+                        <Eye className="h-4 w-4 mr-1" /> Preview
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            <Trash2 className="h-4 w-4 mr-1" /> Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this timetable?</AlertDialogTitle>
+                            <AlertDialogDescription>Are you sure you want to delete this timetable? This action cannot be undone.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={async () => {
+                              const { error } = await (supabase as any).from('timetable_history').delete().eq('id', h.id);
+                              if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
+                              toast({ title: 'Deleted', description: 'Timetable removed from history.' });
+                              fetchHistory();
+                            }}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 ))}
               </div>

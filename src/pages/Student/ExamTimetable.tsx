@@ -25,17 +25,17 @@ export default function StudentExamTimetable() {
     const userId = user.user?.id;
     const [{ data: timetable }, enrollRes, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
-      userId ? supabase.from('student_enrollments').select('course_id, courses(name, subjects(code))').eq('student_id', userId) : Promise.resolve({ data: [] }),
+      userId ? supabase.from('student_enrollments').select('course_id, courses(name)').eq('student_id', userId) : Promise.resolve({ data: [] }),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
-    const codes = (enrollRes.data || []).map((e: any) => e.courses?.subjects?.code?.toUpperCase()).filter(Boolean);
+    const codes = (enrollRes.data || []).map((e: any) => e.courses?.name?.toUpperCase()).filter(Boolean);
     setMyCourses(codes);
     setLoading(false);
   };
 
-  const isMyExam = (code: string) => myCourses.some(c => code.toUpperCase().includes(c));
+  const isMyExam = (code: string) => myCourses.includes(code.toUpperCase());
   const today = new Date();
   const isToday = (date: string) => new Date(date).toDateString() === today.toDateString();
   const isTomorrow = (date: string) => {

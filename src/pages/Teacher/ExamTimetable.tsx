@@ -24,17 +24,17 @@ export default function TeacherExamTimetable() {
   const fetchData = async () => {
     const [{ data: timetable }, { data: courses }, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
-      supabase.from('courses').select('id, name, subjects(code)').eq('teacher_id', profile?.id),
+      supabase.from('courses').select('id, name').eq('teacher_id', profile?.id),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
-    const codes = (courses || []).map((c: any) => c.subjects?.code?.toUpperCase()).filter(Boolean);
+    const codes = (courses || []).map((c: any) => c.name?.toUpperCase()).filter(Boolean);
     setMyCourses(codes);
     setLoading(false);
   };
 
-  const isMyExam = (code: string) => myCourses.some(c => code.toUpperCase().includes(c));
+  const isMyExam = (code: string) => myCourses.includes(code.toUpperCase());
   const isToday = (date: string) => new Date(date).toDateString() === new Date().toDateString();
 
   const semesterLabel = activeSemester ? `${activeSemester.name} Academic Session` : 'Academic Session';
