@@ -191,10 +191,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const defaultAuthContext: AuthContextType = {
+  user: null,
+  session: null,
+  profile: null,
+  loading: true,
+  signUp: async () => ({ error: new Error('AuthProvider not mounted') }),
+  signIn: async () => ({ error: new Error('AuthProvider not mounted'), profile: null }),
+  signOut: async () => {},
+  resetPassword: async () => ({ error: new Error('AuthProvider not mounted') }),
+  refetchProfile: () => {},
+};
+
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    console.warn('useAuth called outside AuthProvider – returning safe defaults');
+    return defaultAuthContext;
   }
   return context;
 }
