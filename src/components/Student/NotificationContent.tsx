@@ -37,7 +37,7 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
-function NotificationList({ items, onItemClick }: { items: Notification[]; onItemClick: (item: Notification) => void }) {
+function NotificationList({ items, onItemClick, onDeleteItem }: { items: Notification[]; onItemClick: (item: Notification) => void; onDeleteItem?: (item: Notification) => void }) {
   if (items.length === 0) {
     return (
       <Card>
@@ -72,9 +72,24 @@ function NotificationList({ items, onItemClick }: { items: Notification[]; onIte
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{notification.message}</p>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-              </span>
+              <div className="flex items-center gap-2 ml-4">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                </span>
+                {onDeleteItem && notification.db_id && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteItem(notification);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
         </Card>
