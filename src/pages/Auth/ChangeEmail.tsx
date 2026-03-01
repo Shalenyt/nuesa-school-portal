@@ -20,21 +20,18 @@ export default function ChangeEmail() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Detect email change confirmation from hash-based redirect (via {{ .ConfirmationURL }})
+  // Detect email change confirmation from redirect
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       console.log('[ChangeEmail] auth event:', event);
       if (event === 'USER_UPDATED') {
         console.log('[ChangeEmail] Email change confirmed via USER_UPDATED event');
         setShowSuccess(true);
-        // Clean the URL hash
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     });
 
-    // Also check hash directly for email_change type
     if (window.location.hash.includes('type=email_change')) {
-      // The auth state change listener above will handle it once the token is exchanged
       console.log('[ChangeEmail] Detected email_change in URL hash, waiting for auth event...');
     }
 
@@ -53,7 +50,6 @@ export default function ChangeEmail() {
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
       toast({
@@ -80,8 +76,8 @@ export default function ChangeEmail() {
       if (error) throw error;
 
       toast({
-        title: "Confirmation email sent",
-        description: "Check your new email inbox to confirm the change.",
+        title: "Confirmation email sent ✉️",
+        description: `We've sent a confirmation link to your current email (${user?.email}). Please check your inbox.`,
       });
       setNewEmail('');
     } catch (error: any) {
@@ -93,6 +89,13 @@ export default function ChangeEmail() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSuccessDismiss = async () => {
+    setShowSuccess(false);
+    // Sign out so user can log in with new email
+    await supabase.auth.signOut();
+    navigate('/auth/login');
   };
 
   return (
@@ -114,7 +117,7 @@ export default function ChangeEmail() {
             </CardTitle>
             <CardDescription>
               Your current email is <span className="font-medium text-foreground">{user?.email}</span>.
-              Enter your new email below. A confirmation link will be sent to the new email address only.
+              Enter your new email below. A confirmation link will be sent to your <span className="font-semibold text-foreground">current email</span> for verification.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -155,32 +158,35 @@ export default function ChangeEmail() {
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to change your email?</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Email Change</AlertDialogTitle>
             <AlertDialogDescription>
-              A confirmation link will be sent to <span className="font-medium">{newEmail}</span>. You must confirm from that email to complete the change.
+              We'll send a confirmation link to your current email (<span className="font-medium">{user?.email}</span>) to verify this change. Your new email will be <span className="font-medium">{newEmail}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirm}>Confirm</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirm}>Send Confirmation</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Success Dialog */}
-      <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary" />
-              Email Changed Successfully
-            </DialogTitle>
-            <DialogDescription>
-              Your email address has been updated successfully. You can now use your new email to log in.
+      <Dialog open={showSuccess} onOpenChange={(open) => { if (!open) handleSuccessDismiss(); }}>
+        <DialogContent className="text-center sm:max-w-md">
+          <DialogHeader className="items-center">
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <CheckCircle2 className="h-9 w-9 text-primary" />
+            </div>
+            <DialogTitle className="text-xl">You're All Set! 🎉</DialogTitle>
+            <DialogDescription className="text-base pt-2 space-y-2">
+              <p>Your email address has been updated successfully.</p>
+              <p className="font-medium text-foreground">
+                Next time you log in, use your shiny new email — the old one is officially retired! 😎
+              </p>
             </DialogDescription>
           </DialogHeader>
-          <Button onClick={() => { setShowSuccess(false); navigate(-1); }} className="w-full mt-2">
-            Continue
+          <Button onClick={handleSuccessDismiss} className="w-full mt-4" size="lg">
+            Got it, take me to Login
           </Button>
         </DialogContent>
       </Dialog>
