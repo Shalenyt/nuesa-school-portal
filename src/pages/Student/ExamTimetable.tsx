@@ -35,7 +35,7 @@ export default function StudentExamTimetable() {
     setLoading(false);
   };
 
-  const isMyExam = (code: string) => myCourses.some(c => code.toUpperCase().includes(c));
+  const isMyExam = (code: string) => myCourses.includes(code.toUpperCase());
   const today = new Date();
   const isToday = (date: string) => new Date(date).toDateString() === today.toDateString();
   const isTomorrow = (date: string) => {

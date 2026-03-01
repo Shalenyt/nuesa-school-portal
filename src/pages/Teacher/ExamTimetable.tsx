@@ -34,7 +34,7 @@ export default function TeacherExamTimetable() {
     setLoading(false);
   };
 
-  const isMyExam = (code: string) => myCourses.some(c => code.toUpperCase().includes(c));
+  const isMyExam = (code: string) => myCourses.includes(code.toUpperCase());
   const isToday = (date: string) => new Date(date).toDateString() === new Date().toDateString();
 
   const semesterLabel = activeSemester ? `${activeSemester.name} Academic Session` : 'Academic Session';
