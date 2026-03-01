@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Loader2, ArrowLeft, Mail } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import DashboardLayout from '@/components/Layout/DashboardLayout';
+import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 
 export default function ChangeEmail() {
   const [newEmail, setNewEmail] = useState('');
