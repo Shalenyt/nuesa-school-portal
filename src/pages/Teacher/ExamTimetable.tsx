@@ -24,7 +24,7 @@ export default function TeacherExamTimetable() {
   const fetchData = async () => {
     const [{ data: timetable }, { data: courses }, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
-      supabase.from('courses').select('id, name, subjects(code)').eq('teacher_id', profile?.id),
+      supabase.from('courses').select('id, name').eq('teacher_id', profile?.id),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
     setEntries(timetable || []);
