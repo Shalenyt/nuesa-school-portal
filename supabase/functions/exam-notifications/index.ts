@@ -24,16 +24,14 @@ serve(async (req: Request) => {
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
       });
-      const token = authHeader.replace("Bearer ", "");
-      const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-      if (claimsError || !claimsData?.claims) {
+      const { data: { user }, error: userError } = await userClient.auth.getUser();
+      if (userError || !user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const userId = claimsData.claims.sub;
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).single();
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
       if (profile?.role !== "admin") {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403,
@@ -46,14 +44,14 @@ serve(async (req: Request) => {
     const { type, course_code, exam_date, time_slot, venue, start_time, end_time } = body;
 
     if (type === "exam_created" && course_code) {
-      // Find courses matching this code
+      // Find courses matching this code by course name
       const { data: courses } = await supabase
         .from("courses")
-        .select("id, teacher_id, subjects(code)")
+        .select("id, name, teacher_id")
         .order("created_at", { ascending: false });
 
       const matchingCourses = (courses || []).filter(
-        (c: any) => c.subjects?.code?.toUpperCase() === course_code.toUpperCase()
+        (c: any) => c.name?.toUpperCase() === course_code.toUpperCase()
       );
 
       const courseIds = matchingCourses.map((c: any) => c.id);
@@ -127,11 +125,11 @@ serve(async (req: Request) => {
       for (const exam of upcomingExams || []) {
         const { data: courses } = await supabase
           .from("courses")
-          .select("id, teacher_id, subjects(code)")
+          .select("id, name, teacher_id")
           .order("created_at", { ascending: false });
 
         const matching = (courses || []).filter(
-          (c: any) => c.subjects?.code?.toUpperCase() === exam.course_code.toUpperCase()
+          (c: any) => c.name?.toUpperCase() === exam.course_code.toUpperCase()
         );
         const cIds = matching.map((c: any) => c.id);
         const tIds = matching.map((c: any) => c.teacher_id).filter(Boolean);
