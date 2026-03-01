@@ -30,7 +30,7 @@ export default function StudentExamTimetable() {
     ]);
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
-    const codes = (enrollRes.data || []).map((e: any) => e.courses?.subjects?.code?.toUpperCase()).filter(Boolean);
+    const codes = (enrollRes.data || []).map((e: any) => e.courses?.name?.toUpperCase()).filter(Boolean);
     setMyCourses(codes);
     setLoading(false);
   };
