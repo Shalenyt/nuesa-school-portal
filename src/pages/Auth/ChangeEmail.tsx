@@ -157,7 +157,7 @@ export default function ChangeEmail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to change your email?</AlertDialogTitle>
             <AlertDialogDescription>
-              A confirmation link will be sent to both <span className="font-medium">{user?.email}</span> and <span className="font-medium">{newEmail}</span>. You must confirm from both emails to complete the change.
+              A confirmation link will be sent to <span className="font-medium">{newEmail}</span>. You must confirm from that email to complete the change.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
