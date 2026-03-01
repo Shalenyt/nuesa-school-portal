@@ -14,7 +14,7 @@ export default function TeacherExamTimetable() {
   const { profile } = useAuth();
   const { settings } = useSchoolSettings();
   const [entries, setEntries] = useState<any[]>([]);
-  const [myCourses, setMyCourses] = useState<string[]>([]);
+  const [myCourseCodes, setMyCourseCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSemester, setActiveSemester] = useState<any>(null);
   const timetableRef = useRef<HTMLDivElement>(null);
@@ -24,17 +24,19 @@ export default function TeacherExamTimetable() {
   const fetchData = async () => {
     const [{ data: timetable }, { data: courses }, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
-      supabase.from('courses').select('id, name').eq('teacher_id', profile?.id),
+      supabase.from('courses').select('id, name, subjects(code)').eq('teacher_id', profile?.id),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
-    const codes = (courses || []).map((c: any) => c.name?.toUpperCase()).filter(Boolean);
-    setMyCourses(codes);
+    // Match using subject codes (which is what exam_timetables.course_code stores)
+    const codes = (courses || []).map((c: any) => c.subjects?.code?.toUpperCase()).filter(Boolean);
+    const names = (courses || []).map((c: any) => c.name?.toUpperCase()).filter(Boolean);
+    setMyCourseCodes([...new Set([...codes, ...names])]);
     setLoading(false);
   };
 
-  const isMyExam = (code: string) => myCourses.includes(code.toUpperCase());
+  const isMyExam = (code: string) => myCourseCodes.includes(code.toUpperCase());
   const isToday = (date: string) => new Date(date).toDateString() === new Date().toDateString();
 
   const semesterLabel = activeSemester ? `${activeSemester.name} Academic Session` : 'Academic Session';
@@ -72,8 +74,8 @@ export default function TeacherExamTimetable() {
         <td className="border border-border p-2">
           <div className="space-y-1">
             {items.map((e: any) => (
-              <div key={e.id}>
-                <span className={`font-bold text-sm ${isMyExam(e.course_code) ? 'text-red-600 dark:text-red-400' : ''}`}>{e.course_code}</span>
+              <div key={e.id} className={isMyExam(e.course_code) ? 'bg-green-100 dark:bg-green-900/30 rounded px-1' : ''}>
+                <span className={`font-bold text-sm ${isMyExam(e.course_code) ? 'text-green-700 dark:text-green-400' : ''}`}>{e.course_code}</span>
               </div>
             ))}
           </div>
@@ -90,8 +92,6 @@ export default function TeacherExamTimetable() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Heading is inside timetable ref only */}
-
         {loading ? <p className="text-center text-muted-foreground">Loading...</p> : Object.keys(grouped).length === 0 ? (
           <Card><CardContent className="text-center py-8"><Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" /><p className="text-muted-foreground">No exam timetable available.</p></CardContent></Card>
         ) : (
@@ -145,7 +145,7 @@ export default function TeacherExamTimetable() {
                   })}
                 </tbody>
               </table>
-              <p className="text-xs text-muted-foreground mt-2 text-center">Courses in <span className="text-red-600 font-semibold">red</span> are your assigned courses.</p>
+              <p className="text-xs text-muted-foreground mt-2 text-center">Courses in <span className="text-green-600 font-semibold">green</span> are your assigned courses.</p>
             </div>
           </>
         )}
