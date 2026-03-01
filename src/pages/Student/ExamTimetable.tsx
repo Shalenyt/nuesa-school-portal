@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, BookOpen } from 'lucide-react';
+import { Calendar, BookOpen, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function StudentExamTimetable() {
   const { settings } = useSchoolSettings();
@@ -13,19 +16,18 @@ export default function StudentExamTimetable() {
   const [myCourses, setMyCourses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSemester, setActiveSemester] = useState<any>(null);
+  const timetableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     const { data: user } = await supabase.auth.getUser();
     const userId = user.user?.id;
-
     const [{ data: timetable }, enrollRes, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
       userId ? supabase.from('student_enrollments').select('course_id, courses(name, subjects(code))').eq('student_id', userId) : Promise.resolve({ data: [] }),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
-
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
     const codes = (enrollRes.data || []).map((e: any) => e.courses?.subjects?.code?.toUpperCase()).filter(Boolean);
@@ -60,6 +62,17 @@ export default function StudentExamTimetable() {
 
   const semesterLabel = activeSemester ? `${activeSemester.name} Academic Session` : 'Academic Session';
 
+  const downloadPDF = async () => {
+    if (!timetableRef.current) return;
+    const canvas = await html2canvas(timetableRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Exam-Timetable-${activeSemester?.name || 'current'}.pdf`);
+  };
+
   const renderSlotCell = (items: any[], slotType: string, dateStr: string) => {
     if (slotType === 'afternoon' && new Date(dateStr).getDay() === 5) {
       return (<td className="border border-border p-2 text-center" colSpan={2}><span className="font-bold text-muted-foreground">FRIDAY PRAYER</span></td>);
@@ -72,9 +85,8 @@ export default function StudentExamTimetable() {
         <td className="border border-border p-2">
           <div className="space-y-1">
             {items.map((e: any) => (
-              <div key={e.id} className={`rounded px-1 ${isMyExam(e.course_code) ? 'bg-primary/20 border border-primary font-bold' : ''}`}>
-                <span className="font-bold text-sm">{e.course_code}</span>
-                {isMyExam(e.course_code) && <Badge className="ml-1 text-[9px]">Yours</Badge>}
+              <div key={e.id}>
+                <span className={`font-bold text-sm ${isMyExam(e.course_code) ? 'text-red-600 dark:text-red-400' : ''}`}>{e.course_code}</span>
               </div>
             ))}
           </div>
@@ -146,11 +158,27 @@ export default function StudentExamTimetable() {
           <Card><CardContent className="text-center py-8"><Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" /><p className="text-muted-foreground">No exam timetable available yet.</p></CardContent></Card>
         ) : (
           <Tabs defaultValue="all">
-            <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="all">Full Timetable</TabsTrigger>
-              <TabsTrigger value="my">My Exams ({myExams.length})</TabsTrigger>
-            </TabsList>
-            <TabsContent value="all" className="mt-4">{renderTable(grouped)}</TabsContent>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <TabsList className="w-full sm:w-auto">
+                <TabsTrigger value="all">Full Timetable</TabsTrigger>
+                <TabsTrigger value="my">My Exams ({myExams.length})</TabsTrigger>
+              </TabsList>
+              <Button variant="outline" size="sm" onClick={downloadPDF}>
+                <Download className="h-4 w-4 mr-1" /> Download PDF
+              </Button>
+            </div>
+            <TabsContent value="all" className="mt-4">
+              <div ref={timetableRef} className="bg-background p-2">
+                <div className="text-center space-y-1 mb-3">
+                  <p className="text-lg font-bold uppercase">{settings?.school_name || 'University'}</p>
+                  <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
+                  <p className="text-sm font-bold uppercase">Examination Timetable</p>
+                  <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
+                </div>
+                {renderTable(grouped)}
+                <p className="text-xs text-muted-foreground mt-2 text-center">Courses in <span className="text-red-600 font-semibold">red</span> are your registered courses.</p>
+              </div>
+            </TabsContent>
             <TabsContent value="my" className="mt-4">
               {myExams.length === 0 ? (
                 <Card><CardContent className="text-center py-8"><BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-2" /><p className="text-muted-foreground">No exams matched to your enrolled courses.</p></CardContent></Card>
@@ -165,7 +193,7 @@ export default function StudentExamTimetable() {
                         return (
                           <div key={e.id} className={`flex items-center justify-between p-3 rounded-lg border ${isToday(e.exam_date) ? 'border-primary bg-primary/10' : isTomorrow(e.exam_date) ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20' : isPast ? 'opacity-50' : ''}`}>
                             <div>
-                              <p className="font-bold">{e.course_code}</p>
+                              <p className="font-bold text-red-600 dark:text-red-400">{e.course_code}</p>
                               <p className="text-sm text-muted-foreground">{e.day_label} – {examDate.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })}</p>
                               <p className="text-xs text-muted-foreground">{e.start_time} – {e.end_time}{e.venue ? ` | ${e.venue}` : ''}</p>
                             </div>

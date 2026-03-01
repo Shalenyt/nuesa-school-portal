@@ -1654,6 +1654,33 @@ export type Database = {
           },
         ]
       }
+      timetable_history: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          semester: string
+          session: string
+          timetable_data: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          semester: string
+          session: string
+          timetable_data?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          semester?: string
+          session?: string
+          timetable_data?: Json
+        }
+        Relationships: []
+      }
       votes: {
         Row: {
           candidate_id: string
