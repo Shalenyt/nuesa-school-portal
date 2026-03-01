@@ -4,7 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Bell, MessageSquare, Calendar, Book, Trophy, ClipboardList, CheckCircle, UserPlus, AlertCircle, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Bell, MessageSquare, Calendar, Book, Trophy, ClipboardList, CheckCircle, UserPlus, AlertCircle, FileText, Trash2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 
