@@ -114,7 +114,7 @@ export default function ChangeEmail() {
             </CardTitle>
             <CardDescription>
               Your current email is <span className="font-medium text-foreground">{user?.email}</span>.
-              Enter a new email below. Confirmation links will be sent to both your old and new email addresses.
+              Enter your new email below. A confirmation link will be sent to the new email address only.
             </CardDescription>
           </CardHeader>
           <CardContent>
