@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     const paystackData = await paystackRes.json();
     if (!paystackRes.ok || !paystackData.status) {
       console.error('Paystack initialize failed:', paystackData);
-      return new Response(JSON.stringify({ error: 'Failed to initialize payment', details: paystackData.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Failed to initialize payment' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     return new Response(JSON.stringify({
