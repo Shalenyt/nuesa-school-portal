@@ -25,7 +25,7 @@ export default function StudentExamTimetable() {
     const userId = user.user?.id;
     const [{ data: timetable }, enrollRes, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
-      userId ? supabase.from('student_enrollments').select('course_id, courses(name, subjects(code))').eq('student_id', userId) : Promise.resolve({ data: [] }),
+      userId ? supabase.from('student_enrollments').select('course_id, courses(name)').eq('student_id', userId) : Promise.resolve({ data: [] }),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
     setEntries(timetable || []);
