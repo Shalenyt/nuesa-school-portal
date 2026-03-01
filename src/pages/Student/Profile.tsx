@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 export default function StudentProfile() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -236,6 +238,9 @@ export default function StudentProfile() {
                       disabled
                       className="bg-muted"
                     />
+                    <Button variant="outline" size="sm" className="mt-1" onClick={() => navigate('/dashboard/change-email')}>
+                      <Mail className="mr-1 h-3 w-3" /> Change Email
+                    </Button>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>

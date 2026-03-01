@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import { Edit, Palette } from 'lucide-react';
 export default function AdminProfile() {
   const { profile, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { settings, refetch: refetchSettings } = useSchoolSettings();
   
   // Initialize theme sync
@@ -243,6 +245,9 @@ export default function AdminProfile() {
                         disabled
                         className="bg-muted"
                       />
+                      <Button variant="outline" size="sm" className="mt-1" onClick={() => navigate('/dashboard/change-email')}>
+                        <Mail className="mr-1 h-3 w-3" /> Change Email
+                      </Button>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="staff_id">Staff ID</Label>

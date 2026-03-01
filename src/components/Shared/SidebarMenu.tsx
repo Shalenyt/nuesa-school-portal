@@ -103,27 +103,31 @@ export function SidebarMenu() {
           <SidebarGroupContent>
             <SidebarMenuPrimitive>
               {menuItems.map((item) => {
+                const isActive = location.pathname === item.url;
+
                 const linkContent = (
                   <NavLink 
                     to={item.url} 
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 w-full transition-all duration-300 rounded-lg px-3 py-2.5 group ${
-                        isActive 
-                          ? "bg-primary/10 text-primary border-l-4 border-primary font-semibold shadow-sm" 
-                          : "text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium border-l-4 border-transparent hover:border-primary/30"
-                      }`
-                    }
+                    className={`flex items-center w-full transition-all duration-300 rounded-lg px-3 py-2.5 group overflow-hidden whitespace-nowrap ${
+                      collapsed ? 'justify-center gap-0' : 'gap-3'
+                    } ${
+                      isActive 
+                        ? "bg-primary/10 text-primary border-l-4 border-primary font-semibold shadow-sm" 
+                        : "text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium border-l-4 border-transparent hover:border-primary/30"
+                    }`}
                   >
-                    <item.icon className={`h-5 w-5 shrink-0 transition-all duration-300 ${
-                      location.pathname === item.url ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                    <item.icon className={`h-5 w-5 min-w-[20px] shrink-0 transition-all duration-300 ${
+                      isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                     }`} />
-                    <span className="transition-all duration-300 truncate">{item.title}</span>
-                    {item.title === 'Notifications' && counts.total > 0 && (
+                    {!collapsed && (
+                      <span className="transition-all duration-300 truncate">{item.title}</span>
+                    )}
+                    {!collapsed && item.title === 'Notifications' && counts.total > 0 && (
                       <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
                         {counts.total}
                       </Badge>
                     )}
-                    {item.title === 'Feedback' && feedbackCount > 0 && (
+                    {!collapsed && item.title === 'Feedback' && feedbackCount > 0 && (
                       <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
                         {feedbackCount}
                       </Badge>
@@ -135,11 +139,11 @@ export function SidebarMenu() {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       {collapsed ? (
-                        <Tooltip>
+                        <Tooltip delayDuration={0}>
                           <TooltipTrigger asChild>
                             {linkContent}
                           </TooltipTrigger>
-                          <TooltipContent side="right" className="font-medium">
+                          <TooltipContent side="right" sideOffset={4} className="font-medium text-sm">
                             {item.title}
                           </TooltipContent>
                         </Tooltip>
