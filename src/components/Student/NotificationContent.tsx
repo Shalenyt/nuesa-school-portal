@@ -202,6 +202,36 @@ export function NotificationContent() {
     setGeneralNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  const deleteNotification = async (item: Notification) => {
+    if (!item.db_id) return;
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', item.db_id);
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to delete notification', variant: 'destructive' });
+      return;
+    }
+    setGeneralNotifications(prev => prev.filter(n => n.id !== item.id));
+    toast({ title: 'Deleted', description: 'Notification removed' });
+  };
+
+  const deleteAllNotifications = async () => {
+    if (!profile) return;
+    const ids = generalNotifications.filter(n => n.db_id).map(n => n.db_id!);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .in('id', ids);
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to clear notifications', variant: 'destructive' });
+      return;
+    }
+    setGeneralNotifications([]);
+    toast({ title: 'Cleared', description: 'All notifications removed' });
+  };
+
   const handleItemClick = (item: Notification) => {
     setSelectedItem(item);
     markAsRead(item);
