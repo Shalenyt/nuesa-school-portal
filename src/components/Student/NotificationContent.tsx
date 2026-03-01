@@ -268,7 +268,14 @@ export function NotificationContent() {
           <NotificationList items={announcements} onItemClick={handleItemClick} />
         </TabsContent>
         <TabsContent value="general">
-          <NotificationList items={generalNotifications} onItemClick={handleItemClick} />
+          {generalNotifications.length > 0 && (
+            <div className="flex justify-end mb-2">
+              <Button variant="outline" size="sm" onClick={deleteAllNotifications} className="text-destructive hover:text-destructive">
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear All
+              </Button>
+            </div>
+          )}
+          <NotificationList items={generalNotifications} onItemClick={handleItemClick} onDeleteItem={deleteNotification} />
         </TabsContent>
       </Tabs>
 
