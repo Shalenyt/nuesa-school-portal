@@ -81,7 +81,7 @@ export default function ChangeEmail() {
 
       toast({
         title: "Confirmation email sent",
-        description: "Check both your old and new email inboxes to confirm the change.",
+        description: "Check your new email inbox to confirm the change.",
       });
       setNewEmail('');
     } catch (error: any) {
