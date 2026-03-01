@@ -7,8 +7,10 @@ import {
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu as SidebarMenuPrimitive, SidebarMenuButton, SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNotificationCounts } from '@/hooks/useNotificationCounts';
 import { useFeedbackCounts } from '@/hooks/useFeedbackCounts';
 
@@ -68,6 +70,8 @@ const studentMenuItems = [
 export function SidebarMenu() {
   const { profile } = useAuth();
   const location = useLocation();
+  const { state } = useSidebar();
+  const collapsed = state === 'collapsed';
   const { counts } = useNotificationCounts();
   const { unreadCount: feedbackCount } = useFeedbackCounts();
 
@@ -98,37 +102,54 @@ export function SidebarMenu() {
           <SidebarGroupLabel>{getRoleLabel()} Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenuPrimitive>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 w-full transition-all duration-300 rounded-lg px-3 py-2.5 group ${
-                          isActive 
-                            ? "bg-primary/10 text-primary border-l-4 border-primary font-semibold shadow-sm" 
-                            : "text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium border-l-4 border-transparent hover:border-primary/30"
-                        }`
-                      }
-                    >
-                      <item.icon className={`h-5 w-5 shrink-0 transition-all duration-300 ${
-                        location.pathname === item.url ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                      }`} />
-                      <span className="transition-all duration-300 truncate">{item.title}</span>
-                      {item.title === 'Notifications' && counts.total > 0 && (
-                        <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
-                          {counts.total}
-                        </Badge>
+              {menuItems.map((item) => {
+                const linkContent = (
+                  <NavLink 
+                    to={item.url} 
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 w-full transition-all duration-300 rounded-lg px-3 py-2.5 group ${
+                        isActive 
+                          ? "bg-primary/10 text-primary border-l-4 border-primary font-semibold shadow-sm" 
+                          : "text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium border-l-4 border-transparent hover:border-primary/30"
+                      }`
+                    }
+                  >
+                    <item.icon className={`h-5 w-5 shrink-0 transition-all duration-300 ${
+                      location.pathname === item.url ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                    }`} />
+                    <span className="transition-all duration-300 truncate">{item.title}</span>
+                    {item.title === 'Notifications' && counts.total > 0 && (
+                      <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
+                        {counts.total}
+                      </Badge>
+                    )}
+                    {item.title === 'Feedback' && feedbackCount > 0 && (
+                      <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
+                        {feedbackCount}
+                      </Badge>
+                    )}
+                  </NavLink>
+                );
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      {collapsed ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {linkContent}
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="font-medium">
+                            {item.title}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        linkContent
                       )}
-                      {item.title === 'Feedback' && feedbackCount > 0 && (
-                        <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 min-w-[18px] flex items-center justify-center shrink-0">
-                          {feedbackCount}
-                        </Badge>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenuPrimitive>
           </SidebarGroupContent>
         </SidebarGroup>

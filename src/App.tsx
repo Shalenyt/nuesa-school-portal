@@ -18,6 +18,7 @@ import Apply from "./pages/Auth/Apply";
 import RecoverPassword from "./pages/Auth/RecoverPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import Success from "./pages/Auth/Success";
+import ChangeEmail from "./pages/Auth/ChangeEmail";
 
 // Admin pages
 import AdminDashboard from "./pages/Admin/Dashboard";
@@ -95,6 +96,7 @@ function AppRoutes() {
       <Route path="/auth/recover-password" element={<Navigate to="/auth/forgot-password" replace />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
       <Route path="/auth/success" element={<Success />} />
+      <Route path="/dashboard/change-email" element={<ProtectedRoute allowedRoles={['admin','teacher','student']}><ChangeEmail /></ProtectedRoute>} />
       
       {/* Verification Routes (public) */}
       <Route path="/verify" element={<Verify />} />
