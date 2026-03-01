@@ -236,6 +236,9 @@ export default function StudentProfile() {
                       disabled
                       className="bg-muted"
                     />
+                    <Button variant="outline" size="sm" className="mt-1" onClick={() => navigate('/dashboard/change-email')}>
+                      <Mail className="mr-1 h-3 w-3" /> Change Email
+                    </Button>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
