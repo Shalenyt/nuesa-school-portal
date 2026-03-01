@@ -88,9 +88,9 @@ export default function AdminExamTimetable() {
     if (filterDept) filtered = filtered.filter((c: any) => c.subjects?.id === filterDept);
     if (filterLevel) filtered = filtered.filter((c: any) => c.classes?.id === filterLevel);
     return filtered.map((c: any) => ({
-      value: c.subjects?.code || c.name || c.id,
-      label: c.subjects?.code || c.name || '',
-      description: `${c.subjects?.name || c.name || ''} • ${c.classes?.name || ''} • ${c.credit_unit || 0} units`,
+      value: c.name || c.id,
+      label: `${c.name || ''}${c.description ? ' – ' + c.description : ''}`,
+      description: `${c.subjects?.name || ''} • ${c.classes?.name || ''} • ${c.credit_unit || 0} units`,
     }));
   }, [allCourses, filterDept, filterLevel]);
 
