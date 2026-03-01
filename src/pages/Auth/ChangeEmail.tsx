@@ -81,7 +81,7 @@ export default function ChangeEmail() {
 
       toast({
         title: "Confirmation email sent",
-        description: "Check both your old and new email inboxes to confirm the change.",
+        description: "Check your new email inbox to confirm the change.",
       });
       setNewEmail('');
     } catch (error: any) {
@@ -114,7 +114,7 @@ export default function ChangeEmail() {
             </CardTitle>
             <CardDescription>
               Your current email is <span className="font-medium text-foreground">{user?.email}</span>.
-              Enter a new email below. Confirmation links will be sent to both your old and new email addresses.
+              Enter your new email below. A confirmation link will be sent to the new email address only.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -157,7 +157,7 @@ export default function ChangeEmail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to change your email?</AlertDialogTitle>
             <AlertDialogDescription>
-              A confirmation link will be sent to both <span className="font-medium">{user?.email}</span> and <span className="font-medium">{newEmail}</span>. You must confirm from both emails to complete the change.
+              A confirmation link will be sent to <span className="font-medium">{newEmail}</span>. You must confirm from that email to complete the change.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
