@@ -158,7 +158,7 @@ export default function ChangeEmail() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <CheckCircle2 className="h-5 w-5 text-primary" />
               Email Changed Successfully
             </DialogTitle>
             <DialogDescription>
