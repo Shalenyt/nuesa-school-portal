@@ -105,6 +105,13 @@ export default function ResetPassword() {
 
       if (error) throw error;
 
+      // Send password change notification email
+      try {
+        await supabase.functions.invoke('notify-password-change');
+      } catch (emailErr) {
+        console.error('Failed to send password change notification:', emailErr);
+      }
+
       setShowSuccessDialog(true);
     } catch (error: any) {
       console.error('Password update error:', error);
