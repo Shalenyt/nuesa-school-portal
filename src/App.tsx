@@ -18,6 +18,7 @@ import Apply from "./pages/Auth/Apply";
 import RecoverPassword from "./pages/Auth/RecoverPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import Success from "./pages/Auth/Success";
+import ChangeEmail from "./pages/Auth/ChangeEmail";
 
 // Admin pages
 import AdminDashboard from "./pages/Admin/Dashboard";
