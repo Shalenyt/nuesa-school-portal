@@ -140,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string) => {
     console.log('[Auth] Requesting password reset for:', email);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://nuesauofa.vercel.app/auth/reset-password'
+      redirectTo: `${window.location.origin}/auth/reset-password`
     });
 
     if (error) {
