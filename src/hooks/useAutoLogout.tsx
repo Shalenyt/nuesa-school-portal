@@ -64,5 +64,13 @@ export function useAutoLogout() {
     };
   }, [user, resetTimer]);
 
-  return { showWarning, countdown, extendSession, signOut };
+  const handleSignOut = useCallback(() => {
+    setShowWarning(false);
+    setCountdown(60);
+    if (countdownTimer.current) clearInterval(countdownTimer.current);
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    signOut();
+  }, [signOut]);
+
+  return { showWarning, countdown, extendSession, signOut: handleSignOut };
 }
