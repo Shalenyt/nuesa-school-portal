@@ -4,7 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Bell, MessageSquare, Calendar, Book, Trophy, ClipboardList, CheckCircle, UserPlus, AlertCircle, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Bell, MessageSquare, Calendar, Book, Trophy, ClipboardList, CheckCircle, UserPlus, AlertCircle, FileText, Trash2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -35,7 +37,7 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
-function NotificationList({ items, onItemClick }: { items: Notification[]; onItemClick: (item: Notification) => void }) {
+function NotificationList({ items, onItemClick, onDeleteItem }: { items: Notification[]; onItemClick: (item: Notification) => void; onDeleteItem?: (item: Notification) => void }) {
   if (items.length === 0) {
     return (
       <Card>
@@ -70,9 +72,24 @@ function NotificationList({ items, onItemClick }: { items: Notification[]; onIte
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{notification.message}</p>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-              </span>
+              <div className="flex items-center gap-2 ml-4">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                </span>
+                {onDeleteItem && notification.db_id && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteItem(notification);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
         </Card>
@@ -185,6 +202,36 @@ export function NotificationContent() {
     setGeneralNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  const deleteNotification = async (item: Notification) => {
+    if (!item.db_id) return;
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', item.db_id);
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to delete notification', variant: 'destructive' });
+      return;
+    }
+    setGeneralNotifications(prev => prev.filter(n => n.id !== item.id));
+    toast({ title: 'Deleted', description: 'Notification removed' });
+  };
+
+  const deleteAllNotifications = async () => {
+    if (!profile) return;
+    const ids = generalNotifications.filter(n => n.db_id).map(n => n.db_id!);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .in('id', ids);
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to clear notifications', variant: 'destructive' });
+      return;
+    }
+    setGeneralNotifications([]);
+    toast({ title: 'Cleared', description: 'All notifications removed' });
+  };
+
   const handleItemClick = (item: Notification) => {
     setSelectedItem(item);
     markAsRead(item);
@@ -221,7 +268,14 @@ export function NotificationContent() {
           <NotificationList items={announcements} onItemClick={handleItemClick} />
         </TabsContent>
         <TabsContent value="general">
-          <NotificationList items={generalNotifications} onItemClick={handleItemClick} />
+          {generalNotifications.length > 0 && (
+            <div className="flex justify-end mb-2">
+              <Button variant="outline" size="sm" onClick={deleteAllNotifications} className="text-destructive hover:text-destructive">
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear All
+              </Button>
+            </div>
+          )}
+          <NotificationList items={generalNotifications} onItemClick={handleItemClick} onDeleteItem={deleteNotification} />
         </TabsContent>
       </Tabs>
 
