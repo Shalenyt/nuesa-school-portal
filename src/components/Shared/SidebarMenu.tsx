@@ -74,7 +74,6 @@ export function SidebarMenu() {
   const collapsed = state === 'collapsed';
   const { counts } = useNotificationCounts();
   const { unreadCount: feedbackCount } = useFeedbackCounts();
-  const { unreadCount: feedbackCount } = useFeedbackCounts();
 
   const getRoleLabel = () => {
     switch (profile?.role) {
