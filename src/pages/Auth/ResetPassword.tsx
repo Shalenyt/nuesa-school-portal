@@ -24,11 +24,36 @@ export default function ResetPassword() {
 
   useThemeSync();
 
-  // Listen for Supabase to establish the session from the hash fragment.
-  // When the user clicks the recovery email link, Supabase's JS client
-  // automatically picks up the tokens from the URL hash and fires
-  // PASSWORD_RECOVERY on onAuthStateChange.
+  // Verify token from URL query params (token_hash & type)
+  // or fall back to hash-based PASSWORD_RECOVERY event
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenHash = params.get('token_hash') || params.get('access_token');
+    const type = params.get('type');
+
+    if (tokenHash && (type === 'recovery' || type === 'signup')) {
+      // Verify the token to establish a session
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('[ResetPassword] Token verification failed:', error);
+            toast({
+              title: "Invalid reset link",
+              description: "This password reset link is invalid or has expired. Please request a new one.",
+              variant: "destructive"
+            });
+            navigate('/auth/forgot-password');
+          } else {
+            console.log('[ResetPassword] Token verified, session established');
+            setSessionReady(true);
+            // Clean the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        });
+      return;
+    }
+
+    // Fallback: listen for hash-based PASSWORD_RECOVERY event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       console.log('[ResetPassword] auth event:', event);
       if (event === 'PASSWORD_RECOVERY') {
@@ -36,14 +61,12 @@ export default function ResetPassword() {
       }
     });
 
-    // Also check if a session already exists (e.g. page refresh after token was consumed)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setSessionReady(true);
       }
     });
 
-    // Timeout: if no session established after 5 seconds, the link is likely invalid
     const timeout = setTimeout(() => {
       setSessionReady((prev) => {
         if (!prev) {
