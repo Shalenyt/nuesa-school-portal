@@ -65,11 +65,14 @@ export function useAutoLogout() {
   }, [user, resetTimer]);
 
   const handleSignOut = useCallback(() => {
-    setShowWarning(false);
-    setCountdown(60);
     if (countdownTimer.current) clearInterval(countdownTimer.current);
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    signOut();
+    countdownTimer.current = null;
+    inactivityTimer.current = null;
+    setShowWarning(false);
+    setCountdown(60);
+    // Delay signOut to allow dialog to close first
+    setTimeout(() => signOut(), 100);
   }, [signOut]);
 
   return { showWarning, countdown, extendSession, signOut: handleSignOut };
