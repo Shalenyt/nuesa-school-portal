@@ -35,8 +35,8 @@ interface NotificationEmailRequest {
 
 const VALID_TYPES = ['approved', 'rejected', 'suspended', 'promoted', 'deleted'];
 
-const LOGO_URL = "https://nuesauofa.vercel.app/logo.png";
-const LOGIN_URL = "https://nuesauofa.vercel.app/auth/login";
+const LOGO_URL = "https://www.nuesa.org/logo.png";
+const LOGIN_URL = "https://www.nuesa.org/auth/login";
 const PORTAL_NAME = "NUESA Portal";
 const FOOTER_TEXT = "NUESA Portal • Faculty of Engineering • University of Abuja";
 

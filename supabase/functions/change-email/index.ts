@@ -77,7 +77,7 @@ serve(async (req) => {
       const oldEmailHtml = `
 <div style="font-family: 'Segoe UI', sans-serif; background:#f6fff8; padding:40px;">
   <div style="max-width:600px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
-    <img src="https://nuesauofa.vercel.app/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
+    <img src="https://www.nuesa.org/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
     <h2 style="color:#16a34a; margin-bottom:10px;">Email Successfully Changed 📧</h2>
     <p style="color:#444; font-size:15px;">
       Your email for <strong>NUESA Portal – Faculty of Engineering</strong> has been changed from <strong>${oldEmail}</strong> to <strong>${newEmail}</strong>.
@@ -92,12 +92,12 @@ serve(async (req) => {
       const newEmailHtml = `
 <div style="font-family: 'Segoe UI', sans-serif; background:#f6fff8; padding:40px;">
   <div style="max-width:600px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
-    <img src="https://nuesauofa.vercel.app/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
+    <img src="https://www.nuesa.org/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
     <h2 style="color:#16a34a; margin-bottom:10px;">Welcome to NUESA Portal 🎉</h2>
     <p style="color:#444; font-size:15px;">
       Your email has been successfully updated to <strong>${newEmail}</strong>. You can now sign in using this email to access your NUESA Portal account.
     </p>
-    <a href="https://nuesauofa.vercel.app/auth/login"
+    <a href="https://www.nuesa.org/auth/login"
        style="display:inline-block; margin-top:25px; padding:12px 25px; background:#16a34a; color:white; text-decoration:none; border-radius:8px; font-weight:600;">
        Access Portal
     </a>
