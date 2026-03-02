@@ -43,7 +43,7 @@ serve(async (req) => {
     const html = `
 <div style="font-family: 'Segoe UI', sans-serif; background:#f6fff8; padding:40px;">
   <div style="max-width:600px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
-    <img src="https://nuesauofa.vercel.app/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
+    <img src="https://www.nuesa.org/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
     <h2 style="color:#16a34a;">Password Updated Successfully 🔐</h2>
     <p style="color:#444; font-size:15px;">
       Hello 👋,<br><br>
