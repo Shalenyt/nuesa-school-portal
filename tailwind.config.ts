@@ -52,7 +52,16 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				urgency: {
+					comfortable: 'hsl(var(--urgency-comfortable))',
+					upcoming: 'hsl(var(--urgency-upcoming))',
+					approaching: 'hsl(var(--urgency-approaching))',
+					soon: 'hsl(var(--urgency-soon))',
+					critical: 'hsl(var(--urgency-critical))',
+					overdue: 'hsl(var(--urgency-overdue))'
+				},
 				sidebar: {
+
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
 					primary: 'hsl(var(--sidebar-primary))',
