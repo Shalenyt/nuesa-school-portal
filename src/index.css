@@ -38,6 +38,15 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
+    /* Semantic urgency scale (deadlines, payments, tickets) */
+    --urgency-comfortable: 142 60% 34%;
+    --urgency-upcoming: 214 78% 45%;
+    --urgency-approaching: 42 88% 38%;
+    --urgency-soon: 26 88% 43%;
+    --urgency-critical: 0 78% 47%;
+    --urgency-overdue: 220 9% 40%;
+
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 20%;
     --sidebar-primary: 0 100% 50%;
@@ -75,6 +84,14 @@ All colors MUST be HSL.
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
+
+    --urgency-comfortable: 142 58% 55%;
+    --urgency-upcoming: 214 90% 68%;
+    --urgency-approaching: 45 92% 60%;
+    --urgency-soon: 27 92% 62%;
+    --urgency-critical: 0 84% 65%;
+    --urgency-overdue: 220 9% 65%;
+
     --ring: 0 100% 60%;
 
     --sidebar-background: 240 5.9% 10%;
