@@ -57,6 +57,7 @@ import TeacherExamTimetable from "./pages/Teacher/ExamTimetable";
 
 // Student pages
 import StudentProfile from "./pages/Student/Profile";
+import StudentDashboard from "./pages/Student/Dashboard";
 import StudentViewMaterials from "./pages/Student/ViewMaterials";
 import StudentSubmitAssignment from "./pages/Student/SubmitAssignment";
 import StudentTimetable from "./pages/Student/Timetable";
@@ -141,6 +142,7 @@ function AppRoutes() {
       <Route path="/teacher/exam-timetable" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherExamTimetable /></ProtectedRoute>} />
       
       {/* Student Routes */}
+      <Route path="/student/dashboard" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
       <Route path="/student/profile" element={<ProtectedRoute allowedRoles={['student']}><StudentProfile /></ProtectedRoute>} />
       <Route path="/student/view-materials" element={<ProtectedRoute allowedRoles={['student']}><StudentViewMaterials /></ProtectedRoute>} />
       <Route path="/student/submit-assignment" element={<ProtectedRoute allowedRoles={['student']}><StudentSubmitAssignment /></ProtectedRoute>} />

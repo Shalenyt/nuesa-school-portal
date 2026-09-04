@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: 'https://nuesauofa.vercel.app/auth/success',
+        emailRedirectTo: 'https://www.nuesa.org/auth/success',
         data: {
           full_name: userData.fullName,
           role: userData.role,
@@ -78,15 +78,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) {
+      console.error('[Auth] Sign up error:', error.message, error.status);
+      const raw = error.message.toLowerCase();
+      let description = error.message;
+
+      if (raw.includes('confirmation email') || raw.includes('sending email') || raw.includes('smtp')) {
+        description =
+          "We couldn't send your verification email right now, so your account was not created. Please try again shortly or contact the NUESA Portal Engineering Team.";
+      } else if (raw.includes('already registered') || raw.includes('already been registered')) {
+        description = 'An account with this email already exists. Try signing in or resetting your password.';
+      } else if (raw.includes('rate limit') || error.status === 429) {
+        description = 'Too many attempts. Please wait a few minutes before trying again.';
+      } else if (raw.includes('password')) {
+        description = 'Please choose a stronger password (at least 6 characters).';
+      }
+
       toast({
-        title: "Sign up failed",
-        description: error.message,
-        variant: "destructive"
+        title: 'Sign up failed',
+        description,
+        variant: 'destructive'
       });
     } else {
       toast({
-        title: "Application submitted",
-        description: "Your application has been submitted for approval. Please wait for admin approval.",
+        title: 'Application submitted',
+        description:
+          'Check your inbox to verify your email address. An administrator will review your application after verification.',
       });
     }
 
@@ -100,13 +116,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) {
+      console.error('[Auth] Sign in error:', error.message, error.status);
+      const raw = error.message.toLowerCase();
+      let description = error.message;
+
+      if (raw.includes('email not confirmed')) {
+        description =
+          'Your email address is not verified yet. Open the verification link we sent you, then sign in again.';
+      } else if (raw.includes('invalid login credentials')) {
+        description = 'Incorrect email or password. Please try again.';
+      } else if (raw.includes('rate limit') || error.status === 429) {
+        description = 'Too many sign-in attempts. Please wait a few minutes and try again.';
+      }
+
       toast({
-        title: "Sign in failed",
-        description: error.message,
-        variant: "destructive"
+        title: 'Sign in failed',
+        description,
+        variant: 'destructive'
       });
       return { error, profile: null };
     }
+
 
     // Fetch profile immediately so caller can use it for navigation
     let fetchedProfile = null;
@@ -140,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string) => {
     console.log('[Auth] Requesting password reset for:', email);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://nuesauofa.vercel.app/auth/reset-password'
+      redirectTo: 'https://www.nuesa.org/auth/reset-password'
     });
 
     if (error) {
