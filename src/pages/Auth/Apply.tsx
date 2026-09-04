@@ -332,6 +332,22 @@ export default function Apply() {
                   <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                   <p>After verifying your email, an administrator will review and approve your application. You'll be notified once approved.</p>
                 </div>
+                <div className="text-left text-xs">
+                  Didn't get the email? Check your spam folder, or{' '}
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={cooldown > 0 || resending}
+                    className="font-medium text-primary underline-offset-2 hover:underline disabled:opacity-60 disabled:no-underline"
+                  >
+                    {resending
+                      ? 'sending…'
+                      : cooldown > 0
+                        ? `resend in ${cooldown}s`
+                        : 'resend the verification link'}
+                  </button>
+                  .
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -342,6 +358,7 @@ export default function Apply() {
               </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
+
         </AlertDialogContent>
       </AlertDialog>
     </div>
