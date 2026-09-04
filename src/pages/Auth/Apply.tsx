@@ -39,8 +39,40 @@ export default function Apply() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [cooldown, setCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
   const { signUp } = useAuth();
   const { settings } = useSchoolSettings();
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const handleResend = async () => {
+    if (cooldown > 0 || !formData.email) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: formData.email,
+      options: { emailRedirectTo: 'https://www.nuesa.org/auth/success' },
+    });
+    setResending(false);
+    if (error) {
+      toast({
+        title: 'Could not resend',
+        description: error.message.toLowerCase().includes('rate')
+          ? 'Please wait a moment before requesting another email.'
+          : "We couldn't resend the verification email right now. Please try again shortly.",
+        variant: 'destructive',
+      });
+      return;
+    }
+    setCooldown(60);
+    toast({ title: 'Verification email sent', description: `We sent a new link to ${formData.email}.` });
+  };
+
   
   // Initialize theme sync
   useThemeSync();
