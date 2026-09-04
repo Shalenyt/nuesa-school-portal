@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { BookOpen, Loader2, CheckCircle2, Mail, ShieldCheck } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogContent,
