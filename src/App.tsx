@@ -57,6 +57,7 @@ import TeacherExamTimetable from "./pages/Teacher/ExamTimetable";
 
 // Student pages
 import StudentProfile from "./pages/Student/Profile";
+import StudentDashboard from "./pages/Student/Dashboard";
 import StudentViewMaterials from "./pages/Student/ViewMaterials";
 import StudentSubmitAssignment from "./pages/Student/SubmitAssignment";
 import StudentTimetable from "./pages/Student/Timetable";
