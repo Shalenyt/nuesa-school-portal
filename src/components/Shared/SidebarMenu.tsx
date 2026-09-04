@@ -50,7 +50,8 @@ const lecturerMenuItems = [
 ];
 
 const studentMenuItems = [
-  { title: "Profile", url: "/student/profile", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/student/dashboard", icon: LayoutDashboard },
+  { title: "Profile", url: "/student/profile", icon: GraduationCap },
   { title: "Analytics", url: "/student/analytics", icon: BarChart3 },
   { title: "View Materials", url: "/student/view-materials", icon: FileText },
   { title: "Submit Assignment", url: "/student/submit-assignment", icon: Upload },
