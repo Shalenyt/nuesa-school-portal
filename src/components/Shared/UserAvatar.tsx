@@ -31,3 +31,13 @@ export function UserAvatar({ photoUrl, name, className, fallbackClassName }: Use
     </Avatar>
   );
 }
+
+/**
+ * Drop-in replacement for <AvatarImage> that resolves private-bucket photos.
+ * Renders nothing when there is no image, so the initials fallback shows.
+ */
+export function SignedAvatarImage({ src, ...props }: { src?: string | null } & Record<string, any>) {
+  const resolved = useAvatarUrl(src);
+  if (!resolved) return null;
+  return <AvatarImage src={resolved} {...props} />;
+}
