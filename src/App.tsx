@@ -77,7 +77,9 @@ import StudentExamTimetable from "./pages/Student/ExamTimetable";
 import StudentSupport from "./pages/Student/Support";
 
 import Verify from "./pages/Verify";
+import PublicStudentVerify from "./pages/PublicStudentVerify";
 import VerifyPayment from "./pages/VerifyPayment";
+
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -104,7 +106,8 @@ function AppRoutes() {
       
       {/* Verification Routes (public) */}
       <Route path="/verify" element={<Verify />} />
-      <Route path="/verify/student/:id" element={<Verify />} />
+      <Route path="/verify/student/:code" element={<PublicStudentVerify />} />
+
       <Route path="/verify/payment/:id" element={<VerifyPayment />} />
       
       {/* Admin Routes */}

@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, Plus, Download, Upload, Trash2, Search, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { PaymentExports } from '@/components/Admin/PaymentExports';
+
 
 export default function AdminPayments() {
   const { profile } = useAuth();
@@ -316,7 +318,11 @@ export default function AdminPayments() {
           </div>
         )}
 
+        {/* Payment Records & Exports */}
+        <PaymentExports />
+
         {/* Payment Detail Dialog */}
+
         <Dialog open={!!selectedPayment} onOpenChange={() => { setSelectedPayment(null); setSearchQuery(''); setFilterLevel('all'); setFilterDepartment('all'); }}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>

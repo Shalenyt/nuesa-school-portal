@@ -23,25 +23,31 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
       }
 
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `school-logo.${fileExt}`;
-      const filePath = `logos/${fileName}`;
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('school-assets')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        throw uploadError;
+      const ALLOWED = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      if (!ALLOWED.includes(ext)) {
+        throw new Error('Invalid image type. Allowed: JPG, PNG, WEBP, SVG');
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('Image too large. Maximum size is 5MB.');
       }
 
-      // Get public URL
+      // Unique filename so CDN/browser caches can never serve the old logo.
+      const filePath = `logos/school-logo-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('school-assets')
+        .upload(filePath, file, { upsert: true, cacheControl: '3600', contentType: file.type });
+
+      if (uploadError) throw uploadError;
+
       const { data } = supabase.storage
         .from('school-assets')
         .getPublicUrl(filePath);
 
-      // Update school settings - get the first row and update it
+      const publicUrl = data.publicUrl;
+
+      // Persist to the database (create the settings row if it does not exist yet)
       const { data: existingSettings, error: fetchError } = await (supabase as any)
         .from('school_settings')
         .select('id')
@@ -53,17 +59,21 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
       if (existingSettings) {
         const { error: updateError } = await (supabase as any)
           .from('school_settings')
-          .update({ logo_url: data.publicUrl })
+          .update({ logo_url: publicUrl })
           .eq('id', existingSettings.id);
-
         if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await (supabase as any)
+          .from('school_settings')
+          .insert({ school_name: 'NUESA PORTAL', logo_url: publicUrl, singleton: true });
+        if (insertError) throw insertError;
       }
 
-      onLogoUpdated(data.publicUrl);
-      
+      onLogoUpdated(publicUrl);
+
       toast({
         title: "School logo updated",
-        description: "The school logo has been updated successfully.",
+        description: "The new logo is saved and will stay after refresh.",
       });
     } catch (error: any) {
       toast({
@@ -73,8 +83,10 @@ export function SchoolLogoUpload({ currentLogoUrl, onLogoUpdated }: SchoolLogoUp
       });
     } finally {
       setUploading(false);
+      event.target.value = '';
     }
   };
+
 
   return (
     <div className="flex flex-col items-center space-y-4">
