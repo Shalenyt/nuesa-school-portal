@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Camera, Upload, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAvatarUrl } from '@/hooks/useAvatarUrl';
 
 interface PhotoUploadProps {
   currentPhotoUrl?: string;
@@ -14,6 +15,7 @@ interface PhotoUploadProps {
 export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const { profile, refetchProfile } = useAuth();
+  const displayUrl = useAvatarUrl(currentPhotoUrl || profile?.profile_photo_url);
 
   const uploadPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -43,13 +45,13 @@ export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProp
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type });
 
       if (uploadError) {
         throw uploadError;
       }
 
-      // Get public URL
+      // Canonical stored reference (bucket is private; display uses signed URLs)
       const { data } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(filePath);
@@ -65,8 +67,8 @@ export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProp
       }
 
       onPhotoUpdated(data.publicUrl);
-      refetchProfile(); // Refresh profile data to update header avatar
-      
+      await refetchProfile(); // Refresh profile everywhere (header avatar, ID card, profile page)
+
       toast({
         title: "Photo updated",
         description: "Your profile photo has been updated successfully.",
@@ -86,10 +88,10 @@ export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProp
     <div className="flex flex-col items-center space-y-4">
       <div className="relative">
         <div className="w-24 h-24 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-          {currentPhotoUrl ? (
-            <img 
-              src={currentPhotoUrl} 
-              alt="Profile" 
+          {displayUrl ? (
+            <img
+              src={displayUrl}
+              alt="Profile"
               className="w-full h-full object-cover"
             />
           ) : (

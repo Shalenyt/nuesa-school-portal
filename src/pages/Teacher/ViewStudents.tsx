@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
 import { Badge } from '@/components/ui/badge';
 import { Users, Search, Mail, Phone, BookOpen, Eye } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
@@ -132,7 +133,7 @@ export default function ViewStudents() {
                     <div key={student.id} className="p-4 border rounded-lg">
                       <div className="flex items-start gap-3">
                         <Avatar>
-                          <AvatarImage src={student.profile_photo_url} alt={student.full_name} />
+                          <SignedAvatarImage src={student.profile_photo_url} alt={student.full_name} />
                           <AvatarFallback>{student.full_name?.charAt(0)?.toUpperCase() || 'S'}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">

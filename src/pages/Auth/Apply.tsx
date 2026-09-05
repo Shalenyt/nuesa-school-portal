@@ -26,7 +26,9 @@ import oaustechLogo from '@/assets/oaustech-logo.png';
 
 export default function Apply() {
   const [formData, setFormData] = useState({
-    fullName: '',
+    lastName: '',
+    firstName: '',
+    middleName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -131,7 +133,13 @@ export default function Apply() {
 
     try {
       const { error } = await signUp(formData.email, formData.password, {
-        fullName: formData.fullName,
+        lastName: formData.lastName.trim(),
+        firstName: formData.firstName.trim(),
+        middleName: formData.middleName.trim(),
+        fullName: [formData.lastName, formData.firstName, formData.middleName]
+          .map((n) => n.trim())
+          .filter(Boolean)
+          .join(' '),
         role: formData.role,
         studentId: formData.role === 'student' ? formData.studentId : null,
         staffId: formData.role !== 'student' ? formData.staffId : null,
@@ -179,13 +187,34 @@ export default function Apply() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="lastName">Last Name</Label>
                 <Input
-                  id="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   required
-                  placeholder="Enter your full name"
+                  placeholder="Enter your last name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  required
+                  placeholder="Enter your first name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="middleName">Middle Name (optional)</Label>
+                <Input
+                  id="middleName"
+                  value={formData.middleName}
+                  onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                  placeholder="Enter your middle name"
                 />
               </div>
 

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClipboardList, Download, Eye, CheckCircle, ArrowLeft, User } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
@@ -265,7 +266,7 @@ export default function GradeAssignments() {
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        <AvatarImage src={submission.profiles?.profile_photo_url} />
+                        <SignedAvatarImage src={submission.profiles?.profile_photo_url} />
                         <AvatarFallback>
                           <User className="h-4 w-4" />
                         </AvatarFallback>
@@ -343,7 +344,7 @@ export default function GradeAssignments() {
                 </CardTitle>
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={selectedSubmission.profiles?.profile_photo_url} />
+                    <SignedAvatarImage src={selectedSubmission.profiles?.profile_photo_url} />
                     <AvatarFallback>
                       <User className="h-4 w-4" />
                     </AvatarFallback>

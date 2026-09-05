@@ -1161,9 +1161,12 @@ export type Database = {
           created_at: string
           department_id: string | null
           email: string
+          first_name: string | null
           full_name: string
           id: string
+          last_name: string | null
           level_id: string | null
+          middle_name: string | null
           phone: string | null
           profile_photo_url: string | null
           public_student_id: string | null
@@ -1178,9 +1181,12 @@ export type Database = {
           created_at?: string
           department_id?: string | null
           email: string
+          first_name?: string | null
           full_name: string
           id: string
+          last_name?: string | null
           level_id?: string | null
+          middle_name?: string | null
           phone?: string | null
           profile_photo_url?: string | null
           public_student_id?: string | null
@@ -1195,9 +1201,12 @@ export type Database = {
           created_at?: string
           department_id?: string | null
           email?: string
+          first_name?: string | null
           full_name?: string
           id?: string
+          last_name?: string | null
           level_id?: string | null
+          middle_name?: string | null
           phone?: string | null
           profile_photo_url?: string | null
           public_student_id?: string | null

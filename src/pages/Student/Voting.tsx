@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, Vote, User, Send, BarChart3, Trophy, Clock, StopCircle } from 'lucide-react';
@@ -223,7 +224,7 @@ export default function StudentVoting() {
                               <CardContent className="p-4">
                                 <div className="flex items-start gap-3">
                                   <Avatar className="h-16 w-16">
-                                    <AvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
+                                    <SignedAvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
                                     <AvatarFallback><User className="h-6 w-6" /></AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1 min-w-0">
@@ -292,7 +293,7 @@ export default function StudentVoting() {
                           return (
                             <div key={cand.id} className={`flex items-center gap-3 p-2 rounded-lg ${isWinner ? 'bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-500/30' : ''}`}>
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
+                                <SignedAvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
                                 <AvatarFallback>{cand.profiles?.full_name?.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1">

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
 import { Badge } from '@/components/ui/badge';
 import { User, CheckCircle, XCircle, Clock, ShieldCheck, BookOpen, BarChart3 } from 'lucide-react';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
@@ -136,7 +137,7 @@ export default function Verify() {
 
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={student.profile_photo_url} />
+              <SignedAvatarImage src={student.profile_photo_url} />
               <AvatarFallback><User className="h-8 w-8" /></AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">

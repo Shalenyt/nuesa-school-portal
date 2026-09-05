@@ -69,6 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: 'https://www.nuesa.org/auth/success',
         data: {
           full_name: userData.fullName,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          middle_name: userData.middleName,
           role: userData.role,
           student_id: userData.studentId,
           staff_id: userData.staffId,

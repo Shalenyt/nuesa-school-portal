@@ -5,7 +5,8 @@ import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
 import { User } from 'lucide-react';
 
 interface CourseInfo {
@@ -139,7 +140,7 @@ export default function TeacherStudentDetail() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-6">
               <Avatar className="h-32 w-32">
-                <AvatarImage src={student.profile_photo_url} />
+                <SignedAvatarImage src={student.profile_photo_url} />
                 <AvatarFallback><User className="h-16 w-16" /></AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-4">

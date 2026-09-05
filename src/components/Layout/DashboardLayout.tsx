@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/Shared/UserAvatar';
+import { firstNameOf } from '@/lib/name';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LogOut, Download } from 'lucide-react';
 import oaustechLogo from '@/assets/oaustech-logo.png';
@@ -131,15 +132,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   onClick={() => navigate(getProfileUrl())}
                   className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                 >
-                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                    <AvatarImage src={profile?.profile_photo_url} />
-                    <AvatarFallback className="text-xs">
-                      {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    photoUrl={profile?.profile_photo_url}
+                    name={profile?.full_name}
+                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    fallbackClassName="text-xs"
+                  />
                   <div className="text-sm hidden sm:block text-left">
                     <span className="text-muted-foreground">Welcome,</span>{' '}
-                    <span className="font-medium">{profile?.full_name}</span>
+                    <span className="font-medium">{firstNameOf(profile, '')}</span>
                   </div>
                 </button>
                 
