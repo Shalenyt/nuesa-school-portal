@@ -52,6 +52,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				theme: {
+					DEFAULT: 'hsl(var(--theme-primary))',
+					foreground: 'hsl(var(--theme-primary-foreground))',
+					light: 'hsl(var(--theme-primary-light))',
+					muted: 'hsl(var(--theme-primary-muted))',
+					border: 'hsl(var(--theme-primary-border))'
+				},
 				urgency: {
 					comfortable: 'hsl(var(--urgency-comfortable))',
 					upcoming: 'hsl(var(--urgency-upcoming))',
