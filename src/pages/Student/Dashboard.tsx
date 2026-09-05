@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
+import { firstNameOf } from '@/lib/name';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateStudentGPA } from '@/lib/gpa';
@@ -231,8 +232,8 @@ export default function StudentDashboard() {
   }, [profile?.id]);
 
   const firstName = useMemo(
-    () => (profile?.full_name || '').trim().split(' ')[0] || 'there',
-    [profile?.full_name],
+    () => firstNameOf(profile),
+    [profile],
   );
 
   const urgentDeadline = deadlines.find((d) => {

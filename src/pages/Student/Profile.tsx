@@ -16,10 +16,13 @@ import { DownloadAppButton } from '@/components/Shared/DownloadAppButton';
 import { PhotoUpload } from '@/components/Shared/PhotoUpload';
 
 export default function StudentProfile() {
-  const { profile, user } = useAuth();
+  const { profile, user, refetchProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    last_name: '',
+    first_name: '',
+    middle_name: '',
     full_name: '',
     email: '',
     phone: '',
@@ -37,6 +40,9 @@ export default function StudentProfile() {
     fetchClassesAndSubjects();
     if (profile) {
       setFormData({
+        last_name: profile.last_name || '',
+        first_name: profile.first_name || '',
+        middle_name: profile.middle_name || '',
         full_name: profile.full_name || '',
         email: user?.email || '',
         phone: profile.phone || '',
@@ -141,13 +147,21 @@ export default function StudentProfile() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          full_name: formData.full_name,
+          last_name: formData.last_name.trim() || null,
+          first_name: formData.first_name.trim() || null,
+          middle_name: formData.middle_name.trim() || null,
+          full_name: [formData.last_name, formData.first_name, formData.middle_name]
+            .map((n) => n.trim())
+            .filter(Boolean)
+            .join(' ') || formData.full_name,
           phone: formData.phone,
           address: formData.address
         })
         .eq('id', profile?.id);
 
       if (error) throw error;
+
+      await refetchProfile();
 
       toast({
         title: "Profile updated",
@@ -213,11 +227,27 @@ export default function StudentProfile() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="full_name">Full Name</Label>
+                    <Label htmlFor="last_name">Last Name</Label>
                     <Input
-                      id="full_name"
-                      value={formData.full_name}
-                      onChange={(e) => handleInputChange('full_name', e.target.value)}
+                      id="last_name"
+                      value={formData.last_name}
+                      onChange={(e) => handleInputChange('last_name', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="first_name">First Name</Label>
+                    <Input
+                      id="first_name"
+                      value={formData.first_name}
+                      onChange={(e) => handleInputChange('first_name', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="middle_name">Middle Name</Label>
+                    <Input
+                      id="middle_name"
+                      value={formData.middle_name}
+                      onChange={(e) => handleInputChange('middle_name', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
