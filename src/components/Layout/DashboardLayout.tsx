@@ -131,12 +131,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   onClick={() => navigate(getProfileUrl())}
                   className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                 >
-                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                    <AvatarImage src={profile?.profile_photo_url} />
-                    <AvatarFallback className="text-xs">
-                      {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    photoUrl={profile?.profile_photo_url}
+                    name={profile?.full_name}
+                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    fallbackClassName="text-xs"
+                  />
                   <div className="text-sm hidden sm:block text-left">
                     <span className="text-muted-foreground">Welcome,</span>{' '}
                     <span className="font-medium">{profile?.full_name}</span>
