@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LogOut, Download } from 'lucide-react';
 import oaustechLogo from '@/assets/oaustech-logo.png';
+import { GlobalSearch } from '@/components/Shared/GlobalSearch';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -119,6 +120,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </a>
               
               <div className="ml-auto flex items-center gap-1 sm:gap-3 shrink-0">
+                <GlobalSearch />
                 {showInstallButton && (
                   <Button variant="outline" size="sm" onClick={handleInstall} className="px-2 sm:px-3 gap-1">
                     <Download className="h-4 w-4" />

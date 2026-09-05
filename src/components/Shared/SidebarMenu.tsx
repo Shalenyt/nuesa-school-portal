@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, BarChart3, Settings, BookOpen, FileText, MessageSquare, Upload,
-  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode, Vote, MessageCircle, FileSpreadsheet
+  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode, Vote, MessageCircle, FileSpreadsheet, LifeBuoy, ScrollText
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -25,6 +25,8 @@ const adminMenuItems = [
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Voting", url: "/admin/voting", icon: Vote },
   { title: "Feedback", url: "/admin/feedback", icon: MessageCircle },
+  { title: "Support Centre", url: "/admin/support", icon: LifeBuoy },
+  { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
   { title: "Semester", url: "/admin/semester-settings", icon: Calendar },
   { title: "Exam Timetable", url: "/admin/exam-timetable", icon: FileSpreadsheet },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
@@ -63,6 +65,7 @@ const studentMenuItems = [
   { title: "Payments", url: "/student/payments", icon: CreditCard },
   { title: "Voting", url: "/student/voting", icon: Vote },
   { title: "Feedback", url: "/student/feedback", icon: MessageCircle },
+  { title: "Support Centre", url: "/student/support", icon: LifeBuoy },
   { title: "Student ID", url: "/student/student-id", icon: QrCode },
   { title: "Exam Timetable", url: "/student/exam-timetable", icon: FileSpreadsheet },
   { title: "Notifications", url: "/student/notifications", icon: Bell }
