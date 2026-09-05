@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { logAudit } from '@/lib/audit';
 import { Check, X, Users, Trash2, Eye, Search } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -68,6 +69,15 @@ export default function ManageUsers() {
         });
       } catch (e) { console.error('Email failed:', e); }
     }
+    logAudit({
+      action: status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : 'status_change',
+      resourceType: 'user',
+      resourceId: userId,
+      resourceLabel: user.full_name,
+      description: `Account ${status}`,
+      oldValues: { status: user.status },
+      newValues: { status },
+    });
     toast({ title: 'Success', description: `User ${status} successfully` });
     fetchProfiles();
   };
@@ -75,6 +85,7 @@ export default function ManageUsers() {
   const deleteUser = async (userId: string, email: string) => {
     try {
       await supabase.functions.invoke('admin-delete-user', { body: { userId } });
+      logAudit({ action: 'delete', resourceType: 'user', resourceId: userId, resourceLabel: email, description: 'Account permanently deleted' });
       toast({ title: 'Deleted', description: `${email} removed from system` });
       fetchProfiles();
     } catch (e) { toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' }); }

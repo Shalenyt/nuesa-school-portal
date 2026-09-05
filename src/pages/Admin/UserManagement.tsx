@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logAudit } from '@/lib/audit';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -165,6 +166,7 @@ export default function UserManagement() {
         // Don't fail the whole operation if email fails
       }
 
+      logAudit({ action: 'role_change', resourceType: 'user', resourceId: userId, resourceLabel: userProfile.full_name, description: 'Promoted to admin', newValues: { role: 'admin' } });
       toast({
         title: "User promoted",
         description: "User has been promoted to admin",
@@ -189,6 +191,7 @@ export default function UserManagement() {
 
       if (error) throw error;
 
+      logAudit({ action: 'role_change', resourceType: 'user', resourceId: userId, description: 'Demoted to lecturer', newValues: { role: 'teacher' } });
       toast({
         title: "User demoted",
         description: "User has been demoted to lecturer",
@@ -217,6 +220,7 @@ export default function UserManagement() {
         throw error;
       }
 
+      logAudit({ action: 'delete', resourceType: 'user', resourceId: userId, description: 'Account permanently deleted' });
       toast({
         title: "User deleted",
         description: "User has been permanently deleted from the system.",
