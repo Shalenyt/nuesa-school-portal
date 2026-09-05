@@ -37,6 +37,8 @@ import AdminPayments from "./pages/Admin/Payments";
 import AdminVoting from "./pages/Admin/Voting";
 import AdminFeedback from "./pages/Admin/Feedback";
 import AdminExamTimetable from "./pages/Admin/ExamTimetable";
+import AdminSupport from "./pages/Admin/Support";
+import AuditLogs from "./pages/Admin/AuditLogs";
 
 // Teacher pages
 import TeacherProfile from "./pages/Teacher/Profile";
