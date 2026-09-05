@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, CheckCircle, XCircle, Users, BarChart3, Download, Vote, Eye, Trash2, Clock, Trophy, StopCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -376,7 +377,7 @@ export default function AdminVoting() {
                       {posCandidates.map(cand => (
                         <div key={cand.id} className="flex items-center gap-4 p-3 border rounded-lg">
                           <Avatar className="h-12 w-12">
-                            <AvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
+                            <SignedAvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
                             <AvatarFallback>{cand.profiles?.full_name?.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
@@ -456,7 +457,7 @@ export default function AdminVoting() {
                         return (
                           <div key={cand.id} className={`flex items-center gap-4 p-3 border rounded-lg ${isWinner ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20' : ''}`}>
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
+                              <SignedAvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
                               <AvatarFallback>{cand.profiles?.full_name?.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
