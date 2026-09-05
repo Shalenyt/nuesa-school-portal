@@ -74,6 +74,7 @@ import StudentPayments from "./pages/Student/Payments";
 import StudentVoting from "./pages/Student/Voting";
 import StudentFeedback from "./pages/Student/Feedback";
 import StudentExamTimetable from "./pages/Student/ExamTimetable";
+import StudentSupport from "./pages/Student/Support";
 
 import Verify from "./pages/Verify";
 import VerifyPayment from "./pages/VerifyPayment";
@@ -123,6 +124,8 @@ function AppRoutes() {
       <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['admin']}><AdminPayments /></ProtectedRoute>} />
       <Route path="/admin/voting" element={<ProtectedRoute allowedRoles={['admin']}><AdminVoting /></ProtectedRoute>} />
       <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin']}><AdminFeedback /></ProtectedRoute>} />
+      <Route path="/admin/support" element={<ProtectedRoute allowedRoles={['admin']}><AdminSupport /></ProtectedRoute>} />
+      <Route path="/admin/audit-logs" element={<ProtectedRoute allowedRoles={['admin']}><AuditLogs /></ProtectedRoute>} />
       <Route path="/admin/exam-timetable" element={<ProtectedRoute allowedRoles={['admin']}><AdminExamTimetable /></ProtectedRoute>} />
       
       {/* Teacher Routes */}
@@ -159,6 +162,7 @@ function AppRoutes() {
       <Route path="/student/payments" element={<ProtectedRoute allowedRoles={['student']}><StudentPayments /></ProtectedRoute>} />
       <Route path="/student/voting" element={<ProtectedRoute allowedRoles={['student']}><StudentVoting /></ProtectedRoute>} />
       <Route path="/student/feedback" element={<ProtectedRoute allowedRoles={['student']}><StudentFeedback /></ProtectedRoute>} />
+      <Route path="/student/support" element={<ProtectedRoute allowedRoles={['student']}><StudentSupport /></ProtectedRoute>} />
       <Route path="/student/exam-timetable" element={<ProtectedRoute allowedRoles={['student']}><StudentExamTimetable /></ProtectedRoute>} />
       
       <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
