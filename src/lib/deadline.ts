@@ -60,7 +60,7 @@ const META: Record<UrgencyLevel, { category: string; badge: string; dot: string;
   },
   overdue: {
     category: 'Overdue',
-    badge: 'bg-urgency-overdue/10 text-urgency-overdue border-urgency-overdue/30',
+    badge: 'bg-urgency-overdue/10 text-urgency-overdue border-urgency-overdue/40 font-semibold',
     dot: 'bg-urgency-overdue',
     accent: 'border-l-urgency-overdue',
   },
