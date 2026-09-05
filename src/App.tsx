@@ -77,7 +77,9 @@ import StudentExamTimetable from "./pages/Student/ExamTimetable";
 import StudentSupport from "./pages/Student/Support";
 
 import Verify from "./pages/Verify";
+import PublicStudentVerify from "./pages/PublicStudentVerify";
 import VerifyPayment from "./pages/VerifyPayment";
+
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
