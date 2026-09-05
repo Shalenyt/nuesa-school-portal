@@ -247,6 +247,49 @@ export default function StudentPayments() {
                 );
               })}
             </div>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Payment history</CardTitle></CardHeader>
+              <CardContent className="p-0 sm:p-0">
+                {myRecords.length === 0 ? (
+                  <p className="px-6 pb-6 text-sm text-muted-foreground">You have not made any payments yet.</p>
+                ) : (
+                  <ul className="divide-y">
+                    {[...myRecords]
+                      .sort((a: any, b: any) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime())
+                      .map((r: any) => {
+                        const related = payments.find((p: any) => p.id === r.payment_id);
+                        const ok = r.status === 'paid';
+                        return (
+                          <li key={r.id} className="px-4 sm:px-6 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{related?.title || 'Payment'}</p>
+                              <p className="text-xs text-muted-foreground break-all">
+                                Ref {r.reference} · Receipt {r.receipt_number} · {new Date(r.paid_at).toLocaleString()}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className={ok
+                              ? 'bg-green-600/10 text-green-700 dark:text-green-400 border-green-600/30'
+                              : r.status === 'failed'
+                                ? 'bg-destructive/10 text-destructive border-destructive/30'
+                                : 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/30'}>
+                              {ok ? 'Successful' : r.status === 'failed' ? 'Failed' : 'Pending'}
+                            </Badge>
+                            <div className="ml-auto flex items-center gap-3">
+                              <span className="font-semibold">₦{parseFloat(r.amount_paid).toLocaleString()}</span>
+                              {related && ok && (
+                                <Button size="sm" variant="outline" onClick={() => viewReceipt(related)}>
+                                  <Download className="h-4 w-4 mr-1" /> Receipt
+                                </Button>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
           </>
         )}
 
@@ -289,9 +332,14 @@ export default function StudentPayments() {
                   </div>
                 </div>
 
-                <Button className="w-full" onClick={downloadReceipt}>
-                  <Download className="h-4 w-4 mr-2" /> Download Receipt
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button className="flex-1" onClick={downloadReceipt}>
+                    <Download className="h-4 w-4 mr-2" /> Download Receipt
+                  </Button>
+                  <Button variant="outline" className="flex-1" onClick={() => window.print()}>
+                    Print Receipt
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
