@@ -1,73 +1,143 @@
-# Welcome to your Lovable project
+# NUESA Portal
 
-## Project info
+A production student management portal for the NUESA faculty body: dashboards, courses, materials, assignments, quizzes, attendance, results, exam timetables, payments, elections, digital ID, a support centre and a full administrative audit trail.
 
-**URL**: https://lovable.dev/projects/174f57a4-6f93-448b-ab94-05446cb4e575
+Live: https://www.nuesa.org
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Tech stack
 
-**Use Lovable**
+| Layer | Technology |
+| --- | --- |
+| UI | React 18, TypeScript, Vite 5 |
+| Styling | Tailwind CSS v3, shadcn/ui, semantic design tokens in `src/index.css` |
+| Data | Supabase (Postgres, Auth, Storage, Edge Functions) |
+| State/data fetching | React hooks, TanStack Query |
+| Mobile | Installable PWA (`vite-plugin-pwa`) |
+| Email | Resend (transactional) via Supabase SMTP + Edge Functions |
+| Payments | Paystack, verified server-side in Edge Functions |
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/174f57a4-6f93-448b-ab94-05446cb4e575) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting started
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm install
+cp .env.example .env   # fill in your own Supabase project values
+npm run dev            # http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+Build and preview production output:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run build
+npm run preview
+```
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Environment variables
 
-## What technologies are used for this project?
+Only **public** configuration belongs in `.env` — it is bundled into the browser build.
 
-This project is built with:
+| Variable | Purpose |
+| --- | --- |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon/publishable key (safe for the browser) |
+| `VITE_SUPABASE_PROJECT_ID` | Supabase project ref |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+`.env` is git-ignored; `.env.example` documents the required keys.
 
-## How can I deploy this project?
+**Never** put these in `.env` or any frontend file: the Supabase service-role key, Paystack secret key, Resend API key, SMTP passwords or database credentials. They live only in Supabase Edge Function secrets and are read with `Deno.env.get(...)`.
 
-Simply open [Lovable](https://lovable.dev/projects/174f57a4-6f93-448b-ab94-05446cb4e575) and click on Share -> Publish.
+Currently configured server-side secrets: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `PAYSTACK_SECRET_KEY`, `RESEND_API_KEY`, `LOVABLE_API_KEY`.
 
-## Can I connect a custom domain to my Lovable project?
+If a secret is ever committed or exposed, treat it as compromised: rotate it in the provider dashboard, update the Supabase secret, and redeploy.
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Project structure
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```
+src/
+  components/
+    Layout/        Dashboard shell (sidebar, header, global search, install button)
+    Shared/        Cross-role widgets (SidebarMenu, GlobalSearch, DeadlineBadge, uploads)
+    Student/ Teacher/ Admin/   Role-specific widgets
+    ui/            shadcn/ui primitives
+  hooks/           useAuth, useAutoLogout, useSchoolSettings, notification counts, …
+  lib/             audit.ts, support.ts, deadline.ts, gpa.ts, notifications.ts
+  pages/
+    Auth/          Login, Apply, password recovery/reset, email change
+    Student/ Teacher/ Admin/   Route pages
+  integrations/supabase/       Generated client and types (do not edit types.ts)
+supabase/
+  functions/       Edge Functions (payments, email, admin actions, elections)
+  config.toml      Edge Function configuration
+```
+
+---
+
+## Roles
+
+| Role | Entry point | Scope |
+| --- | --- | --- |
+| Student | `/student/dashboard` | Own courses, materials, assignments, quizzes, attendance, results, payments, tickets |
+| Lecturer | `/teacher/profile` | Assigned courses, grading, quizzes, attendance, analytics, student records |
+| Admin | `/admin/dashboard` | Users, structure, courses, payments, elections, support centre, audit logs |
+
+Roles come from `public.profiles.role` and are enforced in the database with the `is_admin()` / `is_teacher()` security-definer functions used by RLS policies, not from client state.
+
+---
+
+## Key modules
+
+- **Student dashboard** — greeting, today's classes, urgent deadlines, GPA snapshot, announcements, quick actions.
+- **Deadline urgency** (`src/lib/deadline.ts`) — six levels from comfortable to overdue, always colour *and* text so it is readable without colour vision.
+- **Support Centre** (`src/lib/support.ts`) — tickets with number, category, status, priority, assignment, threaded replies and admin-only internal notes.
+- **Audit trail** (`src/lib/audit.ts`) — `logAudit({...})` appends an entry with actor, action, record, before/after values. Sensitive keys (passwords, tokens, secrets) are stripped before writing. Admin-only, append-only.
+- **Global search** — `Ctrl/Cmd + K` from any dashboard page; queries run with the signed-in user's own permissions so results respect RLS.
+- **Payments** — Paystack transactions are always verified server-side in `supabase/functions/paystack-verify`; duplicate references are rejected and students can never mark their own payment as paid.
+
+---
+
+## Database and security
+
+- Every table has Row Level Security enabled with explicit policies.
+- Roles are never read from the client for authorisation decisions.
+- `audit_logs` allows insert (own actor) and admin select only — no update or delete policy exists.
+- Storage: `school-assets` is public; `materials`, `assignments` and `profile-photos` are private and served through signed URLs.
+- Schema changes are made through Supabase migrations; `src/integrations/supabase/types.ts` is generated and must not be edited by hand.
+
+---
+
+## Edge Functions
+
+| Function | Purpose |
+| --- | --- |
+| `paystack-initialize` / `paystack-verify` | Start and server-verify payments |
+| `send-notification-email` | Branded transactional email via Resend |
+| `notify-password-change` | Security notice on password change |
+| `change-email` | Admin-API email change with notifications to the old address |
+| `admin-delete-user` | Removes auth user and profile records |
+| `close-election` | Tallies votes and publishes results |
+| `exam-notifications` | Exam reminders |
+
+---
+
+## PWA
+
+Installable on Android, iOS (Add to Home Screen) and desktop. Static assets are precached; private academic data is always fetched fresh so nothing stale or unauthorised is shown offline.
+
+---
+
+## Conventions
+
+- Say **Lecturer**, never "Teacher", and **Matric NO**, never "Student ID", in the interface.
+- Use semantic design tokens; do not hardcode colour utilities.
+- Do not remove working functionality — upgrade in place.
+
+---
+
+Built by Shalen.
