@@ -104,7 +104,8 @@ function AppRoutes() {
       
       {/* Verification Routes (public) */}
       <Route path="/verify" element={<Verify />} />
-      <Route path="/verify/student/:id" element={<Verify />} />
+      <Route path="/verify/student/:code" element={<PublicStudentVerify />} />
+
       <Route path="/verify/payment/:id" element={<VerifyPayment />} />
       
       {/* Admin Routes */}
