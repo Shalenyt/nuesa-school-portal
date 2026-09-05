@@ -1166,6 +1166,7 @@ export type Database = {
           level_id: string | null
           phone: string | null
           profile_photo_url: string | null
+          public_student_id: string | null
           role: Database["public"]["Enums"]["user_role"]
           staff_id: string | null
           status: Database["public"]["Enums"]["application_status"]
@@ -1182,6 +1183,7 @@ export type Database = {
           level_id?: string | null
           phone?: string | null
           profile_photo_url?: string | null
+          public_student_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           staff_id?: string | null
           status?: Database["public"]["Enums"]["application_status"]
@@ -1198,6 +1200,7 @@ export type Database = {
           level_id?: string | null
           phone?: string | null
           profile_photo_url?: string | null
+          public_student_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           staff_id?: string | null
           status?: Database["public"]["Enums"]["application_status"]
@@ -1543,9 +1546,12 @@ export type Database = {
       school_settings: {
         Row: {
           created_at: string
+          faculty_name: string
           financial_secretary_signature_url: string | null
           id: string
+          institution_name: string
           logo_url: string | null
+          organization_name: string
           portal_name: string | null
           president_signature_url: string | null
           school_name: string
@@ -1555,9 +1561,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          faculty_name?: string
           financial_secretary_signature_url?: string | null
           id?: string
+          institution_name?: string
           logo_url?: string | null
+          organization_name?: string
           portal_name?: string | null
           president_signature_url?: string | null
           school_name?: string
@@ -1567,9 +1576,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          faculty_name?: string
           financial_secretary_signature_url?: string | null
           id?: string
+          institution_name?: string
           logo_url?: string | null
+          organization_name?: string
           portal_name?: string | null
           president_signature_url?: string | null
           school_name?: string
@@ -1985,12 +1997,29 @@ export type Database = {
     }
     Functions: {
       auto_manage_semester_lifecycle: { Args: never; Returns: undefined }
+      generate_public_student_id: { Args: never; Returns: string }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
       is_admin: { Args: never; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
+      verify_student_by_code: {
+        Args: { p_code: string }
+        Returns: {
+          department_name: string
+          faculty_name: string
+          full_name: string
+          institution_name: string
+          is_verified: boolean
+          level_name: string
+          logo_url: string
+          matric_number: string
+          organization_name: string
+          phone: string
+          profile_photo_url: string
+        }[]
+      }
       verify_student_public: {
         Args: { student_matric: string }
         Returns: {
