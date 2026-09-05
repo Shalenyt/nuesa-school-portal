@@ -316,7 +316,11 @@ export default function AdminPayments() {
           </div>
         )}
 
+        {/* Payment Records & Exports */}
+        <PaymentExports />
+
         {/* Payment Detail Dialog */}
+
         <Dialog open={!!selectedPayment} onOpenChange={() => { setSelectedPayment(null); setSearchQuery(''); setFilterLevel('all'); setFilterDepartment('all'); }}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
