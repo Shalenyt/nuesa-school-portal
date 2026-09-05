@@ -165,14 +165,42 @@ export default function StudentPayments() {
 
         {loading ? <div className="text-center py-8">Loading payments...</div> : (
           <>
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Total Due</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold">{payments.filter(p => getPaymentStatus(p).status !== 'paid').length}</p></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Paid</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold text-green-600">{payments.filter(p => getPaymentStatus(p).status === 'paid').length}</p></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Overdue</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold text-destructive">{payments.filter(p => getPaymentStatus(p).status === 'overdue').length}</p></CardContent></Card>
-            </div>
+            {(() => {
+              const outstanding = payments.filter(p => getPaymentStatus(p).status !== 'paid');
+              const outstandingAmount = outstanding.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+              const paidAmount = myRecords.reduce((sum: number, r: any) => sum + parseFloat(r.amount_paid || 0), 0);
+              const overdue = payments.filter(p => getPaymentStatus(p).status === 'overdue');
+              const nextDue = outstanding
+                .filter(p => p.due_date)
+                .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
+              const lastRecord = [...myRecords].sort((a: any, b: any) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime())[0];
+              return (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Outstanding</CardTitle></CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">₦{outstandingAmount.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">{outstanding.length} item{outstanding.length === 1 ? '' : 's'} unpaid</p>
+                    </CardContent></Card>
+                  <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Paid</CardTitle></CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold text-green-600">₦{paidAmount.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {lastRecord ? `Last on ${new Date(lastRecord.paid_at).toLocaleDateString()}` : 'No payments yet'}
+                      </p>
+                    </CardContent></Card>
+                  <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Overdue</CardTitle></CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold text-destructive">{overdue.length}</p>
+                      <p className="text-xs text-muted-foreground">Past the due date</p>
+                    </CardContent></Card>
+                  <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Next deadline</CardTitle></CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{nextDue ? new Date(nextDue.due_date).toLocaleDateString() : '—'}</p>
+                      <p className="text-xs text-muted-foreground truncate">{nextDue ? nextDue.title : 'Nothing scheduled'}</p>
+                    </CardContent></Card>
+                </div>
+              );
+            })()}
 
             <div className="space-y-4">
               {payments.length === 0 ? (
