@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { logAudit } from '@/lib/audit';
 import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -153,10 +154,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    logAudit({ action: 'login', resourceType: 'session', resourceId: data?.user?.id, resourceLabel: fetchedProfile?.full_name ?? email, description: 'Signed in' });
+
     return { error: null, profile: fetchedProfile };
   };
 
   const signOut = async () => {
+    await logAudit({ action: 'logout', resourceType: 'session', description: 'Signed out' });
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
