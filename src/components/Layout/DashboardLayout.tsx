@@ -139,7 +139,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   />
                   <div className="text-sm hidden sm:block text-left">
                     <span className="text-muted-foreground">Welcome,</span>{' '}
-                    <span className="font-medium">{profile?.full_name}</span>
+                    <span className="font-medium">{firstNameOf(profile, '')}</span>
                   </div>
                 </button>
                 
