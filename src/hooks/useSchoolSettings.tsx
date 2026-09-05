@@ -7,7 +7,11 @@ interface SchoolSettings {
   school_name: string;
   portal_name?: string;
   theme_color?: string;
+  institution_name?: string;
+  faculty_name?: string;
+  organization_name?: string;
 }
+
 
 export function useSchoolSettings() {
   const [settings, setSettings] = useState<SchoolSettings | null>(null);
