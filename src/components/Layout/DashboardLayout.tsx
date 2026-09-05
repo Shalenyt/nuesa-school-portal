@@ -7,6 +7,7 @@ import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/Shared/UserAvatar';
+import { firstNameOf } from '@/lib/name';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LogOut, Download } from 'lucide-react';
 import oaustechLogo from '@/assets/oaustech-logo.png';
