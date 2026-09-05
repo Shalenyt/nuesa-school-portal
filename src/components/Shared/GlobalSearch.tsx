@@ -139,10 +139,10 @@ export function GlobalSearch() {
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className="gap-2 px-2 sm:px-3 text-muted-foreground"
+        className="gap-2 px-2 sm:px-3 text-muted-foreground border-theme-border/60 hover:bg-theme-light hover:text-theme focus-visible:ring-theme"
         aria-label="Search the portal"
       >
-        <Search className="h-4 w-4" />
+        <Search className="h-4 w-4 text-theme" />
         <span className="hidden md:inline">Search</span>
         <kbd className="hidden lg:inline pointer-events-none rounded border bg-muted px-1.5 text-[10px] font-medium">
           ⌘K

@@ -240,6 +240,10 @@ export default function StudentDashboard() {
     return s && (s.level === 'critical' || s.level === 'soon' || s.level === 'overdue');
   });
 
+  const outstandingOverdue = !!(
+    outstanding?.due && getDeadlineStatus(outstanding.due)?.level === 'overdue'
+  );
+
   const hasToday =
     todayClasses.length > 0 || !!urgentDeadline || !!outstanding || unreadCount > 0;
 
@@ -250,11 +254,18 @@ export default function StudentDashboard() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {greeting()}, {firstName}.
+              {greeting()}, <span className="text-theme">{firstName}</span>.
             </h1>
             <p className="text-sm text-muted-foreground">Here's what you have coming up today.</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={load} disabled={loading} aria-label="Refresh dashboard">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={load}
+            disabled={loading}
+            aria-label="Refresh dashboard"
+            className="border-theme-border/60 text-theme hover:bg-theme-light hover:text-theme focus-visible:ring-theme"
+          >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
             <span className="ml-2 hidden sm:inline">Refresh</span>
           </Button>
@@ -283,9 +294,13 @@ export default function StudentDashboard() {
         ) : (
           <>
             {/* Today's overview */}
-            <Card>
+            <Card className="overflow-hidden border-theme-border/40">
+              <div className="h-1 w-full bg-theme" aria-hidden="true" />
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Today · {DAYS[new Date().getDay()]}</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CalendarDays className="h-4 w-4 text-theme" aria-hidden="true" />
+                  Today · {DAYS[new Date().getDay()]}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {!hasToday && (
@@ -315,7 +330,7 @@ export default function StudentDashboard() {
                 {todayClasses.map((c) => (
                   <div
                     key={c.id}
-                    className="flex items-center justify-between gap-3 rounded-md border p-3"
+                    className="flex items-center justify-between gap-3 rounded-md border border-l-2 border-l-theme bg-theme-light/50 p-3"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
@@ -325,7 +340,7 @@ export default function StudentDashboard() {
                         {c.room ? `Room ${c.room}` : 'Venue TBA'}
                       </p>
                     </div>
-                    <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    <span className="whitespace-nowrap rounded-full bg-theme-muted px-2 py-0.5 text-xs font-medium text-theme">
                       {String(c.start_time).slice(0, 5)} – {String(c.end_time).slice(0, 5)}
                     </span>
                   </div>
@@ -334,14 +349,21 @@ export default function StudentDashboard() {
                 {outstanding && (
                   <Link
                     to="/student/payments"
-                    className="flex items-center justify-between gap-3 rounded-md border p-3 transition-colors hover:bg-accent"
+                    className={cn(
+                      'flex items-center justify-between gap-3 rounded-md border border-l-2 p-3 transition-colors',
+                      outstandingOverdue
+                        ? 'border-destructive/40 border-l-destructive bg-destructive/5 hover:bg-destructive/10'
+                        : 'border-l-theme hover:bg-theme-light',
+                    )}
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{outstanding.title}</p>
-                      <p className="text-xs text-muted-foreground">Outstanding payment</p>
+                      <p className={cn('text-xs', outstandingOverdue ? 'font-medium text-destructive' : 'text-muted-foreground')}>
+                        {outstandingOverdue ? 'Overdue payment' : 'Outstanding payment'}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">
+                      <span className={cn('text-sm font-semibold', outstandingOverdue && 'text-destructive')}>
                         ₦{outstanding.amount.toLocaleString()}
                       </span>
                       {outstanding.due && <DeadlineBadge dueDate={outstanding.due} />}
@@ -352,12 +374,15 @@ export default function StudentDashboard() {
             </Card>
 
             {/* Academic snapshot */}
-            <Card>
+            <Card className="border-theme-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Academic snapshot</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <GraduationCap className="h-4 w-4 text-theme" aria-hidden="true" />
+                  Academic snapshot
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                   {[
                     { label: 'GPA', value: gpa != null ? gpa.toFixed(2) : '—' },
                     { label: 'Semester', value: semester || '—' },
@@ -365,9 +390,12 @@ export default function StudentDashboard() {
                     { label: 'Registered units', value: String(totalUnits) },
                     { label: 'Graded units', value: String(completedUnits) },
                   ].map((m) => (
-                    <div key={m.label}>
+                    <div
+                      key={m.label}
+                      className="rounded-md border border-theme-border/40 bg-theme-light/40 p-3"
+                    >
                       <dt className="text-xs text-muted-foreground">{m.label}</dt>
-                      <dd className="truncate text-lg font-semibold">{m.value}</dd>
+                      <dd className="truncate text-lg font-semibold text-theme">{m.value}</dd>
                     </div>
                   ))}
                 </dl>
@@ -376,9 +404,12 @@ export default function StudentDashboard() {
 
             <div className="grid gap-4 lg:grid-cols-2">
               {/* Deadlines */}
-              <Card>
+              <Card className="border-theme-border/40">
                 <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-                  <CardTitle className="text-base">Upcoming deadlines</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <ClipboardList className="h-4 w-4 text-theme" aria-hidden="true" />
+                    Upcoming deadlines
+                  </CardTitle>
                   <DeadlineLegend />
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -407,24 +438,34 @@ export default function StudentDashboard() {
                       );
                     })
                   )}
-                  <Button variant="ghost" size="sm" className="w-full" asChild>
+                  <Button variant="ghost" size="sm" className="w-full text-theme hover:bg-theme-light hover:text-theme" asChild>
                     <Link to="/student/submit-assignment">View all assignments</Link>
                   </Button>
                 </CardContent>
               </Card>
 
               {/* Announcements */}
-              <Card>
+              <Card className="border-theme-border/40">
                 <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-                  <CardTitle className="text-base">Recent announcements</CardTitle>
-                  <Megaphone className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Megaphone className="h-4 w-4 text-theme" aria-hidden="true" />
+                    Recent announcements
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {announcements.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No recent announcements.</p>
                   ) : (
                     announcements.map((a) => (
-                      <div key={a.id} className="rounded-md border p-3">
+                      <div
+                        key={a.id}
+                        className={cn(
+                          'rounded-md border border-l-2 p-3',
+                          a.type === 'urgent'
+                            ? 'border-destructive/40 border-l-destructive bg-destructive/5'
+                            : 'border-l-theme bg-theme-light/40',
+                        )}
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <p className="truncate text-sm font-medium">{a.title}</p>
                           {a.type === 'urgent' && (
@@ -443,18 +484,23 @@ export default function StudentDashboard() {
             </div>
 
             {/* Notifications */}
-            <Card>
+            <Card className="border-theme-border/40">
               <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Bell className="h-4 w-4" aria-hidden="true" />
+                  <Bell className="h-4 w-4 text-theme" aria-hidden="true" />
                   Notifications
                   {unreadCount > 0 && (
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge className="border-theme-border/50 bg-theme-muted text-[10px] text-theme hover:bg-theme-muted">
                       {unreadCount} unread
                     </Badge>
                   )}
                 </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/student/notifications')}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-theme hover:bg-theme-light hover:text-theme"
+                  onClick={() => navigate('/student/notifications')}
+                >
                   View all
                 </Button>
               </CardHeader>
@@ -467,7 +513,7 @@ export default function StudentDashboard() {
                       key={n.id}
                       className={cn(
                         'flex items-start justify-between gap-3 rounded-md border p-3',
-                        !n.is_read && 'bg-accent/40',
+                        !n.is_read && 'border-l-2 border-l-theme bg-theme-light/60',
                       )}
                     >
                       <div className="min-w-0">
@@ -484,7 +530,7 @@ export default function StudentDashboard() {
             </Card>
 
             {/* Quick actions */}
-            <Card>
+            <Card className="border-theme-border/40">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Quick actions</CardTitle>
               </CardHeader>
@@ -494,9 +540,9 @@ export default function StudentDashboard() {
                     <Link
                       key={a.to}
                       to={a.to}
-                      className="flex min-h-[64px] flex-col items-center justify-center gap-1.5 rounded-md border p-3 text-xs font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex min-h-[64px] flex-col items-center justify-center gap-1.5 rounded-md border p-3 text-center text-xs font-medium transition-colors hover:border-theme-border hover:bg-theme-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme"
                     >
-                      <a.icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <a.icon className="h-4 w-4 text-theme" aria-hidden="true" />
                       {a.label}
                     </Link>
                   ))}

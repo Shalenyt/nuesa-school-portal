@@ -44,7 +44,14 @@ All colors MUST be HSL.
     --urgency-approaching: 42 88% 38%;
     --urgency-soon: 26 88% 43%;
     --urgency-critical: 0 78% 47%;
-    --urgency-overdue: 220 9% 40%;
+    --urgency-overdue: 0 72% 38%;
+
+    /* Dynamic theme accent (driven by the admin theme colour) */
+    --theme-primary: var(--primary);
+    --theme-primary-foreground: var(--primary-foreground);
+    --theme-primary-light: 0 100% 96%;
+    --theme-primary-muted: 0 100% 92%;
+    --theme-primary-border: 0 100% 80%;
 
 
     --sidebar-background: 0 0% 98%;
@@ -90,7 +97,13 @@ All colors MUST be HSL.
     --urgency-approaching: 45 92% 60%;
     --urgency-soon: 27 92% 62%;
     --urgency-critical: 0 84% 65%;
-    --urgency-overdue: 220 9% 65%;
+    --urgency-overdue: 0 74% 58%;
+
+    --theme-primary: var(--primary);
+    --theme-primary-foreground: var(--primary-foreground);
+    --theme-primary-light: 0 40% 14%;
+    --theme-primary-muted: 0 40% 20%;
+    --theme-primary-border: 0 50% 32%;
 
     --ring: 0 100% 60%;
 
