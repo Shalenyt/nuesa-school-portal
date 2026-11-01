@@ -102,11 +102,11 @@ export function DigitalStudentID() {
             height={36}
           />
           <div className="text-left">
-            <p className="text-sm font-semibold uppercase">{(settings as any)?.institution_name || 'University of Abuja'}</p>
-            <p className="text-[11px] opacity-90">{(settings as any)?.organization_name || 'NUESA'}</p>
+            <p className="text-sm font-semibold uppercase">{(settings as any)?.organization_name || 'NUESA'} Portal</p>
+            <p className="text-[11px] opacity-90">{(settings as any)?.institution_name || 'University of Abuja'}</p>
           </div>
         </div>
-        <p className="text-xs font-bold uppercase tracking-widest">Digital Student ID</p>
+        <p className="text-xs font-bold uppercase tracking-widest">{(settings as any)?.organization_name || 'NUESA'} Portal ID</p>
       </div>
 
       <CardContent className="p-6 space-y-5">

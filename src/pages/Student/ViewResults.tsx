@@ -67,8 +67,8 @@ export default function StudentViewResults() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <Trophy className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-2 text-sm font-semibold">No results available</h3>
-                <p className="mt-1 text-sm text-muted-foreground">No graded assignments yet or results pending release.</p>
+                <h3 className="mt-2 text-sm font-semibold">No graded assignments yet</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Assignment grades will appear here once your lecturers mark them.</p>
               </div>
             </CardContent>
           </Card>

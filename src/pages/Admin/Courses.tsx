@@ -230,7 +230,7 @@ export default function AdminCourses() {
                   )}
                   <div className="flex flex-wrap gap-2 mb-3">
                     {course.semester && <Badge variant="secondary">{course.semester} Semester</Badge>}
-                    <Badge variant="outline">{course.credit_unit || 1} Credit{(course.credit_unit || 1) > 1 ? 's' : ''}</Badge>
+                    <Badge variant="outline">{course.credit_unit || 1} Unit{(course.credit_unit || 1) > 1 ? 's' : ''}</Badge>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Users className="h-4 w-4" />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { withStaffNames } from '@/lib/staffNames';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +36,7 @@ export default function TeacherAnnouncements() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAnnouncements(data || []);
+      setAnnouncements(await withStaffNames((data || []) as any[], 'author_id'));
     } catch (error) {
       console.error('Error fetching announcements:', error);
     } finally {

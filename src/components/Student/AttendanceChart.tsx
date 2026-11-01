@@ -23,21 +23,17 @@ export function AttendanceChart() {
 
       if (!enrollments?.length) { setLoading(false); return; }
 
-      const chartData = [];
-      for (const e of enrollments) {
-        const { count: total } = await (supabase as any)
-          .from('attendance_sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('course_id', e.course_id);
-
-        if (!total) continue;
-
+      // Load every course at the same time instead of one after another
+      // (the chart used to take several seconds to appear).
+      const rows = await Promise.all(enrollments.map(async (e) => {
         const sessions = await (supabase as any)
           .from('attendance_sessions')
           .select('id')
           .eq('course_id', e.course_id);
 
         const sessionIds = sessions.data?.map((s: any) => s.id) || [];
+        const total = sessionIds.length;
+        if (!total) return null;
 
         const { count: attended } = await (supabase as any)
           .from('attendance_records')
@@ -46,15 +42,15 @@ export function AttendanceChart() {
           .in('session_id', sessionIds);
 
         const pct = Math.round(((attended || 0) / total) * 100);
-        chartData.push({
+        return {
           name: (e as any).courses?.name?.substring(0, 12) || (e as any).courses?.subjects?.name?.substring(0, 12) || 'Course',
           percentage: pct,
           attended: attended || 0,
           total,
-        });
-      }
+        };
+      }));
 
-      setData(chartData);
+      setData(rows.filter(Boolean));
     } catch (err) {
       console.error('Error fetching attendance chart data:', err);
     } finally {

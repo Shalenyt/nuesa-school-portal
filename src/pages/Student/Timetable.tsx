@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getStaffNames } from '@/lib/staffNames';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Calendar, Clock, MapPin, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -75,17 +76,19 @@ export default function StudentTimetable() {
             id,
             name,
             subjects(name, code),
+            teacher_id,
             profiles(full_name)
           )
         `)
         .in('course_id', courseListData.course_ids);
 
+      const staff = await getStaffNames();
       const allTimetable = timetableData?.map((schedule: any) => ({
         ...schedule,
         courseName: schedule.courses?.name || schedule.courses?.subjects?.code || 'Course',
         courseCode: schedule.courses?.subjects?.code,
         subjectName: schedule.courses?.subjects?.name,
-        teacherName: schedule.courses?.profiles?.full_name,
+        teacherName: schedule.courses?.profiles?.full_name || staff[schedule.courses?.teacher_id]?.full_name,
         isEnrolled: enrolledIds.has(schedule.course_id),
       })) || [];
 

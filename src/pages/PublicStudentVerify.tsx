@@ -32,7 +32,7 @@ export default function PublicStudentVerify() {
   useEffect(() => {
     document.title = 'NUESA Student Verification';
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Official NUESA digital student ID verification.');
+    if (meta) meta.setAttribute('content', 'NUESA Portal ID verification.');
   }, []);
 
   useEffect(() => {
@@ -48,26 +48,8 @@ export default function PublicStudentVerify() {
         if (error) throw error;
         if (data && data.length > 0) row = data[0] as PublicStudent;
 
-        // Legacy QR codes carried the matric number — keep them working.
-        if (!row) {
-          const { data: legacy } = await supabase.rpc('verify_student_public', { student_matric: code });
-          if (legacy && legacy.length > 0) {
-            const l: any = legacy[0];
-            row = {
-              full_name: l.full_name,
-              matric_number: l.student_id,
-              profile_photo_url: l.profile_photo_url,
-              phone: null,
-              department_name: l.department_name,
-              faculty_name: 'Engineering',
-              level_name: l.level_name,
-              institution_name: 'University of Abuja',
-              organization_name: 'NUESA',
-              logo_url: null,
-              is_verified: l.status === 'approved',
-            };
-          }
-        }
+        // The old lookup by matric number has been removed: matric numbers
+        // are guessable, so anyone could list every student through it.
 
         if (cancelled) return;
         if (!row) { setState('not-found'); return; }
@@ -131,7 +113,6 @@ export default function PublicStudentVerify() {
     ['Department', s.department_name],
     ['Faculty', s.faculty_name],
     ['Level', s.level_name],
-    ['Phone', s.phone || 'Not provided'],
   ];
 
   return (
@@ -148,11 +129,11 @@ export default function PublicStudentVerify() {
               height={40}
             />
             <div className="text-left">
-              <p className="text-sm font-semibold uppercase tracking-wide">{s.institution_name}</p>
-              <p className="text-xs opacity-90">{s.organization_name}</p>
+              <p className="text-sm font-semibold uppercase tracking-wide">{s.organization_name} Portal</p>
+              <p className="text-xs opacity-90">{s.institution_name}</p>
             </div>
           </div>
-          <h1 className="text-base font-bold uppercase tracking-widest">Digital Student ID</h1>
+          <h1 className="text-base font-bold uppercase tracking-widest">{s.organization_name} Portal ID</h1>
         </header>
 
         <CardContent className="p-6 space-y-6">
@@ -194,7 +175,7 @@ export default function PublicStudentVerify() {
 
           <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground border-t pt-4">
             <ShieldCheck className="h-3 w-3" aria-hidden="true" />
-            Verified by {s.organization_name}, {s.institution_name}
+            Verified by the {s.organization_name} Portal
           </p>
         </CardContent>
       </Card>

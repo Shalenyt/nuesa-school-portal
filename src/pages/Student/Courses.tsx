@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { withStaffNames } from '@/lib/staffNames';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Users, Calendar, GraduationCap } from 'lucide-react';
@@ -63,6 +64,7 @@ export default function StudentCourses() {
           id, name, description, credit_unit, semester,
           subjects(name, code),
           classes(name),
+          teacher_id,
           profiles(full_name)
         `)
         .in('id', courseListData.course_ids);
@@ -73,9 +75,10 @@ export default function StudentCourses() {
         return;
       }
 
-      // Sort courses by name
-      const sortedCourses = coursesData.sort((a: any, b: any) => 
-        (a.subjects?.name || '').localeCompare(b.subjects?.name || '')
+      // Sort courses by course code
+      const named = await withStaffNames(coursesData, 'teacher_id');
+      const sortedCourses = named.sort((a: any, b: any) =>
+        (a.name || '').localeCompare(b.name || '')
       );
 
       setCourses(sortedCourses);
@@ -149,12 +152,12 @@ export default function StudentCourses() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5" />
-                    {course.subjects?.name || 'Course'}
+                    {course.name || course.subjects?.name || 'Course'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {course.name && (
-                    <p className="text-sm font-medium">{course.name}</p>
+                  {course.name && course.subjects?.name && (
+                    <p className="text-sm font-medium">{course.subjects.name}</p>
                   )}
                   {course.description && (
                     <p className="text-sm text-muted-foreground">{course.description}</p>
@@ -165,7 +168,7 @@ export default function StudentCourses() {
                       <Badge variant="secondary">{course.semester} Semester</Badge>
                     )}
                     {course.credit_unit && (
-                      <Badge variant="outline">{course.credit_unit} Credit{course.credit_unit > 1 ? 's' : ''}</Badge>
+                      <Badge variant="outline">{course.credit_unit} Unit{course.credit_unit > 1 ? 's' : ''}</Badge>
                     )}
                   </div>
 

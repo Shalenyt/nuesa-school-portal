@@ -57,6 +57,29 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Invalid payment metadata' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // The transaction must belong to the student calling this function
+    // (paystack-initialize stores student_id in the metadata).
+    if (txData.metadata?.student_id !== userId) {
+      return new Response(JSON.stringify({ error: 'This payment does not belong to your account' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Service-role client for server-side reads and the insert below
+    const adminSupabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // The amount paid must cover the amount set for this payment
+    const { data: expectedPayment } = await adminSupabase
+      .from('payments')
+      .select('amount')
+      .eq('id', paymentId)
+      .maybeSingle();
+
+    if (!expectedPayment || txData.amount < Math.round(Number(expectedPayment.amount) * 100)) {
+      return new Response(JSON.stringify({ error: 'Payment amount does not match' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Prevent duplicate records
     const { data: existing } = await supabase
       .from('payment_records')
@@ -71,11 +94,6 @@ Deno.serve(async (req) => {
     const receiptNumber = `RCT-${Date.now().toString(36).toUpperCase()}`;
 
     // Insert payment record using service role for reliability
-    const adminSupabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
     const { error: insertError } = await adminSupabase
       .from('payment_records')
       .insert({

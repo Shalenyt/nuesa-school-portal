@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense, type ComponentType } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,84 +14,104 @@ import { HighPriorityNotification } from "@/components/HighPriorityNotification"
 
 // Auth pages
 import Login from "./pages/Auth/Login";
-import Apply from "./pages/Auth/Apply";
-import RecoverPassword from "./pages/Auth/RecoverPassword";
-import ResetPassword from "./pages/Auth/ResetPassword";
-import Success from "./pages/Auth/Success";
-import ChangeEmail from "./pages/Auth/ChangeEmail";
+// Load a page on demand, and remember how to load it so every page can be
+// fetched quietly in the background once the first screen has shown.
+const pageLoaders: Array<() => Promise<unknown>> = [];
+function lazyPage<T extends ComponentType<any>>(load: () => Promise<{ default: T }>) {
+  pageLoaders.push(load);
+  return lazy(load);
+}
+
+const Apply = lazyPage(() => import("./pages/Auth/Apply"));
+const RecoverPassword = lazyPage(() => import("./pages/Auth/RecoverPassword"));
+const ResetPassword = lazyPage(() => import("./pages/Auth/ResetPassword"));
+const Success = lazyPage(() => import("./pages/Auth/Success"));
+const ChangeEmail = lazyPage(() => import("./pages/Auth/ChangeEmail"));
 
 // Admin pages
-import AdminDashboard from "./pages/Admin/Dashboard";
-import ManageUsers from "./pages/Admin/ManageUsers";
-import Analytics from "./pages/Admin/Analytics";
-import ManageStructure from "./pages/Admin/ManageStructure";
-import AdminAnnouncements from "./pages/Admin/Announcements";
-import AdminCourses from "./pages/Admin/Courses";
-import CourseLists from "./pages/Admin/CourseLists";
-import AdminProfile from "./pages/Admin/Profile";
-import AdminNotifications from "./pages/Admin/Notifications";
-import UserManagement from "./pages/Admin/UserManagement";
-import SemesterSettings from "./pages/Admin/SemesterSettings";
-import AdminStudentDetail from "./pages/Admin/StudentDetail";
-import AdminPayments from "./pages/Admin/Payments";
-import AdminVoting from "./pages/Admin/Voting";
-import AdminFeedback from "./pages/Admin/Feedback";
-import AdminExamTimetable from "./pages/Admin/ExamTimetable";
-import AdminSupport from "./pages/Admin/Support";
-import AuditLogs from "./pages/Admin/AuditLogs";
+const AdminDashboard = lazyPage(() => import("./pages/Admin/Dashboard"));
+const ManageUsers = lazyPage(() => import("./pages/Admin/ManageUsers"));
+const Analytics = lazyPage(() => import("./pages/Admin/Analytics"));
+const ManageStructure = lazyPage(() => import("./pages/Admin/ManageStructure"));
+const AdminAnnouncements = lazyPage(() => import("./pages/Admin/Announcements"));
+const AdminCourses = lazyPage(() => import("./pages/Admin/Courses"));
+const CourseLists = lazyPage(() => import("./pages/Admin/CourseLists"));
+const AdminProfile = lazyPage(() => import("./pages/Admin/Profile"));
+const AdminNotifications = lazyPage(() => import("./pages/Admin/Notifications"));
+const UserManagement = lazyPage(() => import("./pages/Admin/UserManagement"));
+const SemesterSettings = lazyPage(() => import("./pages/Admin/SemesterSettings"));
+const AdminStudentDetail = lazyPage(() => import("./pages/Admin/StudentDetail"));
+const AdminPayments = lazyPage(() => import("./pages/Admin/Payments"));
+const AdminVoting = lazyPage(() => import("./pages/Admin/Voting"));
+const AdminFeedback = lazyPage(() => import("./pages/Admin/Feedback"));
+const AdminExamTimetable = lazyPage(() => import("./pages/Admin/ExamTimetable"));
+const AdminSupport = lazyPage(() => import("./pages/Admin/Support"));
+const AuditLogs = lazyPage(() => import("./pages/Admin/AuditLogs"));
 
 // Teacher pages
-import TeacherProfile from "./pages/Teacher/Profile";
-import TeacherAnnouncements from "./pages/Teacher/Announcements";
-import TeacherCourses from "./pages/Teacher/Courses";
-import UploadMaterials from "./pages/Teacher/UploadMaterials";
-import TeacherAssignments from "./pages/Teacher/Assignments";
-import TeacherClassSchedule from "./pages/Teacher/ClassSchedule";
-import GradeAssignments from "./pages/Teacher/GradeAssignments";
-import TeacherAttendance from "./pages/Teacher/Attendance";
-import TeacherQuizzes from "./pages/Teacher/Quizzes";
-import QuizSecurity from "./pages/Teacher/QuizSecurity";
-import ViewStudents from "./pages/Teacher/ViewStudents";
-import TeacherNotifications from "./pages/Teacher/Notifications";
-import TeacherStudentDetail from "./pages/Teacher/StudentDetail";
-import TeacherFeedback from "./pages/Teacher/Feedback";
-import TeacherExamTimetable from "./pages/Teacher/ExamTimetable";
+const TeacherProfile = lazyPage(() => import("./pages/Teacher/Profile"));
+const TeacherAnnouncements = lazyPage(() => import("./pages/Teacher/Announcements"));
+const TeacherCourses = lazyPage(() => import("./pages/Teacher/Courses"));
+const UploadMaterials = lazyPage(() => import("./pages/Teacher/UploadMaterials"));
+const TeacherAssignments = lazyPage(() => import("./pages/Teacher/Assignments"));
+const TeacherClassSchedule = lazyPage(() => import("./pages/Teacher/ClassSchedule"));
+const GradeAssignments = lazyPage(() => import("./pages/Teacher/GradeAssignments"));
+const TeacherAttendance = lazyPage(() => import("./pages/Teacher/Attendance"));
+const TeacherQuizzes = lazyPage(() => import("./pages/Teacher/Quizzes"));
+const QuizSecurity = lazyPage(() => import("./pages/Teacher/QuizSecurity"));
+const ViewStudents = lazyPage(() => import("./pages/Teacher/ViewStudents"));
+const TeacherNotifications = lazyPage(() => import("./pages/Teacher/Notifications"));
+const TeacherStudentDetail = lazyPage(() => import("./pages/Teacher/StudentDetail"));
+const TeacherFeedback = lazyPage(() => import("./pages/Teacher/Feedback"));
+const TeacherExamTimetable = lazyPage(() => import("./pages/Teacher/ExamTimetable"));
 
 // Student pages
-import StudentProfile from "./pages/Student/Profile";
-import StudentDashboard from "./pages/Student/Dashboard";
-import StudentViewMaterials from "./pages/Student/ViewMaterials";
-import StudentSubmitAssignment from "./pages/Student/SubmitAssignment";
-import StudentTimetable from "./pages/Student/Timetable";
-import StudentCourses from "./pages/Student/Courses";
-import StudentViewResults from "./pages/Student/ViewResults";
-import StudentNotifications from "./pages/Student/Notifications";
-import StudentAttendance from "./pages/Student/Attendance";
-import StudentQuizzes from "./pages/Student/Quizzes";
-import StudentID from "./pages/Student/StudentID";
-import StudentAnalytics from "./pages/Student/Analytics";
-import StudentPayments from "./pages/Student/Payments";
-import StudentVoting from "./pages/Student/Voting";
-import StudentFeedback from "./pages/Student/Feedback";
-import StudentExamTimetable from "./pages/Student/ExamTimetable";
-import StudentSupport from "./pages/Student/Support";
+const StudentProfile = lazyPage(() => import("./pages/Student/Profile"));
+const StudentDashboard = lazyPage(() => import("./pages/Student/Dashboard"));
+const StudentViewMaterials = lazyPage(() => import("./pages/Student/ViewMaterials"));
+const StudentSubmitAssignment = lazyPage(() => import("./pages/Student/SubmitAssignment"));
+const StudentTimetable = lazyPage(() => import("./pages/Student/Timetable"));
+const StudentCourses = lazyPage(() => import("./pages/Student/Courses"));
+const StudentViewResults = lazyPage(() => import("./pages/Student/ViewResults"));
+const StudentNotifications = lazyPage(() => import("./pages/Student/Notifications"));
+const StudentAttendance = lazyPage(() => import("./pages/Student/Attendance"));
+const StudentQuizzes = lazyPage(() => import("./pages/Student/Quizzes"));
+const StudentID = lazyPage(() => import("./pages/Student/StudentID"));
+const StudentAnalytics = lazyPage(() => import("./pages/Student/Analytics"));
+const StudentPayments = lazyPage(() => import("./pages/Student/Payments"));
+const StudentVoting = lazyPage(() => import("./pages/Student/Voting"));
+const StudentFeedback = lazyPage(() => import("./pages/Student/Feedback"));
+const StudentExamTimetable = lazyPage(() => import("./pages/Student/ExamTimetable"));
+const StudentSupport = lazyPage(() => import("./pages/Student/Support"));
 
-import Verify from "./pages/Verify";
-import PublicStudentVerify from "./pages/PublicStudentVerify";
-import VerifyPayment from "./pages/VerifyPayment";
+const Verify = lazyPage(() => import("./pages/Verify"));
+const PublicStudentVerify = lazyPage(() => import("./pages/PublicStudentVerify"));
+const VerifyPayment = lazyPage(() => import("./pages/VerifyPayment"));
 
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-import TeacherAnalytics from "./pages/Teacher/Analytics";
+const TeacherAnalytics = lazyPage(() => import("./pages/Teacher/Analytics"));
 
 const queryClient = new QueryClient();
 
 function AppRoutes() {
   useThemeSync();
 
+  // After the first screen is up, download the remaining pages in the
+  // background so moving between pages stays instant.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      pageLoaders.forEach((load) => load().catch(() => {}));
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
+    // Pages load on demand, so visitors only download the page they open
+    // (everything used to ship in one 578 KB file).
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
     <Routes>
       <Route path="/" element={<Index />} />
       
@@ -171,6 +191,7 @@ function AppRoutes() {
       <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 }
 
