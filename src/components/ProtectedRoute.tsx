@@ -56,7 +56,12 @@ export function ProtectedRoute({
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(profile.role)) {
-    return <Navigate to="/unauthorized" replace />;
+    // Send people to their own dashboard (there is no /unauthorized page,
+    // so this used to show "404 page not found")
+    const home = profile.role === 'admin' ? '/admin/dashboard'
+      : profile.role === 'teacher' ? '/teacher/profile'
+      : '/student/dashboard';
+    return <Navigate to={home} replace />;
   }
 
   return <>{children}</>;
