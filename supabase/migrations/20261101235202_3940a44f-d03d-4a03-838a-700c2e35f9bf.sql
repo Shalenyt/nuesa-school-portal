@@ -1,0 +1,6 @@
+COMMENT ON FUNCTION public.verify_student_by_code(text) IS 'Accepted security warning: must be callable without signing in so ID-card QR scans work. Only matches the random 10-character card code and returns no phone or email.';
+COMMENT ON FUNCTION public.get_staff_names() IS 'Accepted security warning: signed-in users need lecturer/admin names for courses and announcements. Returns only id, full name and role.';
+COMMENT ON FUNCTION public.is_admin() IS 'Accepted security warning: used by data access rules for signed-in users. Only reports on the caller''s own account. Not callable when logged out.';
+COMMENT ON FUNCTION public.is_teacher() IS 'Accepted security warning: used by data access rules for signed-in users. Only reports on the caller''s own account. Not callable when logged out.';
+COMMENT ON FUNCTION public.get_user_role() IS 'Accepted security warning: used by data access rules for signed-in users. Only returns the caller''s own role. Not callable when logged out.';
+COMMENT ON FUNCTION public.auto_manage_semester_lifecycle() IS 'Accepted security warning: called from admin pages. Refuses any signed-in user who is not an admin. Not callable when logged out.';
