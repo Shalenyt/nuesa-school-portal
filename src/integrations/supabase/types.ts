@@ -818,7 +818,7 @@ export type Database = {
           message: string
           subject: string
           type: string
-          user_id: string
+          user_id: string | null
           user_role: string
         }
         Insert: {
@@ -829,7 +829,7 @@ export type Database = {
           message: string
           subject: string
           type?: string
-          user_id: string
+          user_id?: string | null
           user_role?: string
         }
         Update: {
@@ -840,7 +840,7 @@ export type Database = {
           message?: string
           subject?: string
           type?: string
-          user_id?: string
+          user_id?: string | null
           user_role?: string
         }
         Relationships: []
@@ -2007,6 +2007,14 @@ export type Database = {
     Functions: {
       auto_manage_semester_lifecycle: { Args: never; Returns: undefined }
       generate_public_student_id: { Args: never; Returns: string }
+      get_staff_names: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+          role: string
+        }[]
+      }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -2027,17 +2035,6 @@ export type Database = {
           organization_name: string
           phone: string
           profile_photo_url: string
-        }[]
-      }
-      verify_student_public: {
-        Args: { student_matric: string }
-        Returns: {
-          department_name: string
-          full_name: string
-          level_name: string
-          profile_photo_url: string
-          status: string
-          student_id: string
         }[]
       }
     }
