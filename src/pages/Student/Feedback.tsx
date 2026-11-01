@@ -27,7 +27,8 @@ export default function StudentFeedback() {
     }
     setSubmitting(true);
     const { error } = await (supabase as any).from('feedback').insert({
-      user_id: profile.id,
+      // Anonymous feedback is saved without the sender's id, so it can't be traced
+      user_id: isAnonymous ? null : profile.id,
       subject: subject.trim(),
       message: message.trim(),
       type,

@@ -27,16 +27,17 @@ export default function Verify() {
 
   const fetchStudent = async (id: string) => {
     try {
-      // Try by UUID first using the public RPC to avoid RLS issues
-      const { data: rpcData } = await supabase.rpc('verify_student_public', { student_matric: id });
-      
+      // Look up by the random public verification code (the old lookup by
+      // matric number was removed because matric numbers are guessable).
+      const { data: rpcData } = await supabase.rpc('verify_student_by_code', { p_code: id });
+
       if (rpcData && rpcData.length > 0) {
         const s = rpcData[0];
         setStudent({
           full_name: s.full_name,
-          student_id: s.student_id,
+          student_id: s.matric_number,
           profile_photo_url: s.profile_photo_url,
-          status: s.status,
+          status: s.is_verified ? 'approved' : 'pending',
           subjects: { name: s.department_name },
           classes: { name: s.level_name },
         });

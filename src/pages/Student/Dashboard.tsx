@@ -156,7 +156,7 @@ export default function StudentDashboard() {
           .limit(4),
         supabase
           .from('payments')
-          .select('id, title, amount, due_date')
+          .select('*')
           .order('due_date', { ascending: true }),
         supabase.from('payment_records').select('payment_id, status').eq('student_id', profile.id),
       ]);
@@ -201,10 +201,18 @@ export default function StudentDashboard() {
 
       const paidIds = new Set(
         (((paidRes as any)?.data || []) as any[])
-          .filter((r) => r.status === 'success' || r.status === 'successful' || r.status === 'completed')
+          // paystack-verify saves successful payments as 'paid'
+          .filter((r) => r.status === 'paid' || r.status === 'success' || r.status === 'successful' || r.status === 'completed')
           .map((r) => r.payment_id),
       );
-      const nextPayment = (((paymentsRes as any)?.data || []) as any[]).find((p) => !paidIds.has(p.id));
+      // Only dues meant for this student (same rule as the Payments page)
+      const myPayments = (((paymentsRes as any)?.data || []) as any[]).filter((p) => {
+        if (p.visibility === 'all') return true;
+        if (p.department_id && (profile as any)?.department_id !== p.department_id) return false;
+        if (p.level_id && (profile as any)?.level_id !== p.level_id) return false;
+        return true;
+      });
+      const nextPayment = myPayments.find((p) => !paidIds.has(p.id));
       setOutstanding(
         nextPayment
           ? { title: nextPayment.title, amount: Number(nextPayment.amount || 0), due: nextPayment.due_date }

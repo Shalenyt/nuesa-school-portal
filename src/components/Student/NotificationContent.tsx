@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { withStaffNames } from '@/lib/staffNames';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -140,7 +141,8 @@ export function NotificationContent() {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    const list: Notification[] = (data || []).map((a: any) => ({
+    const rows = await withStaffNames((data || []) as any[], 'author_id');
+    const list: Notification[] = rows.map((a: any) => ({
       id: `announcement-${a.id}`,
       type: 'announcement' as const,
       title: `${a.profiles?.role === 'admin' ? 'Admin' : 'Lecturer'} Announcement: ${a.title}`,

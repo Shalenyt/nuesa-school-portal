@@ -59,7 +59,10 @@ export default function StudentDetail() {
   const userId = paramId || searchParams.get('id');
 
   useEffect(() => {
+    // With no student picked, stop loading so "User not found" shows
+    // instead of "Loading..." forever.
     if (userId) fetchUser();
+    else setLoading(false);
   }, [userId]);
 
   const fetchUser = async () => {

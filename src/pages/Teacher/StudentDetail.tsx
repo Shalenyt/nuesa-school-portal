@@ -42,7 +42,10 @@ export default function TeacherStudentDetail() {
   const studentId = searchParams.get('id');
 
   useEffect(() => {
+    // With no student picked, stop loading so the not-found message shows
+    // instead of "Loading..." forever.
     if (studentId) fetchStudent();
+    else setLoading(false);
   }, [studentId]);
 
   const fetchStudent = async () => {

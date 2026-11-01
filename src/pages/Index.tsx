@@ -36,7 +36,8 @@ const Index = () => {
           </h1>
         </a>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Welcome to the {schoolSettings?.portal_name || schoolSettings?.school_name || 'NUESA'} Management Portal. Access your academic information,
+          {/* Drop a trailing "Portal" from the name so it doesn't read "NUESA PORTAL Management Portal" */}
+          Welcome to the {(schoolSettings?.portal_name || schoolSettings?.school_name || 'NUESA').replace(/\s+portal\s*$/i, '')} Management Portal. Access your academic information,
           manage courses, and stay connected with the university community.
         </p>
         <div className="flex gap-4 justify-center mt-8">

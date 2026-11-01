@@ -22,17 +22,31 @@ export default function Analytics() {
 
   const fetchAnalytics = async () => {
     try {
-      const [enrollments, courses, assignments] = await Promise.all([
+      // Monthly growth = enrollments this month compared with last month
+      // (this used to be a fixed 12.5%)
+      const now = new Date();
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+
+      const [enrollments, courses, assignments, thisMonth, lastMonth] = await Promise.all([
         supabase.from('student_enrollments').select('*', { count: 'exact', head: true }),
         supabase.from('courses').select('*', { count: 'exact', head: true }),
-        supabase.from('assignment_submissions').select('*', { count: 'exact', head: true })
+        supabase.from('assignment_submissions').select('*', { count: 'exact', head: true }),
+        supabase.from('student_enrollments').select('*', { count: 'exact', head: true }).gte('enrolled_at', thisMonthStart),
+        supabase.from('student_enrollments').select('*', { count: 'exact', head: true }).gte('enrolled_at', lastMonthStart).lt('enrolled_at', thisMonthStart)
       ]);
+
+      const current = thisMonth.count || 0;
+      const previous = lastMonth.count || 0;
+      const monthlyGrowth = previous > 0
+        ? Math.round(((current - previous) / previous) * 1000) / 10
+        : current > 0 ? 100 : 0;
 
       setAnalytics({
         totalEnrollments: enrollments.count || 0,
         activeCourses: courses.count || 0,
         completedAssignments: assignments.count || 0,
-        monthlyGrowth: 12.5
+        monthlyGrowth
       });
     } catch (error) {
       console.error('Error fetching analytics:', error);

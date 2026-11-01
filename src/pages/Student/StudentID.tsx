@@ -6,7 +6,7 @@ export default function StudentIDPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Digital Student ID</h1>
+          <h1 className="text-3xl font-bold tracking-tight">NUESA Portal ID</h1>
           <p className="text-muted-foreground">Your digital identification card with QR verification</p>
         </div>
         <DigitalStudentID />

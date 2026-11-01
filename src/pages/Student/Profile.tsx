@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { withStaffNames } from '@/lib/staffNames';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -99,12 +100,13 @@ export default function StudentProfile() {
           semester,
           subjects(name),
           classes(name),
+          teacher_id,
           profiles(full_name)
         `)
         .in('id', courseListData.course_ids);
 
       if (coursesError) throw coursesError;
-      setCourses(coursesData || []);
+      setCourses(await withStaffNames(coursesData || [], 'teacher_id'));
 
       // Auto-enroll student in these courses if not already enrolled
       await autoEnrollStudent(courseListData.course_ids);

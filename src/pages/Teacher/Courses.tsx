@@ -34,32 +34,23 @@ export default function TeacherCourses() {
       setCourses(coursesData || []);
 
       // Fetch stats for each course
+      // Fetch all counts at the same time (they used to load one after
+      // another, so every course showed 0 for several seconds)
       const stats: any = {};
-      for (const course of coursesData || []) {
-        // Get enrollment count
-        const { count: enrollmentCount } = await supabase
-          .from('student_enrollments')
-          .select('*', { count: 'exact', head: true })
-          .eq('course_id', course.id);
-
-        // Get materials count
-        const { count: materialsCount } = await supabase
-          .from('materials')
-          .select('*', { count: 'exact', head: true })
-          .eq('course_id', course.id);
-
-        // Get assignments count
-        const { count: assignmentsCount } = await supabase
-          .from('assignments')
-          .select('*', { count: 'exact', head: true })
-          .eq('course_id', course.id);
-
+      const count = (table: 'student_enrollments' | 'materials' | 'assignments', courseId: string) =>
+        supabase.from(table).select('*', { count: 'exact', head: true }).eq('course_id', courseId);
+      await Promise.all((coursesData || []).map(async (course) => {
+        const [enrollmentRes, materialsRes, assignmentsRes] = await Promise.all([
+          count('student_enrollments', course.id),
+          count('materials', course.id),
+          count('assignments', course.id),
+        ]);
         stats[course.id] = {
-          enrollments: enrollmentCount || 0,
-          materials: materialsCount || 0,
-          assignments: assignmentsCount || 0
+          enrollments: enrollmentRes.count || 0,
+          materials: materialsRes.count || 0,
+          assignments: assignmentsRes.count || 0
         };
-      }
+      }));
       setCourseStats(stats);
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -81,7 +72,7 @@ export default function TeacherCourses() {
         {courses.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {courses.map((course) => {
-              const stats = courseStats[course.id] || { enrollments: 0, materials: 0, assignments: 0 };
+              const stats = courseStats[course.id] || { enrollments: '…', materials: '…', assignments: '…' };
               
               return (
                 <Card key={course.id} className="hover:shadow-lg transition-shadow">
@@ -97,7 +88,7 @@ export default function TeacherCourses() {
                         <Badge variant="secondary">{course.semester} Sem</Badge>
                       )}
                       {course.credit_unit && (
-                        <Badge variant="outline">{course.credit_unit} Credit{course.credit_unit > 1 ? 's' : ''}</Badge>
+                        <Badge variant="outline">{course.credit_unit} Unit{course.credit_unit > 1 ? 's' : ''}</Badge>
                       )}
                     </div>
                   </CardHeader>

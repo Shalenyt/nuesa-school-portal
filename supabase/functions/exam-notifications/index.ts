@@ -18,9 +18,17 @@ serve(async (req: Request) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Auth check - only admin can trigger
+    // Auth check - only admin can trigger. A missing token is rejected
+    // (previously a request with no token skipped this check entirely).
     const authHeader = req.headers.get("Authorization");
-    if (authHeader?.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Server-side jobs that call with the service role key are allowed through.
+    if (authHeader !== `Bearer ${serviceKey}`) {
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
       });
