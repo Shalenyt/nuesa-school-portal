@@ -27,6 +27,7 @@ export default function TeacherAssignments() {
   });
 
   useEffect(() => {
+    if (!profile?.id) return; // wait for the profile, or the page briefly shows nothing
     fetchCourses();
     fetchAssignments();
   }, [profile]);

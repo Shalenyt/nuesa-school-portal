@@ -29,7 +29,7 @@ export default function GradeAssignments() {
   const [view, setView] = useState<'assignments' | 'submissions' | 'grading'>('assignments');
 
   useEffect(() => {
-    fetchAssignments();
+    if (profile?.id) fetchAssignments(); // wait for the profile
   }, [profile]);
 
   const fetchAssignments = async () => {
