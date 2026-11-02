@@ -72,7 +72,24 @@ export function AttendanceConsistency() {
     }
   };
 
-  if (loading || students.length === 0) return null;
+  // Show the card with a message instead of hiding it, so the page isn't blank
+  if (loading || students.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Attendance Consistency
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {loading ? 'Loading...' : "No attendance records yet. Each student's attendance rate appears here once you open attendance sessions."}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
