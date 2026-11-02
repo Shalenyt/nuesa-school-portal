@@ -54,7 +54,7 @@ export function RecentActivities() {
       // Fetch recent courses added
       const { data: courses } = await (supabase as any)
         .from('courses')
-        .select('created_at, subjects(name)')
+        .select('created_at, name, description, subjects(name)')
         .order('created_at', { ascending: false })
         .limit(2);
 
@@ -116,7 +116,8 @@ export function RecentActivities() {
         recentActivities.push({
           id: `course-${course.created_at}`,
           type: 'course',
-          message: `New course added: ${course.subjects?.name || 'Unknown'}`,
+          // Course code and title, with the department (it used to show only the department)
+          message: `New course added: ${[course.name, course.description].filter(Boolean).join(' ') || 'Unknown'}${course.subjects?.name ? ` (${course.subjects.name})` : ''}`,
           user_name: 'System',
           created_at: course.created_at
         });
