@@ -36,7 +36,8 @@ export default function StudentPayments() {
   const receiptRef = useRef<HTMLDivElement>(null);
   // The receipt is a fixed-width design (850px). Shrink it to fit the popup
   // on smaller screens instead of cutting off its right side.
-  const fitRef = useRef<HTMLDivElement>(null);
+  // Callback ref: the popup content mounts after the effect would first run
+  const [fitBox, setFitBox] = useState<HTMLDivElement | null>(null);
   const [fit, setFit] = useState({ scale: 1, height: 0, offset: 0 });
   const [capturing, setCapturing] = useState(false);
 
@@ -117,9 +118,9 @@ export default function StudentPayments() {
 
   // Keep the on-screen receipt scaled to the popup width
   useEffect(() => {
-    if (!selectedReceipt) return;
+    if (!selectedReceipt || !fitBox) return;
     const measure = () => {
-      const box = fitRef.current, el = receiptRef.current;
+      const box = fitBox, el = receiptRef.current;
       if (!box || !el) return;
       const available = box.clientWidth;
       const natural = el.offsetWidth;
@@ -129,10 +130,10 @@ export default function StudentPayments() {
     };
     const raf = requestAnimationFrame(measure);
     const ro = new ResizeObserver(measure);
-    if (fitRef.current) ro.observe(fitRef.current);
+    ro.observe(fitBox);
     if (receiptRef.current) ro.observe(receiptRef.current);
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, [selectedReceipt]);
+  }, [selectedReceipt, fitBox]);
 
   const downloadReceipt = async () => {
     if (!receiptRef.current) return;
@@ -329,10 +330,11 @@ export default function StudentPayments() {
               <DialogTitle>Payment Receipt</DialogTitle>
             </DialogHeader>
             {selectedReceipt && (
-              <div className="space-y-4">
+              // min-w-0: the popup is a grid, whose items otherwise grow to the receipt's full width
+              <div className="space-y-4 min-w-0">
                 <div
-                  ref={fitRef}
-                  className="w-full overflow-hidden"
+                  ref={setFitBox}
+                  className="w-full min-w-0 overflow-hidden"
                   style={{ height: fit.height ? fit.height * (capturing ? 1 : fit.scale) : undefined }}
                 >
                   <div
