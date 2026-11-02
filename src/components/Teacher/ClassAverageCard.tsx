@@ -56,7 +56,24 @@ export function ClassAverageCard() {
     }
   };
 
-  if (loading || data.length === 0) return null;
+  // Show the card with a message instead of hiding it, so the page isn't blank
+  if (loading || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Class Average Per Quiz
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {loading ? 'Loading...' : 'No quiz attempts yet. Class averages appear here once students take your quizzes.'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

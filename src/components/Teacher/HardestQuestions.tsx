@@ -55,7 +55,24 @@ export function HardestQuestions() {
     }
   };
 
-  if (loading || questions.length === 0) return null;
+  // Show the card with a message instead of hiding it, so the page isn't blank
+  if (loading || questions.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Hardest Questions (Most Failed)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {loading ? 'Loading...' : 'No answers yet. The questions students miss most will show here after your quizzes are taken.'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
