@@ -34,7 +34,8 @@ const adminMenuItems = [
 ];
 
 const lecturerMenuItems = [
-  { title: "Profile", url: "/teacher/profile", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/teacher/dashboard", icon: LayoutDashboard },
+  { title: "Profile", url: "/teacher/profile", icon: GraduationCap },
   { title: "Analytics", url: "/teacher/analytics", icon: BarChart3 },
   { title: "Upload Materials", url: "/teacher/upload-materials", icon: Upload },
   { title: "Assignments", url: "/teacher/assignments", icon: ClipboardList },

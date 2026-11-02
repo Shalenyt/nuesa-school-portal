@@ -59,7 +59,7 @@ export function ProtectedRoute({
     // Send people to their own dashboard (there is no /unauthorized page,
     // so this used to show "404 page not found")
     const home = profile.role === 'admin' ? '/admin/dashboard'
-      : profile.role === 'teacher' ? '/teacher/profile'
+      : profile.role === 'teacher' ? '/teacher/dashboard'
       : '/student/dashboard';
     return <Navigate to={home} replace />;
   }

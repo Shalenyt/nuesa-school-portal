@@ -50,6 +50,7 @@ const AuditLogs = lazyPage(() => import("./pages/Admin/AuditLogs"));
 
 // Teacher pages
 const TeacherProfile = lazyPage(() => import("./pages/Teacher/Profile"));
+const TeacherDashboard = lazyPage(() => import("./pages/Teacher/Dashboard"));
 const TeacherAnnouncements = lazyPage(() => import("./pages/Teacher/Announcements"));
 const TeacherCourses = lazyPage(() => import("./pages/Teacher/Courses"));
 const UploadMaterials = lazyPage(() => import("./pages/Teacher/UploadMaterials"));
@@ -153,6 +154,7 @@ function AppRoutes() {
       <Route path="/admin/exam-timetable" element={<ProtectedRoute allowedRoles={['admin']}><AdminExamTimetable /></ProtectedRoute>} />
       
       {/* Teacher Routes */}
+      <Route path="/teacher/dashboard" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
       <Route path="/teacher/profile" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherProfile /></ProtectedRoute>} />
       <Route path="/teacher/announcements" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherAnnouncements /></ProtectedRoute>} />
       <Route path="/teacher/courses" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherCourses /></ProtectedRoute>} />
