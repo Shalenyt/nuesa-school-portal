@@ -149,6 +149,9 @@ export default function StudentPayments() {
       const origWidth = el.offsetWidth;
       const origHeight = el.offsetHeight;
       
+      // Draw text with the final fonts, not a fallback
+      if (document.fonts?.ready) await document.fonts.ready;
+
       const canvas = await html2canvas(el, {
         useCORS: true,
         scale: 2,
@@ -157,6 +160,15 @@ export default function StudentPayments() {
         height: origHeight,
         windowWidth: origWidth,
         windowHeight: origHeight,
+        // html2canvas draws text lower than the browser when images are
+        // display:block (the site's base style), which pushed the receipt's
+        // text below its underlines in the download. Undo that in the copy
+        // being captured only; the on-screen receipt is unchanged.
+        onclone: (doc) => {
+          const style = doc.createElement('style');
+          style.textContent = 'img { display: inline-block !important; }';
+          doc.head.appendChild(style);
+        },
       });
       
       const imgData = canvas.toDataURL('image/png');

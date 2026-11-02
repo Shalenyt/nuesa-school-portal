@@ -15,6 +15,7 @@ export default function TeacherAssignments() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [assignments, setAssignments] = useState<any[]>([]);
+  const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
   const [courses, setCourses] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newAssignment, setNewAssignment] = useState({
@@ -63,6 +64,8 @@ export default function TeacherAssignments() {
       setAssignments(data || []);
     } catch (error) {
       console.error('Error fetching assignments:', error);
+    } finally {
+      setAssignmentsLoaded(true);
     }
   };
 
@@ -143,7 +146,8 @@ export default function TeacherAssignments() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        {/* Stacks on phones so the title and button both have room */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Assignments</h1>
             <p className="text-muted-foreground">
@@ -210,6 +214,16 @@ export default function TeacherAssignments() {
         )}
 
         <div className="space-y-4">
+          {/* Say so when there are none, instead of a blank page */}
+          {assignmentsLoaded && assignments.length === 0 && (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <ClipboardList className="mx-auto h-10 w-10 text-muted-foreground" aria-hidden="true" />
+                <p className="mt-2 font-medium">No assignments yet</p>
+                <p className="text-sm text-muted-foreground">Use New Assignment to set one for your students.</p>
+              </CardContent>
+            </Card>
+          )}
           {assignments.map((assignment) => (
             <Card key={assignment.id}>
               <CardHeader>

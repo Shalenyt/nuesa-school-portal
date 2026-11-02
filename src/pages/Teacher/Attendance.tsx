@@ -197,7 +197,7 @@ export default function LecturerAttendance() {
           <div className="space-y-1">
             <Label className="text-sm">Course</Label>
             <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-              <SelectTrigger className="w-[300px]">
+              <SelectTrigger className="w-full max-w-[300px] sm:w-[300px]">
                 <SelectValue placeholder="Select a course" />
               </SelectTrigger>
               <SelectContent>
@@ -228,6 +228,15 @@ export default function LecturerAttendance() {
             </>
           )}
         </div>
+
+        {/* Explain what to do before a course is picked */}
+        {!loading && !selectedCourse && (
+          <p className="text-sm text-muted-foreground">
+            {courses.length === 0
+              ? 'You have no courses assigned yet. Your courses will appear here once the admin assigns them.'
+              : 'Choose a course to open an attendance session or see past sessions and student attendance.'}
+          </p>
+        )}
 
         {selectedSession ? (
           <div className="space-y-4">
