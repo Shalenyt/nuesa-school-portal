@@ -35,6 +35,7 @@ export default function TeacherClassSchedule() {
   });
 
   useEffect(() => {
+    if (!profile?.id) return; // wait for the profile, or the page briefly shows nothing
     fetchCourses();
     fetchSchedules();
   }, [profile]);

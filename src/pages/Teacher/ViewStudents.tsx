@@ -24,7 +24,7 @@ export default function ViewStudents() {
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchData(); }, [profile]);
+  useEffect(() => { if (profile?.id) fetchData(); }, [profile]); // wait for the profile
 
   const fetchData = async () => {
     try {

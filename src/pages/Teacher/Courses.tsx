@@ -15,9 +15,10 @@ export default function TeacherCourses() {
   const [courseStats, setCourseStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
+  // Wait for the profile; querying with no id returned nothing and showed "No courses"
   useEffect(() => {
-    fetchCourses();
-  }, [profile]);
+    if (profile?.id) fetchCourses();
+  }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchCourses = async () => {
     try {
@@ -32,6 +33,8 @@ export default function TeacherCourses() {
 
       if (coursesError) throw coursesError;
       setCourses(coursesData || []);
+      // Show the courses now; the counts fill in as they arrive
+      setLoading(false);
 
       // Fetch stats for each course
       // Fetch all counts at the same time (they used to load one after
@@ -69,7 +72,9 @@ export default function TeacherCourses() {
           </p>
         </div>
 
-        {courses.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-muted-foreground">Loading...</p>
+        ) : courses.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {courses.map((course) => {
               const stats = courseStats[course.id] || { enrollments: '…', materials: '…', assignments: '…' };
