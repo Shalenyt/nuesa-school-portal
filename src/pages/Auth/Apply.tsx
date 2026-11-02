@@ -116,7 +116,7 @@ export default function Apply() {
     }
 
     if (!formData.role) {
-      stop('Choose a role', 'Select whether you are a student, lecturer or administrator.');
+      stop('Choose a role', 'Select whether you are a student or a lecturer.');
       return;
     }
 
@@ -236,7 +236,6 @@ export default function Apply() {
                   <SelectContent>
                     <SelectItem value="student">Student</SelectItem>
                     <SelectItem value="teacher">Lecturer</SelectItem>
-                    <SelectItem value="admin">Administrator</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

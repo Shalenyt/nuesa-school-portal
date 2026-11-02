@@ -89,37 +89,10 @@ export default function StudentCourses() {
     }
   };
 
-  const autoEnrollStudent = async (studentId: string, courseIds: string[]) => {
-    try {
-      // Check which courses student is not enrolled in
-      const { data: existingEnrollments } = await supabase
-        .from('student_enrollments')
-        .select('course_id')
-        .eq('student_id', studentId);
-
-      const enrolledCourseIds = existingEnrollments?.map(e => e.course_id) || [];
-      const newCourseIds = courseIds.filter(id => !enrolledCourseIds.includes(id));
-
-      if (newCourseIds.length > 0) {
-        const enrollments = newCourseIds.map(courseId => ({
-          student_id: studentId,
-          course_id: courseId
-        }));
-
-        const { error } = await supabase
-          .from('student_enrollments')
-          .insert(enrollments);
-
-        if (error) {
-          console.error('Error auto-enrolling student:', error);
-        } else {
-          console.log(`Auto-enrolled student in ${newCourseIds.length} new courses`);
-        }
-      }
-    } catch (error) {
-      console.error('Error in auto-enrollment:', error);
-    }
-  };
+  // Enrollment now happens in the database when a student is approved (and
+  // when courses are added to their level). Students can no longer enroll
+  // themselves, so there is nothing to do here.
+  const autoEnrollStudent = async (_studentId: string, _courseIds: string[]) => {};
 
   return (
     <DashboardLayout>

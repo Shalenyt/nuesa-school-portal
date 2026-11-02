@@ -39,8 +39,8 @@ serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-      if (profile?.role !== "admin") {
+      const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", user.id).single();
+      if (profile?.role !== "admin" || profile?.status !== "approved") {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

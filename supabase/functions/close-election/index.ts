@@ -46,11 +46,11 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, serviceKey);
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, status")
       .eq("id", userId)
       .single();
 
-    if (profile?.role !== "admin") {
+    if (profile?.role !== "admin" || profile?.status !== "approved") {
       return new Response(
         JSON.stringify({ error: "Forbidden: Admin access required" }),
         {
