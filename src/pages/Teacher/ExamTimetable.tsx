@@ -24,15 +24,15 @@ export default function TeacherExamTimetable() {
   const fetchData = async () => {
     const [{ data: timetable }, { data: courses }, semRes] = await Promise.all([
       (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
-      supabase.from('courses').select('id, name, subjects(code)').eq('teacher_id', profile?.id),
+      supabase.from('courses').select('id, name').eq('teacher_id', profile?.id),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
-    // Match using subject codes (which is what exam_timetables.course_code stores)
-    const codes = (courses || []).map((c: any) => c.subjects?.code?.toUpperCase()).filter(Boolean);
+    // Match on course codes (courses.name, e.g. CVE 413). subjects.code is the
+    // department code, which made every exam in the department look like "mine".
     const names = (courses || []).map((c: any) => c.name?.toUpperCase()).filter(Boolean);
-    setMyCourseCodes([...new Set([...codes, ...names])]);
+    setMyCourseCodes([...new Set(names)]);
     setLoading(false);
   };
 

@@ -29,7 +29,7 @@ export default function StudentExamTimetable() {
       userId
         ? supabase
             .from('student_enrollments')
-            .select('course_id, courses(name, subjects(code))')
+            .select('course_id, courses(name)')
             .eq('student_id', userId)
         : Promise.resolve({ data: [] }),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
@@ -38,15 +38,12 @@ export default function StudentExamTimetable() {
     setEntries(timetable || []);
     setActiveSemester(semRes.data);
 
-    // Extract subject codes from enrolled courses for matching against exam_timetables.course_code
-    const codes = (enrollRes.data || [])
-      .map((e: any) => e.courses?.subjects?.code?.toUpperCase())
-      .filter(Boolean);
-    // Also include course names as fallback
+    // Match exam_timetables.course_code against the course codes (courses.name)
+    // the student is enrolled in. subjects.code is the department code, not a course.
     const names = (enrollRes.data || [])
       .map((e: any) => e.courses?.name?.toUpperCase())
       .filter(Boolean);
-    setMyCourseCodes([...new Set([...codes, ...names])]);
+    setMyCourseCodes([...new Set(names)]);
     setLoading(false);
   };
 
