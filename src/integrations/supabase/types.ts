@@ -732,6 +732,58 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_timetable_sets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          published_at: string | null
+          semester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published_at?: string | null
+          semester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published_at?: string | null
+          semester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_timetable_sets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_timetable_sets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_timetable_sets_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: true
+            referencedRelation: "semester_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_timetables: {
         Row: {
           course_code: string
@@ -743,6 +795,7 @@ export type Database = {
           exam_date: string
           id: string
           level_id: string | null
+          set_id: string | null
           start_time: string
           time_slot: string
           updated_at: string
@@ -758,6 +811,7 @@ export type Database = {
           exam_date: string
           id?: string
           level_id?: string | null
+          set_id?: string | null
           start_time: string
           time_slot: string
           updated_at?: string
@@ -773,6 +827,7 @@ export type Database = {
           exam_date?: string
           id?: string
           level_id?: string | null
+          set_id?: string | null
           start_time?: string
           time_slot?: string
           updated_at?: string
@@ -805,6 +860,13 @@ export type Database = {
             columns: ["level_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_timetables_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "exam_timetable_sets"
             referencedColumns: ["id"]
           },
         ]
@@ -2011,6 +2073,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_analytics_summary: { Args: never; Returns: Json }
       auto_manage_semester_lifecycle: { Args: never; Returns: undefined }
       generate_public_student_id: { Args: never; Returns: string }
       get_staff_names: {
