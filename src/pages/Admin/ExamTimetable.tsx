@@ -352,7 +352,11 @@ export default function AdminExamTimetable() {
 
   const downloadPDF = async (ref: React.RefObject<HTMLDivElement>, filename: string) => {
     if (!ref.current) return;
-    const canvas = await html2canvas(ref.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const canvas = await html2canvas(ref.current, {
+      scale: 2, useCORS: true, backgroundColor: '#ffffff',
+      // Leave the edit and delete buttons out of the downloaded PDF
+      ignoreElements: (el) => el.hasAttribute?.('data-pdf-hide'),
+    });
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -388,7 +392,7 @@ export default function AdminExamTimetable() {
               <div key={e.id || e.course_code} className="flex items-center justify-between gap-1">
                 <span className="font-bold text-sm">{e.course_code}</span>
                 {!readonly && (
-                  <div className="flex gap-0.5 shrink-0">
+                  <div className="flex gap-0.5 shrink-0" data-pdf-hide>
                     <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => startEdit(e)}><Edit2 className="h-3 w-3" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild><Button variant="ghost" size="sm" className="h-5 w-5 p-0"><Trash2 className="h-3 w-3 text-destructive" /></Button></AlertDialogTrigger>
