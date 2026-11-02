@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
+import { ExamTimetableHeading } from '@/components/Shared/ExamTimetableHeading';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -262,6 +263,12 @@ export default function AdminExamTimetable() {
       return;
     }
 
+    const already = allSelectedCodes.filter((c) => scheduledCodes.has(c));
+    if (already.length) {
+      toast({ title: 'Already on the timetable', description: `${already.join(', ')} ${already.length === 1 ? 'is' : 'are'} already scheduled on another day.`, variant: 'destructive' });
+      return;
+    }
+
     const day_label = `Day ${day}`;
     const live = currentState === 'live';
     setBusy(true);
@@ -445,21 +452,19 @@ export default function AdminExamTimetable() {
 
   const renderHeader = (title: string, data: Record<string, any>, ref?: React.RefObject<HTMLDivElement>, readonly = false) => (
     <div ref={ref} className="bg-background p-4">
-      <div className="text-center space-y-1 mb-4">
-        <p className="text-lg font-bold uppercase">{settings?.school_name || 'University'}</p>
-        <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
-        <p className="text-sm font-bold uppercase">Examination Timetable</p>
-        <p className="text-xs text-muted-foreground uppercase">{title}</p>
-      </div>
+      <ExamTimetableHeading sessionLabel={title} />
       <div className="overflow-x-auto">{renderTimetableTable(data, readonly)}</div>
     </div>
   );
 
   const allSelectedCodes = [...form.sessions.morning.course_codes, ...form.sessions.afternoon.course_codes, ...form.sessions.evening.course_codes];
+  // Courses already on the timetable (except the entry being edited), so each course is only scheduled once
+  const scheduledCodes = new Set(entries.filter((e) => e.id !== editingId).map((e) => e.course_code));
 
   const renderSessionForm = (slot: Slot, label: string) => {
     const session = form.sessions[slot];
-    const availableOptions = courseOptions.filter((o) => !allSelectedCodes.includes(o.value));
+    // Hide courses picked in this form and courses already on another day of the timetable
+    const availableOptions = courseOptions.filter((o) => !allSelectedCodes.includes(o.value) && !scheduledCodes.has(o.value));
     if (slot === 'afternoon' && isFriday(form.exam_date)) {
       return (
         <div className="p-3 rounded-lg border bg-muted/30">

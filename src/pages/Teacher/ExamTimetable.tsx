@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
+import { ExamTimetableHeading } from '@/components/Shared/ExamTimetableHeading';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -107,12 +108,7 @@ export default function TeacherExamTimetable() {
               </Button>
             </div>
             <div ref={timetableRef} className="overflow-x-auto bg-background p-4">
-              <div className="text-center space-y-1 mb-4">
-                <p className="text-lg font-bold uppercase">{settings?.school_name || 'University'}</p>
-                <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
-                <p className="text-sm font-bold uppercase">Examination Timetable</p>
-                <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
-              </div>
+              <ExamTimetableHeading sessionLabel={semesterLabel} />
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-primary text-primary-foreground">

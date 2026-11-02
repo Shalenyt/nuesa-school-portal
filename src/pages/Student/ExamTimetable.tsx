@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
+import { ExamTimetableHeading } from '@/components/Shared/ExamTimetableHeading';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -179,12 +180,7 @@ export default function StudentExamTimetable() {
             </div>
             <TabsContent value="all" className="mt-4">
               <div ref={timetableRef} className="bg-background p-2">
-                <div className="text-center space-y-1 mb-3">
-                  <p className="text-lg font-bold uppercase">{settings?.school_name || 'University'}</p>
-                  <p className="text-sm font-bold uppercase">Faculty of Engineering</p>
-                  <p className="text-sm font-bold uppercase">Examination Timetable</p>
-                  <p className="text-xs text-muted-foreground uppercase">{semesterLabel}</p>
-                </div>
+                <ExamTimetableHeading sessionLabel={semesterLabel} />
                 {renderTable(grouped)}
                 <p className="text-xs text-muted-foreground mt-2 text-center">Courses in <span className="text-green-600 font-semibold">green</span> are your registered courses.</p>
               </div>
