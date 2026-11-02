@@ -27,7 +27,7 @@ const adminMenuItems = [
   { title: "Feedback", url: "/admin/feedback", icon: MessageCircle },
   { title: "Support Centre", url: "/admin/support", icon: LifeBuoy },
   { title: "Audit Logs", url: "/admin/audit-logs", icon: ScrollText },
-  { title: "Semester", url: "/admin/semester-settings", icon: Calendar },
+  { title: "Sessions", url: "/admin/semester-settings", icon: Calendar },
   { title: "Exam Timetable", url: "/admin/exam-timetable", icon: FileSpreadsheet },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Profile", url: "/admin/profile", icon: Settings }
