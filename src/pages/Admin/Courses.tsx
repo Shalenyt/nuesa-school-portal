@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Plus, Trash2, Users } from 'lucide-react';
+import { BookOpen, Plus, Search, Trash2, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { toast } from '@/hooks/use-toast';
@@ -20,6 +20,7 @@ export default function AdminCourses() {
   const [isCreating, setIsCreating] = useState(false);
   const [filterClass, setFilterClass] = useState('all');
   const [filterSubject, setFilterSubject] = useState('all');
+  const [search, setSearch] = useState('');
   const [newCourse, setNewCourse] = useState({
     name: '',
     description: '',
@@ -37,7 +38,7 @@ export default function AdminCourses() {
 
   useEffect(() => {
     applyFilters();
-  }, [courses, filterClass, filterSubject]);
+  }, [courses, filterClass, filterSubject, search]);
 
   const applyFilters = () => {
     let result = courses;
@@ -46,6 +47,14 @@ export default function AdminCourses() {
     }
     if (filterSubject && filterSubject !== 'all') {
       result = result.filter(c => c.subject_id === filterSubject);
+    }
+    const q = search.trim().toLowerCase().replace(/\s+/g, '');
+    if (q) {
+      // Match code with or without the space (cve413 finds CVE 413) or any word of the title
+      result = result.filter(c =>
+        (c.name || '').toLowerCase().replace(/\s+/g, '').includes(q) ||
+        (c.description || '').toLowerCase().includes(search.trim().toLowerCase())
+      );
     }
     setFilteredCourses(result);
   };
@@ -133,7 +142,11 @@ export default function AdminCourses() {
         </div>
 
         {/* Filters */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="relative min-w-0">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search code or title" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          </div>
           <Select value={filterClass} onValueChange={setFilterClass}>
             <SelectTrigger>
               <SelectValue placeholder="Filter by Level" />

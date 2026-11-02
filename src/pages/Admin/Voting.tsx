@@ -33,7 +33,8 @@ export default function AdminVoting() {
   const [closing, setClosing] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'position' | 'result'; id: string; name: string } | null>(null);
 
-  useEffect(() => { fetchAll(); setupRealtime(); }, []);
+  // Return the cleanup so leaving the page removes the realtime channel instead of stacking a new one each visit
+  useEffect(() => { fetchAll(); return setupRealtime(); }, []);
 
   useEffect(() => {
     const interval = setInterval(() => { checkAutoClose(); }, 30000);
