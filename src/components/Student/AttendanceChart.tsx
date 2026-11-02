@@ -58,7 +58,24 @@ export function AttendanceChart() {
     }
   };
 
-  if (loading || data.length === 0) return null;
+  // Show the card with a message instead of hiding it, so the page isn't blank
+  if (loading || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Attendance Performance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {loading ? 'Loading...' : 'No attendance taken yet. Your attendance rate for each course appears here once lecturers open attendance.'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

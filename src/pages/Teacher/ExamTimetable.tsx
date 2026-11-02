@@ -92,6 +92,10 @@ export default function TeacherExamTimetable() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Exam Timetable</h1>
+          <p className="text-muted-foreground">Exam dates, times and venues. Your courses are highlighted in green.</p>
+        </div>
         {loading ? <p className="text-center text-muted-foreground">Loading...</p> : Object.keys(grouped).length === 0 ? (
           <Card><CardContent className="text-center py-8"><Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" /><p className="text-muted-foreground">No exam timetable available.</p></CardContent></Card>
         ) : (

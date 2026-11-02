@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 export default function StudentViewMaterials() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [missingProfile, setMissingProfile] = useState(false);
 
   useEffect(() => {
     fetchMaterials();
@@ -33,6 +34,7 @@ export default function StudentViewMaterials() {
         .single();
 
       if (!profile?.department_id || !profile?.level_id) {
+        setMissingProfile(true);
         setMaterials([]);
         setLoading(false);
         return;
@@ -46,8 +48,6 @@ export default function StudentViewMaterials() {
         .eq('subject_id', profile.department_id)
         .maybeSingle();
 
-      console.log('Materials - Course list data:', courseListData, 'Error:', courseListError);
-      console.log('Materials - Profile data:', profile);
 
       if (!courseListData?.course_ids || courseListData.course_ids.length === 0) {
         setMaterials([]);
@@ -56,7 +56,6 @@ export default function StudentViewMaterials() {
       }
 
       // Get materials for those courses
-      console.log('Fetching materials for course IDs:', courseListData.course_ids);
       const { data: materialsData, error: materialsError } = await (supabase as any)
         .from('materials')
         .select(`
@@ -65,7 +64,6 @@ export default function StudentViewMaterials() {
         `)
         .in('course_id', courseListData.course_ids);
 
-      console.log('Materials query result:', materialsData, 'Error:', materialsError);
 
       const allMaterials = materialsData?.map((material: any) => ({
         ...material,
@@ -113,7 +111,9 @@ export default function StudentViewMaterials() {
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold text-foreground">No materials available</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Please update your department and level in your profile, or no materials have been uploaded yet.
+                  {missingProfile
+                    ? 'Add your department and level in your profile to see your course materials.'
+                    : 'Your lecturers have not uploaded any materials for your courses yet.'}
                 </p>
               </div>
             </CardContent>

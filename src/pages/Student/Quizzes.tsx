@@ -201,6 +201,8 @@ export default function StudentQuizzes() {
                         {q.duration_minutes && <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />{q.duration_minutes} min</Badge>}
                         {q.gps_enabled && <Badge variant="outline" className="text-orange-600"><MapPin className="h-3 w-3 mr-1" />GPS Required</Badge>}
                       </div>
+                      {/* The whole card starts the quiz; this makes that obvious, especially on phones */}
+                      <Button size="sm" className="mt-4 w-full">Start quiz</Button>
                     </CardContent>
                   </Card>
                 ))}

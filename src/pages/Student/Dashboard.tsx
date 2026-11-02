@@ -222,7 +222,8 @@ export default function StudentDashboard() {
 
       try {
         const result = await calculateStudentGPA(profile.id);
-        setGpa(result.gpa);
+        // No graded results yet: show "—" rather than 0.00
+        setGpa(result.courseGrades.length ? result.gpa : null);
         setCompletedUnits(result.totalCredits);
       } catch {
         setGpa(null);
@@ -343,14 +344,12 @@ export default function StudentDashboard() {
                     className="flex items-center justify-between gap-3 rounded-md border border-l-2 border-l-theme bg-theme-light/50 p-3"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {c.courses?.name || 'Class'}
-                        {c.courses?.description && (
-                          <span className="font-normal text-muted-foreground"> · {c.courses.description}</span>
-                        )}
-                      </p>
+                      <p className="text-sm font-medium">{c.courses?.name || 'Class'}</p>
+                      {c.courses?.description && (
+                        <p className="text-sm text-muted-foreground">{c.courses.description}</p>
+                      )}
                       <p className="text-xs text-muted-foreground">
-                        {c.room ? `Room ${c.room}` : 'Venue TBA'}
+                        {c.room || 'Venue TBA'}
                       </p>
                     </div>
                     <span className="whitespace-nowrap rounded-full bg-theme-muted px-2 py-0.5 text-xs font-medium text-theme">
@@ -370,7 +369,7 @@ export default function StudentDashboard() {
                     )}
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{outstanding.title}</p>
+                      <p className="text-sm font-medium">{outstanding.title}</p>
                       <p className={cn('text-xs', outstandingOverdue ? 'font-medium text-destructive' : 'text-muted-foreground')}>
                         {outstandingOverdue ? 'Overdue payment' : 'Outstanding payment'}
                       </p>
@@ -398,7 +397,7 @@ export default function StudentDashboard() {
                 <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                   {[
                     { label: 'GPA', value: gpa != null ? gpa.toFixed(2) : '—' },
-                    { label: 'Semester', value: semester || '—' },
+                    { label: 'Semester', value: semester || '—', wrap: true },
                     { label: 'Courses', value: String(courseCount) },
                     { label: 'Registered units', value: String(totalUnits) },
                     { label: 'Graded units', value: String(completedUnits) },
@@ -408,7 +407,8 @@ export default function StudentDashboard() {
                       className="rounded-md border border-theme-border/40 bg-theme-light/40 p-3"
                     >
                       <dt className="text-xs text-muted-foreground">{m.label}</dt>
-                      <dd className="truncate text-lg font-semibold text-theme">{m.value}</dd>
+                      {/* The semester name is long ("2026/2027 First Semester"), so let it wrap */}
+                      <dd className={cn('font-semibold text-theme', (m as { wrap?: boolean }).wrap ? 'text-sm leading-snug' : 'truncate text-lg')}>{m.value}</dd>
                     </div>
                   ))}
                 </dl>

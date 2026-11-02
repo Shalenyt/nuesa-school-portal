@@ -97,6 +97,8 @@ export default function StudentProfile() {
         .from('courses')
         .select(`
           id,
+          name,
+          description,
           semester,
           subjects(name),
           classes(name),
@@ -106,7 +108,7 @@ export default function StudentProfile() {
         .in('id', courseListData.course_ids);
 
       if (coursesError) throw coursesError;
-      setCourses(await withStaffNames(coursesData || [], 'teacher_id'));
+      setCourses((await withStaffNames(coursesData || [], 'teacher_id')).sort((a: any, b: any) => (a.name || '').localeCompare(b.name || '')));
 
       // Auto-enroll student in these courses if not already enrolled
       await autoEnrollStudent(courseListData.course_ids);
@@ -337,12 +339,13 @@ export default function StudentProfile() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {courses.map((course, index) => (
                   <div key={index} className="p-4 border rounded-lg">
-                    <h3 className="font-semibold">{course.subjects?.name || 'Course'}</h3>
+                    <h3 className="font-semibold">{course.name || 'Course'}</h3>
+                    {course.description && <p className="text-sm">{course.description}</p>}
                     <p className="text-sm text-muted-foreground">
                       {course.classes?.name} • {course.subjects?.name}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Lecturer: {course.profiles?.full_name}
+                      Lecturer: {course.profiles?.full_name || 'Pending'}
                     </p>
                     {course.semester && (
                       <p className="text-sm text-muted-foreground mt-1">
