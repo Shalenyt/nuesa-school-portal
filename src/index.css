@@ -135,3 +135,11 @@ All colors MUST be HSL.
     opacity: 1;
   }
 }
+/* html2canvas measures where text sits using a hidden 1x1 image in the page.
+   The base style makes images display:block, which made it place text about
+   7px too low in every download (receipts, exam timetable PDFs). This targets
+   only that measuring image. */
+img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"] {
+  display: inline !important;
+  vertical-align: baseline !important;
+}
