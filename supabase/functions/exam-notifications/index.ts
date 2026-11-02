@@ -123,9 +123,11 @@ serve(async (req: Request) => {
       const dayAfterStr = dayAfterTomorrow.toISOString().split("T")[0];
 
       // Get exams in next 2 days
+      // Only published timetables; drafts must not send reminders
       const { data: upcomingExams } = await (supabase as any)
         .from("exam_timetables")
-        .select("*")
+        .select("*, exam_timetable_sets!inner(status)")
+        .eq("exam_timetable_sets.status", "published")
         .in("exam_date", [tomorrowStr, dayAfterStr]);
 
       let totalSent = 0;

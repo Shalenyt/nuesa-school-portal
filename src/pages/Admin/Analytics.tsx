@@ -1,91 +1,141 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { BarChart3, TrendingUp, Users, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BarChart3, TrendingUp, Users, BookOpen, RefreshCw } from 'lucide-react';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { DepartmentPerformance } from '@/components/Admin/DepartmentPerformance';
 import { CourseSuccessRate } from '@/components/Admin/CourseSuccessRate';
 import { TeacherGradingPerformance } from '@/components/Admin/TeacherGradingPerformance';
+import { cn } from '@/lib/utils';
+
+interface Summary {
+  enrolled_students: number;
+  course_registrations: number;
+  total_students: number;
+  students_at_month_start: number;
+  new_students_this_month: number;
+  new_students_last_month: number;
+  total_courses: number;
+  courses_with_students: number;
+  submissions: number;
+  graded_submissions: number;
+}
+
+// How often the numbers refresh on their own while the page is open
+const REFRESH_MS = 60_000;
 
 export default function Analytics() {
-  const [analytics, setAnalytics] = useState({
-    totalEnrollments: 0,
-    activeCourses: 0,
-    completedAssignments: 0,
-    monthlyGrowth: 0,
-    thisMonth: 0,
-    lastMonth: 0
-  });
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    fetchAnalytics();
+  // All numbers come from one database function, so they always match the database
+  const fetchSummary = useCallback(async () => {
+    setRefreshing(true);
+    const { data, error } = await (supabase as any).rpc('admin_analytics_summary');
+    if (error) {
+      console.error('Error fetching analytics:', error);
+      setFailed(true);
+    } else {
+      setSummary(data as Summary);
+      setFailed(false);
+      setUpdatedAt(new Date());
+    }
+    setLoading(false);
+    setRefreshing(false);
   }, []);
 
-  const fetchAnalytics = async () => {
-    try {
-      // Monthly growth = enrollments this month compared with last month
-      // (this used to be a fixed 12.5%)
-      const now = new Date();
-      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+  const refreshAll = useCallback(() => {
+    fetchSummary();
+    setRefreshKey((k) => k + 1);
+  }, [fetchSummary]);
 
-      const [enrollments, courses, assignments, thisMonth, lastMonth] = await Promise.all([
-        supabase.from('student_enrollments').select('*', { count: 'exact', head: true }),
-        supabase.from('courses').select('*', { count: 'exact', head: true }),
-        supabase.from('assignment_submissions').select('*', { count: 'exact', head: true }),
-        supabase.from('student_enrollments').select('*', { count: 'exact', head: true }).gte('enrolled_at', thisMonthStart),
-        supabase.from('student_enrollments').select('*', { count: 'exact', head: true }).gte('enrolled_at', lastMonthStart).lt('enrolled_at', thisMonthStart)
-      ]);
+  useEffect(() => {
+    fetchSummary();
+    const timer = setInterval(refreshAll, REFRESH_MS);
+    // Refresh when the admin comes back to the tab
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshAll(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
+  }, [fetchSummary, refreshAll]);
 
-      const current = thisMonth.count || 0;
-      const previous = lastMonth.count || 0;
-      const monthlyGrowth = previous > 0
-        ? Math.round(((current - previous) / previous) * 1000) / 10
-        : current > 0 ? 100 : 0;
+  // Growth = change in the number of students since the start of this month
+  const growth = (() => {
+    if (!summary) return { value: '—', description: '' };
+    const start = summary.students_at_month_start;
+    const now = summary.total_students;
+    const detail = `${summary.new_students_this_month} new this month · ${summary.new_students_last_month} last month`;
+    if (start === 0) return { value: `+${summary.new_students_this_month}`, description: detail };
+    const pct = Math.round(((now - start) / start) * 1000) / 10;
+    return { value: `${pct > 0 ? '+' : ''}${pct}%`, description: detail };
+  })();
 
-      setAnalytics({
-        totalEnrollments: enrollments.count || 0,
-        activeCourses: courses.count || 0,
-        completedAssignments: assignments.count || 0,
-        monthlyGrowth,
-        thisMonth: current,
-        lastMonth: previous
-      });
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const analyticsCards = [
-    { title: "Total Enrollments", value: analytics.totalEnrollments, icon: Users, description: "Students enrolled in courses" },
-    { title: "Total Courses", value: analytics.activeCourses, icon: BookOpen, description: "Courses on the portal" },
-    { title: "Completed Assignments", value: analytics.completedAssignments, icon: BarChart3, description: "Assignments submitted" },
-    // With nothing last month a percentage means nothing, so show the raw count instead of a fake 100%
-    analytics.lastMonth > 0
-      ? { title: "Monthly Growth", value: `${analytics.monthlyGrowth > 0 ? '+' : ''}${analytics.monthlyGrowth}%`, icon: TrendingUp, description: "Enrollments vs last month" }
-      : { title: "Monthly Growth", value: `+${analytics.thisMonth}`, icon: TrendingUp, description: "New enrollments this month" }
+  const cards = [
+    {
+      title: 'Enrolled Students',
+      value: summary?.enrolled_students,
+      icon: Users,
+      description: summary
+        ? `${summary.course_registrations} course registrations · ${summary.total_students} approved students`
+        : 'Students registered for at least one course',
+    },
+    {
+      title: 'Total Courses',
+      value: summary?.total_courses,
+      icon: BookOpen,
+      description: summary ? `${summary.courses_with_students} have students registered` : 'Courses on the portal',
+    },
+    {
+      title: 'Assignment Submissions',
+      value: summary?.submissions,
+      icon: BarChart3,
+      description: summary ? `${summary.graded_submissions} graded` : 'Assignments submitted',
+    },
+    {
+      title: 'Monthly Growth',
+      value: growth.value,
+      icon: TrendingUp,
+      description: growth.description || 'Change in students this month',
+    },
   ];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground">School performance metrics and insights</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+            <p className="text-muted-foreground">
+              Live school metrics{updatedAt ? ` · updated ${updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={refreshAll} disabled={refreshing}>
+            <RefreshCw className={cn('h-4 w-4 mr-2', refreshing && 'animate-spin')} /> Refresh
+          </Button>
         </div>
 
+        {failed && (
+          <Card className="border-destructive/40">
+            <CardContent className="flex flex-wrap items-center gap-3 p-4 text-sm">
+              Couldn't load the analytics.
+              <Button size="sm" variant="outline" onClick={refreshAll}>Try again</Button>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {analyticsCards.map((card, index) => (
-            <Card key={index}>
+          {cards.map((card) => (
+            <Card key={card.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
                 <card.icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{loading ? '-' : card.value}</div>
+                <div className="text-2xl font-bold">{loading ? '-' : card.value ?? '—'}</div>
                 <p className="text-xs text-muted-foreground">{card.description}</p>
               </CardContent>
             </Card>
@@ -93,11 +143,11 @@ export default function Analytics() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <DepartmentPerformance />
-          <CourseSuccessRate />
+          <DepartmentPerformance refreshKey={refreshKey} />
+          <CourseSuccessRate refreshKey={refreshKey} />
         </div>
 
-        <TeacherGradingPerformance />
+        <TeacherGradingPerformance refreshKey={refreshKey} />
       </div>
     </DashboardLayout>
   );

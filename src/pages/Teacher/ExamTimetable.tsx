@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { fetchLiveExamEntries } from '@/lib/examTimetable';
 import jsPDF from 'jspdf';
 
 export default function TeacherExamTimetable() {
@@ -22,8 +23,8 @@ export default function TeacherExamTimetable() {
   useEffect(() => { if (profile) fetchData(); }, [profile]);
 
   const fetchData = async () => {
-    const [{ data: timetable }, { data: courses }, semRes] = await Promise.all([
-      (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
+    const [timetable, { data: courses }, semRes] = await Promise.all([
+      fetchLiveExamEntries(),
       supabase.from('courses').select('id, name').eq('teacher_id', profile?.id),
       supabase.from('semester_config').select('*').eq('is_active', true).maybeSingle(),
     ]);

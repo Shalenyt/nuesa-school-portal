@@ -4,13 +4,14 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Building2 } from 'lucide-react';
 
-export function DepartmentPerformance() {
+export function DepartmentPerformance({ refreshKey = 0 }: { refreshKey?: number }) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Refetches when the analytics page refreshes (every minute and on Refresh)
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {

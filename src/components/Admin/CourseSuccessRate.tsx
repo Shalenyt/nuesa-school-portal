@@ -11,13 +11,14 @@ interface CourseRate {
   total: number;
 }
 
-export function CourseSuccessRate() {
+export function CourseSuccessRate({ refreshKey = 0 }: { refreshKey?: number }) {
   const [courses, setCourses] = useState<CourseRate[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Refetches when the analytics page refreshes (every minute and on Refresh)
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
