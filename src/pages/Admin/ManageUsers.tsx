@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { logAudit } from '@/lib/audit';
-import { Check, X, Users, Trash2, Eye, Search } from 'lucide-react';
+import { Check, X, Users, Trash2, Eye, Search, Crown, ShieldOff } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface Profile {
@@ -28,6 +29,7 @@ interface Profile {
 
 export default function ManageUsers() {
   const navigate = useNavigate();
+  const { profile: me } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [levels, setLevels] = useState<any[]>([]);
@@ -91,6 +93,30 @@ export default function ManageUsers() {
     } catch (e) { toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' }); }
   };
 
+  // Role changes (moved here from the old User Management page)
+  const changeRole = async (user: Profile, role: 'admin' | 'teacher') => {
+    const { error } = await supabase.from('profiles').update({ role: role as any }).eq('id', user.id);
+    if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
+    if (role === 'admin') {
+      try {
+        await supabase.functions.invoke('send-notification-email', {
+          body: { to: user.email, name: user.full_name, type: 'promoted', role: 'admin' }
+        });
+      } catch (e) { console.error('Email failed:', e); }
+    }
+    logAudit({
+      action: 'role_change',
+      resourceType: 'user',
+      resourceId: user.id,
+      resourceLabel: user.full_name,
+      description: role === 'admin' ? 'Promoted to admin' : 'Demoted to lecturer',
+      oldValues: { role: user.role },
+      newValues: { role },
+    });
+    toast({ title: 'Role updated', description: `${user.full_name} is now ${role === 'admin' ? 'an admin' : 'a lecturer'}` });
+    fetchProfiles();
+  };
+
   const filterBySearch = (list: Profile[]) => {
     let filtered = list;
     if (searchTerm) {
@@ -131,6 +157,26 @@ export default function ManageUsers() {
           <>
             <Button size="sm" variant="outline" onClick={() => navigate(`/admin/students/${profile.id}`)}><Eye className="h-4 w-4 mr-1" />View</Button>
             <Button size="sm" variant="outline" onClick={() => updateUserStatus(profile.id, 'rejected')}><X className="h-4 w-4 mr-1" />Deactivate</Button>
+            {profile.role === 'teacher' && (
+              <Button size="sm" variant="secondary" onClick={() => changeRole(profile, 'admin')}><Crown className="h-4 w-4 mr-1" />Promote to Admin</Button>
+            )}
+            {profile.role === 'admin' && profile.id !== me?.id && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline"><ShieldOff className="h-4 w-4 mr-1" />Demote to Lecturer</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remove admin access?</AlertDialogTitle>
+                    <AlertDialogDescription><strong>{profile.full_name}</strong> will become a lecturer and lose access to the admin pages.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => changeRole(profile, 'teacher')}>Demote</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </>
         )}
         {profile.status === 'rejected' && (
@@ -168,7 +214,7 @@ export default function ManageUsers() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
-          <p className="text-muted-foreground">Approve, reject, or manage user accounts</p>
+          <p className="text-muted-foreground">Approve, reject, change roles or manage user accounts</p>
         </div>
 
         <Card>

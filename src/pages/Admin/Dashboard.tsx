@@ -100,7 +100,7 @@ export default function AdminDashboard() {
       value: stats.totalUsers,
       icon: Users,
       description: "All registered users",
-      onClick: () => navigate('/admin/users'),
+      onClick: () => navigate('/admin/manage-users'),
       color: 'text-green-600 dark:text-green-400',
       bg: 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800',
       iconBg: 'bg-green-100 dark:bg-green-900'
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
       value: stats.pendingApplications,
       icon: Clock,
       description: "Awaiting approval",
-      onClick: () => navigate('/admin/users'),
+      onClick: () => navigate('/admin/manage-users'),
       color: 'text-yellow-600 dark:text-yellow-400',
       bg: 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800',
       iconBg: 'bg-yellow-100 dark:bg-yellow-900'
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       value: stats.approvedStudents,
       icon: GraduationCap,
       description: "Approved students",
-      onClick: () => navigate('/admin/users'),
+      onClick: () => navigate('/admin/manage-users'),
       color: 'text-blue-600 dark:text-blue-400',
       bg: 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800',
       iconBg: 'bg-blue-100 dark:bg-blue-900'
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
       value: stats.approvedTeachers,
       icon: UserCheck,
       description: "Approved lecturers",
-      onClick: () => navigate('/admin/users'),
+      onClick: () => navigate('/admin/manage-users'),
       color: 'text-purple-600 dark:text-purple-400',
       bg: 'bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800',
       iconBg: 'bg-purple-100 dark:bg-purple-900'
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
       value: stats.approvedAdmins,
       icon: Shield,
       description: "System administrators",
-      onClick: () => navigate('/admin/users'),
+      onClick: () => navigate('/admin/manage-users'),
       color: 'text-red-600 dark:text-red-400',
       bg: 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800',
       iconBg: 'bg-red-100 dark:bg-red-900'
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-3">
-                <Button variant="outline" className="justify-start" onClick={() => navigate('/admin/users')}>
+                <Button variant="outline" className="justify-start" onClick={() => navigate('/admin/manage-users')}>
                   <Users className="h-4 w-4 mr-2" />
                   Manage Users
                 </Button>
