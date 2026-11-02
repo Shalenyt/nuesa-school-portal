@@ -41,13 +41,18 @@ export function SearchableSelect({
   const [search, setSearch] = React.useState("");
 
   const filtered = React.useMemo(() => {
-    if (!search) return options;
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
+    if (!q) return options;
+    // Spaces are ignored too, so "cve4", "cve 4" and "CVE 413" all match CVE 413
+    const squash = (t?: string) => (t || "").toLowerCase().replace(/\s+/g, "");
+    const qs = squash(q);
     return options.filter(
       (o) =>
         o.label.toLowerCase().includes(q) ||
         o.description?.toLowerCase().includes(q) ||
-        o.value.toLowerCase().includes(q)
+        o.value.toLowerCase().includes(q) ||
+        squash(o.label).includes(qs) ||
+        squash(o.value).includes(qs)
     );
   }, [options, search]);
 
@@ -88,9 +93,12 @@ export function SearchableSelect({
             </div>
           ) : (
             <div className="p-1">
-              {filtered.map((option) => (
+              {filtered.map((option, i) => (
                 <button
-                  key={option.value}
+                  // Index in the key: repeated values (CHM 101 in every department)
+                  // made React show the wrong rows while typing
+                  key={`${option.value}-${i}`}
+                  type="button"
                   onClick={() => {
                     onValueChange(option.value === value ? "" : option.value);
                     setOpen(false);

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, BookOpen, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { fetchLiveExamEntries } from '@/lib/examTimetable';
 import jsPDF from 'jspdf';
 
 export default function StudentExamTimetable() {
@@ -24,8 +25,8 @@ export default function StudentExamTimetable() {
     const { data: user } = await supabase.auth.getUser();
     const userId = user.user?.id;
 
-    const [{ data: timetable }, enrollRes, semRes] = await Promise.all([
-      (supabase as any).from('exam_timetables').select('*').order('exam_date').order('time_slot'),
+    const [timetable, enrollRes, semRes] = await Promise.all([
+      fetchLiveExamEntries(),
       userId
         ? supabase
             .from('student_enrollments')

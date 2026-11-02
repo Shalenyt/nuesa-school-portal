@@ -11,13 +11,14 @@ interface TeacherPerf {
   avgTurnaround: string;
 }
 
-export function TeacherGradingPerformance() {
+export function TeacherGradingPerformance({ refreshKey = 0 }: { refreshKey?: number }) {
   const [teachers, setTeachers] = useState<TeacherPerf[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Refetches when the analytics page refreshes (every minute and on Refresh)
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
