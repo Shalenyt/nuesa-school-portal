@@ -343,10 +343,11 @@ export default function LecturerQuizzes() {
         {view === 'list' && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {quizzes.map((q) => (
-              <Card key={q.id}>
+              <Card key={q.id} className="min-w-0">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center justify-between gap-2 flex-wrap">
-                    <span className="truncate">{q.title}</span>
+                    {/* Wrap long titles instead of pushing the card off the screen on phones */}
+                    <span className="min-w-0 break-words">{q.title}</span>
                     <Badge variant={q.status === 'published' ? 'default' : 'secondary'}>{q.status}</Badge>
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">{q.courses?.name || q.courses?.subjects?.name}</p>

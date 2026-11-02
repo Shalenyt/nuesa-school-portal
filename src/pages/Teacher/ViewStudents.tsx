@@ -96,20 +96,21 @@ export default function ViewStudents() {
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Search className="h-5 w-5" /> Search and Filter</CardTitle></CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="relative">
+            {/* grid-cols-1 + min-w-0: long option text no longer pushes the filters off the card on phones */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="relative min-w-0">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search by name or matric number" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
               </div>
-              <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
+              <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} className="w-full min-w-0 px-3 py-2 border rounded-md bg-background">
                 <option value="all">All Courses</option>
                 {courses.map((course) => <option key={course.id} value={course.id}>{course.name} ({course.classes?.name} - {course.subjects?.name})</option>)}
               </select>
-              <select value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
+              <select value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)} className="w-full min-w-0 px-3 py-2 border rounded-md bg-background">
                 <option value="all">All Departments</option>
                 {departments.map((dept) => <option key={dept.id} value={dept.id}>{dept.name}</option>)}
               </select>
-              <select value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
+              <select value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)} className="w-full min-w-0 px-3 py-2 border rounded-md bg-background">
                 <option value="all">All Levels</option>
                 {levels.map((level) => <option key={level.id} value={level.id}>{level.name}</option>)}
               </select>

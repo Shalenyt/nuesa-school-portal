@@ -249,7 +249,8 @@ export default function TeacherClassSchedule() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        {/* Stacks on phones so the title and button both have room */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Class Schedule</h1>
             <p className="text-muted-foreground">
@@ -356,7 +357,7 @@ export default function TeacherClassSchedule() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    {schedule.start_time} - {schedule.end_time}
+                    {String(schedule.start_time).slice(0, 5)} – {String(schedule.end_time).slice(0, 5)}
                   </div>
                   {schedule.room && (
                     <div className="flex items-center gap-1">

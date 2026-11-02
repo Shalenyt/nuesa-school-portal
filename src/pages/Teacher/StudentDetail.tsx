@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { calculateStudentGPA } from '@/lib/gpa';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,7 @@ import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
 import { User } from 'lucide-react';
 
 interface CourseInfo {
+  title?: string;
   id: string;
   name: string;
   credit_unit: number | null;
@@ -28,10 +30,11 @@ interface StudentDetailData {
   profile_photo_url?: string;
   level_name: string;
   department_name: string;
-  gpa: number;
-  attendance_percentage: number;
+  // null = nothing to show yet (displayed as "—" rather than 0)
+  gpa: number | null;
+  attendance_percentage: number | null;
   courses: CourseInfo[];
-  quiz_avg: number;
+  quiz_avg: number | null;
 }
 
 export default function TeacherStudentDetail() {
@@ -63,17 +66,18 @@ export default function TeacherStudentDetail() {
       // Fetch enrolled courses
       const { data: enrollments } = await supabase
         .from('student_enrollments')
-        .select('course_id, courses:course_id(id, name, credit_unit, semester, subjects:subject_id(name), classes:class_id(name))')
+        .select('course_id, courses:course_id(id, name, description, credit_unit, semester, subjects:subject_id(name), classes:class_id(name))')
         .eq('student_id', studentId);
 
       const courses: CourseInfo[] = (enrollments || []).map((e: any) => ({
         id: e.courses?.id || '',
         name: e.courses?.name || 'Unnamed',
+        title: e.courses?.description || '',
         credit_unit: e.courses?.credit_unit,
         semester: e.courses?.semester,
         department_name: e.courses?.subjects?.name || '',
         level_name: e.courses?.classes?.name || '',
-      }));
+      })).sort((a, b) => a.name.localeCompare(b.name));
 
       // Fetch quiz scores
       const { data: quizSubs } = await supabase
@@ -84,11 +88,11 @@ export default function TeacherStudentDetail() {
       const quizScores = (quizSubs || []).filter((q: any) => q.score !== null);
       const quizAvg = quizScores.length > 0
         ? quizScores.reduce((a: number, b: any) => a + (b.score || 0), 0) / quizScores.length
-        : 0;
+        : null;
 
       // Fetch attendance
       const courseIds = courses.map(c => c.id).filter(Boolean);
-      let attendPct = 0;
+      let attendPct: number | null = null;
       if (courseIds.length > 0) {
         const { data: sessions } = await supabase
           .from('attendance_sessions')
@@ -107,7 +111,13 @@ export default function TeacherStudentDetail() {
         }
       }
 
-      const gpa = quizAvg > 0 ? Math.min(5.0, (quizAvg / 100) * 5) : 0;
+      // Same GPA calculation the student sees. A lecturer can only read results
+      // from their own courses, so this covers those courses.
+      let gpa: number | null = null;
+      try {
+        const result = await calculateStudentGPA(studentId);
+        gpa = result.courseGrades.length ? result.gpa : null;
+      } catch { gpa = null; }
 
       setStudent({
         id: profile.id,
@@ -167,16 +177,16 @@ export default function TeacherStudentDetail() {
 
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">GPA</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{student.gpa.toFixed(2)}/5.0</p></CardContent>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">GPA (your courses)</CardTitle></CardHeader>
+            <CardContent><p className="text-3xl font-bold">{student.gpa != null ? `${student.gpa.toFixed(2)}/5.0` : '—'}</p></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Attendance</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{student.attendance_percentage}%</p></CardContent>
+            <CardContent><p className="text-3xl font-bold">{student.attendance_percentage != null ? `${student.attendance_percentage}%` : '—'}</p></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Quiz Avg</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{student.quiz_avg.toFixed(1)}%</p></CardContent>
+            <CardContent><p className="text-3xl font-bold">{student.quiz_avg != null ? `${student.quiz_avg.toFixed(1)}%` : '—'}</p></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Courses</CardTitle></CardHeader>
@@ -193,10 +203,11 @@ export default function TeacherStudentDetail() {
                   <div key={course.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium text-sm">{course.name}</p>
+                      {course.title && <p className="text-sm">{course.title}</p>}
                       <p className="text-xs text-muted-foreground">{course.department_name} • {course.level_name}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {course.credit_unit && <Badge variant="outline">{course.credit_unit} CU</Badge>}
+                      {course.credit_unit && <Badge variant="outline">{course.credit_unit} Unit{course.credit_unit > 1 ? 's' : ''}</Badge>}
                       {course.semester && <Badge variant="secondary">{course.semester}</Badge>}
                     </div>
                   </div>

@@ -94,14 +94,15 @@ export default function TeacherAnnouncements() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        {/* Stacks on phones so the button isn't pushed off the screen */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
             <p className="text-muted-foreground">
               View school announcements and create class announcements
             </p>
           </div>
-          <Button onClick={() => setIsCreating(true)}>
+          <Button className="self-start sm:self-auto" onClick={() => setIsCreating(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Announcement
           </Button>

@@ -15,6 +15,7 @@ export default function UploadMaterials() {
   const { toast } = useToast();
   const [courses, setCourses] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
+  const [materialsLoaded, setMaterialsLoaded] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [newMaterial, setNewMaterial] = useState({
     title: '',
@@ -62,6 +63,8 @@ export default function UploadMaterials() {
       setMaterials(data || []);
     } catch (error) {
       console.error('Error fetching materials:', error);
+    } finally {
+      setMaterialsLoaded(true);
     }
   };
 
@@ -227,6 +230,9 @@ export default function UploadMaterials() {
 
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Uploaded Materials</h2>
+          {materialsLoaded && materials.length === 0 && (
+            <p className="text-sm text-muted-foreground">You haven't uploaded any materials yet. Upload one above and your students will see it under Course Materials.</p>
+          )}
           {materials.map((material) => (
             <Card key={material.id}>
               <CardHeader>
