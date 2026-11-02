@@ -85,31 +85,18 @@ export default function Apply() {
     fetchClassesAndSubjects();
   }, []);
 
-  useEffect(() => {
-    if (formData.role === 'student') {
-      console.log('Student role selected, classes:', classes.length, 'subjects:', subjects.length);
-    }
-  }, [formData.role, classes, subjects]);
-
   const fetchClassesAndSubjects = async () => {
     try {
-      console.log('Fetching classes and subjects...');
-      
       const [classesResponse, subjectsResponse] = await Promise.all([
         supabase.from('classes').select('*').order('name'),
         supabase.from('subjects').select('*').order('name')
       ]);
 
-      console.log('Classes response:', classesResponse);
-      console.log('Subjects response:', subjectsResponse);
-
       if (classesResponse.data) {
         setClasses(classesResponse.data);
-        console.log('Classes set:', classesResponse.data);
       }
       if (subjectsResponse.data) {
         setSubjects(subjectsResponse.data);
-        console.log('Subjects set:', subjectsResponse.data);
       }
     } catch (error) {
       console.error('Error fetching classes and subjects:', error);
@@ -119,13 +106,23 @@ export default function Apply() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const stop = (title: string, description: string) => {
+      toast({ title, description, variant: 'destructive' });
+    };
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      stop('Passwords do not match', 'Type the same password in both boxes.');
       return;
     }
 
     if (!formData.role) {
-      alert('Please select a role');
+      stop('Choose a role', 'Select whether you are a student, lecturer or administrator.');
+      return;
+    }
+
+    // Without these a student's account has no courses after approval
+    if (formData.role === 'student' && (!formData.classId || !formData.subjectId)) {
+      stop('Level and department needed', 'Select your level and department. You cannot change them yourself later.');
       return;
     }
 
