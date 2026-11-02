@@ -14,12 +14,19 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' && componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': a new version waits until the person taps "Update now"
+      // (see src/components/UpdatePrompt.tsx), instead of silently swapping
+      // in the background and leaving the open page on the old version.
+      registerType: 'prompt',
+      // Registered from UpdatePrompt via virtual:pwa-register/react
+      injectRegister: false,
       includeAssets: ['favicon.png', 'favicon.ico'],
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Remove files from older versions once a new one takes over
+        cleanupOutdatedCaches: true,
       },
       manifest: {
         name: 'NUESA Portal',

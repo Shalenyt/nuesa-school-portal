@@ -34,6 +34,11 @@ export default function StudentPayments() {
   const [signatures, setSignatures] = useState<{ president?: string; financial_secretary?: string }>({});
   
   const receiptRef = useRef<HTMLDivElement>(null);
+  // The receipt is a fixed-width design (850px). Shrink it to fit the popup
+  // on smaller screens instead of cutting off its right side.
+  const fitRef = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState({ scale: 1, height: 0, offset: 0 });
+  const [capturing, setCapturing] = useState(false);
 
   useEffect(() => {
     if (profile) { fetchPayments(); fetchSignatures(); }
@@ -110,8 +115,30 @@ export default function StudentPayments() {
     if (record) setSelectedReceipt({ ...record, paymentTitle: payment.title, paymentAmount: payment.amount, paymentDescription: payment.description, paymentType: payment.payment_type });
   };
 
+  // Keep the on-screen receipt scaled to the popup width
+  useEffect(() => {
+    if (!selectedReceipt) return;
+    const measure = () => {
+      const box = fitRef.current, el = receiptRef.current;
+      if (!box || !el) return;
+      const available = box.clientWidth;
+      const natural = el.offsetWidth;
+      if (!natural) return;
+      const scale = Math.min(1, available / natural);
+      setFit({ scale, height: el.offsetHeight, offset: Math.max(0, (available - natural * scale) / 2) });
+    };
+    const raf = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
+    if (fitRef.current) ro.observe(fitRef.current);
+    if (receiptRef.current) ro.observe(receiptRef.current);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [selectedReceipt]);
+
   const downloadReceipt = async () => {
     if (!receiptRef.current) return;
+    // Capture at full size, not the shrunk on-screen size
+    setCapturing(true);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     try {
       const { default: html2canvas } = await import('html2canvas');
       const { default: jsPDF } = await import('jspdf');
@@ -147,6 +174,8 @@ export default function StudentPayments() {
       printWindow.document.write(`<html><head><title>NUESA Receipt</title></head><body>${receiptRef.current.innerHTML}</body></html>`);
       printWindow.document.close();
       printWindow.print();
+    } finally {
+      setCapturing(false);
     }
   };
 
@@ -301,7 +330,19 @@ export default function StudentPayments() {
             </DialogHeader>
             {selectedReceipt && (
               <div className="space-y-4">
-                <div className="flex justify-center overflow-x-auto">
+                <div
+                  ref={fitRef}
+                  className="w-full overflow-hidden"
+                  style={{ height: fit.height ? fit.height * (capturing ? 1 : fit.scale) : undefined }}
+                >
+                  <div
+                    style={{
+                      width: 'max-content',
+                      transform: capturing ? 'none' : `scale(${fit.scale})`,
+                      transformOrigin: 'top left',
+                      marginLeft: capturing ? 0 : fit.offset,
+                    }}
+                  >
                   <div ref={receiptRef}>
                     {selectedReceipt.paymentType === 'faculty' ? (
                       <FacultyDuesReceipt
@@ -329,6 +370,7 @@ export default function StudentPayments() {
                         <p className="text-xs text-muted-foreground">{receiptDate.toLocaleDateString()}</p>
                       </div>
                     )}
+                  </div>
                   </div>
                 </div>
 

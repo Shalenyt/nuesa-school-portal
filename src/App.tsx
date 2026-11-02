@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useThemeSync } from "@/hooks/useThemeSync";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 import { HighPriorityNotification } from "@/components/HighPriorityNotification";
 
@@ -210,6 +211,7 @@ const App = () => {
           <BrowserRouter>
             <AppRoutes />
             <PushNotificationPrompt />
+            <UpdatePrompt />
             <SessionTimeoutWarning />
             <HighPriorityNotification />
           </BrowserRouter>
