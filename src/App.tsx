@@ -38,7 +38,6 @@ const AdminCourses = lazyPage(() => import("./pages/Admin/Courses"));
 const CourseLists = lazyPage(() => import("./pages/Admin/CourseLists"));
 const AdminProfile = lazyPage(() => import("./pages/Admin/Profile"));
 const AdminNotifications = lazyPage(() => import("./pages/Admin/Notifications"));
-const UserManagement = lazyPage(() => import("./pages/Admin/UserManagement"));
 const SemesterSettings = lazyPage(() => import("./pages/Admin/SemesterSettings"));
 const AdminStudentDetail = lazyPage(() => import("./pages/Admin/StudentDetail"));
 const AdminPayments = lazyPage(() => import("./pages/Admin/Payments"));
@@ -140,7 +139,8 @@ function AppRoutes() {
       <Route path="/admin/course-lists" element={<ProtectedRoute allowedRoles={['admin']}><CourseLists /></ProtectedRoute>} />
       <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['admin']}><AdminProfile /></ProtectedRoute>} />
       <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><AdminNotifications /></ProtectedRoute>} />
-      <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagement /></ProtectedRoute>} />
+      {/* User Management was merged into Manage Users; keep old links working */}
+      <Route path="/admin/users" element={<Navigate to="/admin/manage-users" replace />} />
       <Route path="/admin/semester-settings" element={<ProtectedRoute allowedRoles={['admin']}><SemesterSettings /></ProtectedRoute>} />
       <Route path="/admin/student-detail" element={<ProtectedRoute allowedRoles={['admin']}><AdminStudentDetail /></ProtectedRoute>} />
       <Route path="/admin/students/:id" element={<ProtectedRoute allowedRoles={['admin']}><AdminStudentDetail /></ProtectedRoute>} />

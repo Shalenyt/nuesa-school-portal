@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { Calendar, Plus, Trash2 } from 'lucide-react';
+import { PromoteStudents } from '@/components/Admin/PromoteStudents';
 
 export default function SemesterSettings() {
   const [semesters, setSemesters] = useState<any[]>([]);
@@ -121,6 +122,8 @@ export default function SemesterSettings() {
             </Card>
           ))}
         </div>
+
+        <PromoteStudents />
       </div>
     </DashboardLayout>
   );

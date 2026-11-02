@@ -56,7 +56,17 @@ export default function PublicStudentVerify() {
 
         setStudent(row);
         setState('found');
-        const url = await resolveDisplayableImageUrl(row.profile_photo_url);
+        // Photos are in a private bucket. A signed-in viewer can make the
+        // link directly; someone scanning the QR code isn't signed in, so ask
+        // the verify-student-photo function for a link to this one photo.
+        let url: string | null = null;
+        const { data: session } = await supabase.auth.getSession();
+        if (session.session) {
+          url = await resolveDisplayableImageUrl(row.profile_photo_url);
+        } else {
+          const { data: photoRes } = await supabase.functions.invoke('verify-student-photo', { body: { code } });
+          url = photoRes?.url ?? null;
+        }
         if (!cancelled) setPhoto(url);
       } catch (err) {
         console.error('Student verification failed');
