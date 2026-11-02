@@ -118,11 +118,8 @@ export default function StudentQuizzes() {
       setGpsChecking(false);
     }
 
-    const { data } = await (supabase as any)
-      .from('quiz_questions')
-      .select('*')
-      .eq('quiz_id', quiz.id)
-      .order('sort_order', { ascending: true });
+    // Questions without the correct answers (students can't read those any more)
+    const { data } = await (supabase as any).rpc('quiz_questions_for_student', { p_quiz_id: quiz.id });
 
     setSelectedQuiz(quiz);
     setQuestions(data || []);

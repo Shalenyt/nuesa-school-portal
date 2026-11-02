@@ -96,11 +96,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { data: callerProfile, error: profileError } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, status")
       .eq("id", userId)
       .single();
 
-    if (profileError || callerProfile?.role !== "admin") {
+    if (profileError || callerProfile?.role !== "admin" || callerProfile?.status !== "approved") {
       return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },

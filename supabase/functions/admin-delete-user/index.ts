@@ -67,11 +67,11 @@ const handler = async (req: Request): Promise<Response> => {
     // Verify caller is an admin
     const { data: callerProfile, error: profileError } = await supabaseUser
       .from("profiles")
-      .select("role")
+      .select("role, status")
       .eq("id", adminUserId)
       .single();
 
-    if (profileError || callerProfile?.role !== "admin") {
+    if (profileError || callerProfile?.role !== "admin" || callerProfile?.status !== "approved") {
       console.log("Non-admin attempted to delete user:", adminUserId);
       return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), {
         status: 403,

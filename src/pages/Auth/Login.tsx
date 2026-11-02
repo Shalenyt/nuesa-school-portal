@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
 export default function Login() {
@@ -28,6 +30,21 @@ export default function Login() {
     setLoading(true);
 
     const result = await signIn(email, password);
+
+    // Not approved yet (or turned down): explain, sign out and stay on this page
+    if (!result.error && result.profile && result.profile.status !== 'approved') {
+      const rejected = result.profile.status === 'rejected';
+      toast({
+        title: rejected ? 'Account not approved' : 'Application pending approval',
+        description: rejected
+          ? 'Your account has not been approved or has been deactivated. Please contact the NUESA administration.'
+          : "An administrator still needs to approve your account. We'll email you as soon as it's approved, then you can sign in.",
+        variant: rejected ? 'destructive' : 'default',
+      });
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
+    }
 
     if (!result.error && result.profile) {
       switch (result.profile.role) {

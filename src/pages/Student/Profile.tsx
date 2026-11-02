@@ -117,31 +117,10 @@ export default function StudentProfile() {
     }
   };
 
-  const autoEnrollStudent = async (courseIds: string[]) => {
-    try {
-      // Check which courses student is not enrolled in
-      const { data: existingEnrollments } = await supabase
-        .from('student_enrollments')
-        .select('course_id')
-        .eq('student_id', profile?.id);
-
-      const enrolledCourseIds = existingEnrollments?.map(e => e.course_id) || [];
-      const newCourseIds = courseIds.filter(id => !enrolledCourseIds.includes(id));
-
-      if (newCourseIds.length > 0) {
-        const enrollments = newCourseIds.map(courseId => ({
-          student_id: profile?.id,
-          course_id: courseId
-        }));
-
-        await supabase
-          .from('student_enrollments')
-          .insert(enrollments);
-      }
-    } catch (error) {
-      console.error('Error auto-enrolling student:', error);
-    }
-  };
+  // Enrollment now happens in the database when a student is approved (and
+  // when courses are added to their level). Students can no longer enroll
+  // themselves, so there is nothing to do here.
+  const autoEnrollStudent = async (_courseIds: string[]) => {};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
