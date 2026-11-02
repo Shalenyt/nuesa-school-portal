@@ -195,7 +195,7 @@ export default function StudentSubmitAssignment() {
               <div className="text-center">
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold">No assignments available</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Update your department and level in your profile, or no assignments have been posted yet.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Your lecturers have not posted any assignments for your courses yet.</p>
               </div>
             ) : (
               <Tabs defaultValue="pending">

@@ -50,6 +50,8 @@ serve(async (req: Request) => {
 
     const body = await req.json().catch(() => ({}));
     const { type, course_code, exam_date, time_slot, venue, start_time, end_time } = body;
+    // "08:00:00" -> "08:00"
+    const hhmm = (t?: string) => (t ? String(t).slice(0, 5) : "");
 
     if (type === "exam_created" && course_code) {
       // Find courses matching this code by course name
@@ -91,8 +93,8 @@ serve(async (req: Request) => {
               user_id: uid,
               title: `📝 Exam Scheduled: ${course_code}`,
               message: isTeacher
-                ? `You are scheduled to supervise ${course_code} exam on ${dateFormatted} (${start_time} – ${end_time}).${venue ? ` Venue: ${venue}` : ""}`
-                : `You have an upcoming exam for ${course_code} on ${dateFormatted} (${start_time} – ${end_time}).${venue ? ` Venue: ${venue}` : ""}`,
+                ? `You are scheduled to supervise ${course_code} exam on ${dateFormatted} (${hhmm(start_time)} – ${hhmm(end_time)}).${venue ? ` Venue: ${venue}` : ""}`
+                : `You have an upcoming exam for ${course_code} on ${dateFormatted} (${hhmm(start_time)} – ${hhmm(end_time)}).${venue ? ` Venue: ${venue}` : ""}`,
               type: "exam",
               priority: "normal",
               is_read: false,
@@ -161,7 +163,7 @@ serve(async (req: Request) => {
           const notifs = allIds.map((uid) => ({
             user_id: uid,
             title: `⏰ Exam Reminder: ${exam.course_code}`,
-            message: `Reminder: ${exam.course_code} exam is ${daysUntil} on ${dateFormatted} (${exam.start_time} – ${exam.end_time}).${exam.venue ? ` Venue: ${exam.venue}` : ""}`,
+            message: `Reminder: ${exam.course_code} exam is ${daysUntil} on ${dateFormatted} (${hhmm(exam.start_time)} – ${hhmm(exam.end_time)}).${exam.venue ? ` Venue: ${exam.venue}` : ""}`,
             type: "exam_reminder",
             priority: daysUntil === "tomorrow" ? "urgent" : "normal",
             is_read: false,
