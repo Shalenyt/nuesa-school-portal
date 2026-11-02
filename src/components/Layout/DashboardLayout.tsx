@@ -80,7 +80,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const getProfileUrl = () => {
     switch (profile?.role) {
       case 'admin': return '/admin/profile';
-      case 'teacher': return '/teacher/profile';
+      case 'teacher': return '/teacher/dashboard';
       case 'student': return '/student/profile';
       default: return '/';
     }
@@ -89,7 +89,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const getDashboardUrl = () => {
     switch (profile?.role) {
       case 'admin': return '/admin/dashboard';
-      case 'teacher': return '/teacher/profile';
+      case 'teacher': return '/teacher/dashboard';
       case 'student': return '/student/profile';
       default: return '/';
     }
