@@ -21,63 +21,59 @@ export function TeacherGradingPerformance() {
 
   const fetchData = async () => {
     try {
-      const { data: teacherProfiles } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .eq('role', 'teacher')
-        .eq('status', 'approved');
-
-      if (!teacherProfiles?.length) { setLoading(false); return; }
-
-      const perfs: TeacherPerf[] = [];
-      for (const t of teacherProfiles) {
-        const { data: subs } = await supabase
+      const [{ data: teacherProfiles }, { data: subs }] = await Promise.all([
+        supabase.from('profiles').select('id, full_name').eq('role', 'teacher').eq('status', 'approved'),
+        (supabase as any)
           .from('assignment_submissions')
           .select('grade, graded_at, submitted_at, assignments!inner(max_points, courses!inner(teacher_id))')
-          .eq('assignments.courses.teacher_id', t.id)
-          .not('grade', 'is', null);
+          .not('grade', 'is', null),
+      ]);
 
-        if (!subs?.length) continue;
-
-        const scores = subs.map((s: any) => ((s.grade || 0) / ((s as any).assignments?.max_points || 100)) * 100);
-        const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-
-        // Calculate turnaround time
-        const turnarounds = subs
-          .filter((s: any) => s.graded_at && s.submitted_at)
-          .map((s: any) => (new Date(s.graded_at).getTime() - new Date(s.submitted_at).getTime()) / (1000 * 60 * 60 * 24));
-
-        const avgDays = turnarounds.length > 0 ? Math.round(turnarounds.reduce((a, b) => a + b, 0) / turnarounds.length) : 0;
-
-        perfs.push({
-          name: t.full_name,
-          avgClassScore: avgScore,
-          totalGraded: subs.length,
-          avgTurnaround: `${avgDays}d`,
-        });
+      const nameById = new Map((teacherProfiles || []).map((t: any) => [t.id, t.full_name]));
+      const byTeacher = new Map<string, any[]>();
+      for (const s of subs || []) {
+        const tid = s.assignments?.courses?.teacher_id;
+        if (!tid || !nameById.has(tid)) continue;
+        byTeacher.set(tid, [...(byTeacher.get(tid) || []), s]);
       }
+
+      const perfs: TeacherPerf[] = [...byTeacher.entries()].map(([tid, list]) => {
+        const scores = list.map((s: any) => ((s.grade || 0) / (s.assignments?.max_points || 100)) * 100);
+        const turnarounds = list
+          .filter((s: any) => s.graded_at && s.submitted_at)
+          .map((s: any) => (new Date(s.graded_at).getTime() - new Date(s.submitted_at).getTime()) / 86400000);
+        const avgDays = turnarounds.length ? Math.round(turnarounds.reduce((a, b) => a + b, 0) / turnarounds.length) : 0;
+        return {
+          name: nameById.get(tid) as string,
+          avgClassScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+          totalGraded: list.length,
+          avgTurnaround: `${avgDays}d`,
+        };
+      });
 
       perfs.sort((a, b) => b.avgClassScore - a.avgClassScore);
       setTeachers(perfs);
     } catch (err) {
-      console.error('Error fetching teacher grading performance:', err);
+      console.error('Error fetching lecturer grading performance:', err);
     } finally {
       setLoading(false);
     }
   };
-
-  if (loading || teachers.length === 0) return null;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Teacher Grading Performance
+          Lecturer Grading Performance
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3 max-h-72 overflow-y-auto">
+          {loading && <p className="py-8 text-center text-sm text-muted-foreground">Loading...</p>}
+          {!loading && teachers.length === 0 && (
+            <p className="py-8 text-center text-sm text-muted-foreground">No graded assignments yet. Each lecturer's average score and grading speed will show here.</p>
+          )}
           {teachers.map((t, i) => (
             <div key={i} className="flex items-center justify-between p-2 border rounded-lg text-sm">
               <div>

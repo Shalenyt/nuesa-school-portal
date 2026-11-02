@@ -21,49 +21,15 @@ export function RecentActivities() {
 
   const fetchActivities = async () => {
     try {
-      // Fetch recent applications
-      const { data: applications } = await supabase
-        .from('profiles')
-        .select('full_name, created_at, role')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
-        .limit(2);
-
-      // Fetch recent user approvals/rejections
-      const { data: userUpdates } = await supabase
-        .from('profiles')
-        .select('full_name, updated_at, status')
-        .in('status', ['approved', 'rejected'])
-        .order('updated_at', { ascending: false })
-        .limit(2);
-
-      // Fetch recent announcements
-      const { data: announcements } = await supabase
-        .from('announcements')
-        .select('title, created_at, profiles(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(2);
-
-      // Fetch recent material uploads
-      const { data: materials } = await supabase
-        .from('materials')
-        .select('title, created_at, profiles(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(2);
-
-      // Fetch recent courses added
-      const { data: courses } = await (supabase as any)
-        .from('courses')
-        .select('created_at, name, description, subjects(name)')
-        .order('created_at', { ascending: false })
-        .limit(2);
-
-      // Fetch recent course lists created
-      const { data: courseLists } = await (supabase as any)
-        .from('course_lists')
-        .select('created_at, classes(name), subjects(name)')
-        .order('created_at', { ascending: false })
-        .limit(2);
+      // Six small queries, now in parallel instead of one after another
+      const [{ data: applications }, { data: userUpdates }, { data: announcements }, { data: materials }, { data: courses }, { data: courseLists }] = await Promise.all([
+        supabase.from('profiles').select('full_name, created_at, role').eq('status', 'pending').order('created_at', { ascending: false }).limit(2),
+        supabase.from('profiles').select('full_name, updated_at, status').in('status', ['approved', 'rejected']).order('updated_at', { ascending: false }).limit(2),
+        supabase.from('announcements').select('title, created_at, profiles(full_name)').order('created_at', { ascending: false }).limit(2),
+        supabase.from('materials').select('title, created_at, profiles(full_name)').order('created_at', { ascending: false }).limit(2),
+        (supabase as any).from('courses').select('created_at, name, description, subjects(name)').order('created_at', { ascending: false }).limit(2),
+        (supabase as any).from('course_lists').select('created_at, classes(name), subjects(name)').order('created_at', { ascending: false }).limit(2),
+      ]);
 
       const recentActivities: Activity[] = [];
 

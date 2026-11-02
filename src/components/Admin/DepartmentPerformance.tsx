@@ -14,43 +14,34 @@ export function DepartmentPerformance() {
 
   const fetchData = async () => {
     try {
-      const { data: subjects } = await supabase.from('subjects').select('id, name');
-      if (!subjects?.length) { setLoading(false); return; }
+      // One query for every graded submission, grouped by department here.
+      // This used to make two requests per department.
+      const { data: subs } = await (supabase as any)
+        .from('assignment_submissions')
+        .select('grade, assignments!inner(max_points, courses!inner(subject_id, subjects(name)))')
+        .not('grade', 'is', null);
 
-      const chartData = [];
-      for (const dept of subjects) {
-        const { data: courses } = await supabase.from('courses').select('id').eq('subject_id', dept.id);
-        if (!courses?.length) continue;
-
-        const courseIds = courses.map(c => c.id);
-        const { data: subs } = await supabase
-          .from('assignment_submissions')
-          .select('grade, assignments!inner(max_points, course_id)')
-          .in('assignments.course_id', courseIds)
-          .not('grade', 'is', null);
-
-        if (!subs?.length) continue;
-
-        const scores = subs.map((s: any) => ((s.grade || 0) / ((s as any).assignments?.max_points || 100)) * 100);
-        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-        const passRate = Math.round((scores.filter(s => s >= 50).length / scores.length) * 100);
-
-        chartData.push({
-          name: dept.name.substring(0, 15),
-          avgScore: avg,
-          passRate,
-        });
+      const byDept = new Map<string, { name: string; scores: number[] }>();
+      for (const s of subs || []) {
+        const course = s.assignments?.courses;
+        if (!course?.subject_id) continue;
+        const pct = ((s.grade || 0) / (s.assignments?.max_points || 100)) * 100;
+        const entry = byDept.get(course.subject_id) || { name: course.subjects?.name || 'Department', scores: [] };
+        entry.scores.push(pct);
+        byDept.set(course.subject_id, entry);
       }
 
-      setData(chartData);
+      setData([...byDept.values()].map(({ name, scores }) => ({
+        name: name.replace(/ ENGINEERING$/i, '').substring(0, 15),
+        avgScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+        passRate: Math.round((scores.filter((x) => x >= 50).length / scores.length) * 100),
+      })));
     } catch (err) {
       console.error('Error fetching department performance:', err);
     } finally {
       setLoading(false);
     }
   };
-
-  if (loading || data.length === 0) return null;
 
   return (
     <Card>
@@ -61,6 +52,11 @@ export function DepartmentPerformance() {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {loading ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Loading...</p>
+        ) : data.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">No graded assignments yet. Department averages will show here once lecturers grade work.</p>
+        ) : (
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={data}>
             <XAxis dataKey="name" fontSize={11} />
@@ -70,6 +66,7 @@ export function DepartmentPerformance() {
             <Bar dataKey="passRate" fill="hsl(var(--primary) / 0.5)" name="Pass Rate %" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   );

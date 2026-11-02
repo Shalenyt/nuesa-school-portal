@@ -12,7 +12,9 @@ export default function Analytics() {
     totalEnrollments: 0,
     activeCourses: 0,
     completedAssignments: 0,
-    monthlyGrowth: 0
+    monthlyGrowth: 0,
+    thisMonth: 0,
+    lastMonth: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +48,9 @@ export default function Analytics() {
         totalEnrollments: enrollments.count || 0,
         activeCourses: courses.count || 0,
         completedAssignments: assignments.count || 0,
-        monthlyGrowth
+        monthlyGrowth,
+        thisMonth: current,
+        lastMonth: previous
       });
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -57,9 +61,12 @@ export default function Analytics() {
 
   const analyticsCards = [
     { title: "Total Enrollments", value: analytics.totalEnrollments, icon: Users, description: "Students enrolled in courses" },
-    { title: "Active Courses", value: analytics.activeCourses, icon: BookOpen, description: "Currently running courses" },
+    { title: "Total Courses", value: analytics.activeCourses, icon: BookOpen, description: "Courses on the portal" },
     { title: "Completed Assignments", value: analytics.completedAssignments, icon: BarChart3, description: "Assignments submitted" },
-    { title: "Monthly Growth", value: `${analytics.monthlyGrowth}%`, icon: TrendingUp, description: "Increase in enrollments" }
+    // With nothing last month a percentage means nothing, so show the raw count instead of a fake 100%
+    analytics.lastMonth > 0
+      ? { title: "Monthly Growth", value: `${analytics.monthlyGrowth > 0 ? '+' : ''}${analytics.monthlyGrowth}%`, icon: TrendingUp, description: "Enrollments vs last month" }
+      : { title: "Monthly Growth", value: `+${analytics.thisMonth}`, icon: TrendingUp, description: "New enrollments this month" }
   ];
 
   return (

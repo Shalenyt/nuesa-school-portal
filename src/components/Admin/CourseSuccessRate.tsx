@@ -21,27 +21,27 @@ export function CourseSuccessRate() {
 
   const fetchData = async () => {
     try {
-      const { data: allCourses } = await supabase.from('courses').select('id, name, subjects(name)');
-      if (!allCourses?.length) { setLoading(false); return; }
+      // One query instead of one request per course (484 requests in a row).
+      const { data: subs } = await (supabase as any)
+        .from('assignment_submissions')
+        .select('grade, assignments!inner(max_points, course_id, courses(name))')
+        .not('grade', 'is', null);
 
-      const rates: CourseRate[] = [];
-      for (const c of allCourses) {
-        const { data: subs } = await supabase
-          .from('assignment_submissions')
-          .select('grade, assignments!inner(max_points, course_id)')
-          .eq('assignments.course_id', c.id)
-          .not('grade', 'is', null);
-
-        if (!subs?.length) continue;
-
-        const passed = subs.filter((s: any) => ((s.grade || 0) / ((s as any).assignments?.max_points || 100)) * 100 >= 50).length;
-        rates.push({
-          name: c.name || (c as any).subjects?.name || 'Course',
-          passRate: Math.round((passed / subs.length) * 100),
-          total: subs.length,
-        });
+      const byCourse = new Map<string, { name: string; passed: number; total: number }>();
+      for (const s of subs || []) {
+        const a = s.assignments;
+        if (!a?.course_id) continue;
+        const entry = byCourse.get(a.course_id) || { name: a.courses?.name || 'Course', passed: 0, total: 0 };
+        entry.total += 1;
+        if (((s.grade || 0) / (a.max_points || 100)) * 100 >= 50) entry.passed += 1;
+        byCourse.set(a.course_id, entry);
       }
 
+      const rates: CourseRate[] = [...byCourse.values()].map((c) => ({
+        name: c.name,
+        passRate: Math.round((c.passed / c.total) * 100),
+        total: c.total,
+      }));
       rates.sort((a, b) => a.passRate - b.passRate);
       setCourses(rates);
     } catch (err) {
@@ -50,8 +50,6 @@ export function CourseSuccessRate() {
       setLoading(false);
     }
   };
-
-  if (loading || courses.length === 0) return null;
 
   return (
     <Card>
@@ -62,6 +60,10 @@ export function CourseSuccessRate() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 max-h-72 overflow-y-auto">
+        {loading && <p className="py-8 text-center text-sm text-muted-foreground">Loading...</p>}
+        {!loading && courses.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">No graded assignments yet. Pass rates per course will show here.</p>
+        )}
         {courses.map((c, i) => (
           <div key={i} className="space-y-1">
             <div className="flex justify-between text-sm">

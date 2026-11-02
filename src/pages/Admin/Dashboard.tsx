@@ -36,47 +36,18 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      // Fetch total users
-      const { count: totalUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch pending applications
-      const { count: pendingApplications } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
-
-      // Fetch approved students
-      const { count: approvedStudents } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'student')
-        .eq('status', 'approved');
-
-      // Fetch approved teachers
-      const { count: approvedTeachers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'teacher')
-        .eq('status', 'approved');
-
-      // Fetch approved admins
-      const { count: approvedAdmins } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'admin')
-        .eq('status', 'approved');
-
-      // Fetch total courses
-      const { count: totalCourses } = await supabase
-        .from('courses')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch total announcements
-      const { count: totalAnnouncements } = await supabase
-        .from('announcements')
-        .select('*', { count: 'exact', head: true });
+      // All counts in parallel (they used to run one after another)
+      const count = (q: any) => q.then((r: any) => r.count || 0);
+      const profiles = () => supabase.from('profiles').select('*', { count: 'exact', head: true });
+      const [totalUsers, pendingApplications, approvedStudents, approvedTeachers, approvedAdmins, totalCourses, totalAnnouncements] = await Promise.all([
+        count(profiles()),
+        count(profiles().eq('status', 'pending')),
+        count(profiles().eq('role', 'student').eq('status', 'approved')),
+        count(profiles().eq('role', 'teacher').eq('status', 'approved')),
+        count(profiles().eq('role', 'admin').eq('status', 'approved')),
+        count(supabase.from('courses').select('*', { count: 'exact', head: true })),
+        count(supabase.from('announcements').select('*', { count: 'exact', head: true })),
+      ]);
 
       setStats({
         totalUsers: totalUsers || 0,

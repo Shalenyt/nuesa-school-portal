@@ -428,7 +428,12 @@ export default function AdminExamTimetable() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Exam Timetable</h1>
+            <p className="text-muted-foreground">Add exam dates, times and venues, then save or download the timetable</p>
+          </div>
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={saveTimetableHistory} disabled={entries.length === 0}>
             <Download className="h-4 w-4 mr-2" /> Save to History
           </Button>
@@ -438,6 +443,7 @@ export default function AdminExamTimetable() {
           <Button onClick={() => { resetForm(); setIsCreating(true); }}>
             <Plus className="h-4 w-4 mr-2" /> Add Entry
           </Button>
+        </div>
         </div>
 
         {isCreating && (
