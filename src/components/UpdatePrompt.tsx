@@ -31,11 +31,14 @@ export function UpdatePrompt() {
 
   if (!needRefresh) return null;
 
+  // pointer-events-auto: open popups switch off clicks on the rest of the
+  // page, which would otherwise make "Update now" untappable.
+
   return (
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-x-3 bottom-3 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-lg border bg-background p-3 shadow-lg sm:inset-x-auto sm:right-4"
+      className="pointer-events-auto fixed inset-x-3 bottom-3 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-lg border bg-background p-3 shadow-lg sm:inset-x-auto sm:right-4"
     >
       <RefreshCw className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
       <div className="min-w-0 flex-1">
