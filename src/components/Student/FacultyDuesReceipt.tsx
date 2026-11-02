@@ -53,10 +53,10 @@ const FacultyDuesReceipt = forwardRef<HTMLDivElement, { data: ReceiptData }>(
           <img src={nuesaLogo} alt="NUESA" crossOrigin="anonymous" style={{ width: '100px', height: '100px', objectFit: 'contain' }} />
           <div style={{ textAlign: 'center', flex: 1, padding: '0 12px' }}>
             <h1 style={{ fontFamily: "'Times New Roman', Georgia, serif", fontSize: '16px', fontWeight: 'bold', color: '#1e633d', letterSpacing: '0.05em', margin: 0 }}>
-              NIGERIA UNIVERSITIES ENGINEERING
+              NIGERIAN UNIVERSITIES ENGINEERING
             </h1>
             <h1 style={{ fontFamily: "'Times New Roman', Georgia, serif", fontSize: '16px', fontWeight: 'bold', color: '#1e633d', letterSpacing: '0.05em', margin: 0 }}>
-              STUDENT' ASSOCIATION (NUESA)
+              STUDENTS' ASSOCIATION (NUESA)
             </h1>
             <h2 style={{ fontFamily: "'Times New Roman', Georgia, serif", fontSize: '14px', fontWeight: 'bold', color: '#1e633d', margin: '4px 0 0' }}>
               UNIVERSITY OF ABUJA CHAPTER
