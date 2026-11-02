@@ -121,7 +121,7 @@ export default function StudentDashboard() {
         courseIds.length
           ? supabase
               .from('timetable')
-              .select('id, start_time, end_time, room, course_id, courses(name, subjects(code, name))')
+              .select('id, start_time, end_time, room, course_id, courses(name, description, subjects(code, name))')
               .in('course_id', courseIds)
               .eq('day_of_week', dow)
               .order('start_time')
@@ -172,7 +172,8 @@ export default function StudentDashboard() {
         .map((a: any) => ({
           id: a.id,
           title: a.title,
-          courseName: a.courses?.subjects?.code || a.courses?.name || 'Course',
+          // courses.name is the course code (e.g. CVE 413); subjects.code is the department code
+          courseName: a.courses?.name || 'Course',
           dueDate: a.due_date,
           kind: 'Assignment' as const,
           href: '/student/submit-assignment',
@@ -184,7 +185,7 @@ export default function StudentDashboard() {
           items.push({
             id: q.id,
             title: q.title,
-            courseName: q.courses?.subjects?.code || q.courses?.name || 'Course',
+            courseName: q.courses?.name || 'Course',
             dueDate: q.created_at,
             kind: 'Quiz',
             href: '/student/quizzes',
@@ -343,7 +344,10 @@ export default function StudentDashboard() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
-                        {c.courses?.subjects?.code || c.courses?.name || 'Class'}
+                        {c.courses?.name || 'Class'}
+                        {c.courses?.description && (
+                          <span className="font-normal text-muted-foreground"> · {c.courses.description}</span>
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {c.room ? `Room ${c.room}` : 'Venue TBA'}

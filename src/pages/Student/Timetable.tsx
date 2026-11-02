@@ -75,6 +75,7 @@ export default function StudentTimetable() {
           courses(
             id,
             name,
+            description,
             subjects(name, code),
             teacher_id,
             profiles(full_name)
@@ -85,8 +86,9 @@ export default function StudentTimetable() {
       const staff = await getStaffNames();
       const allTimetable = timetableData?.map((schedule: any) => ({
         ...schedule,
-        courseName: schedule.courses?.name || schedule.courses?.subjects?.code || 'Course',
-        courseCode: schedule.courses?.subjects?.code,
+        courseName: schedule.courses?.name || 'Course',
+        // The course title; this used to show the department code ("CIVIL")
+        courseTitle: schedule.courses?.description,
         subjectName: schedule.courses?.subjects?.name,
         teacherName: schedule.courses?.profiles?.full_name || staff[schedule.courses?.teacher_id]?.full_name,
         isEnrolled: enrolledIds.has(schedule.course_id),
@@ -182,15 +184,13 @@ export default function StudentTimetable() {
                                   <span className={`font-medium ${schedule.isEnrolled ? 'text-green-700 dark:text-green-400' : ''}`}>
                                     {schedule.courseName}
                                   </span>
-                                  {schedule.courseCode && (
-                                    <Badge variant="outline" className={`text-xs ${schedule.isEnrolled ? 'border-green-500 text-green-700 dark:text-green-400' : ''}`}>
-                                      {schedule.courseCode}
-                                    </Badge>
-                                  )}
                                   {schedule.isEnrolled && (
                                     <Badge className="bg-green-600 text-white text-[10px]">My Course</Badge>
                                   )}
                                 </div>
+                                {schedule.courseTitle && (
+                                  <p className="text-sm">{schedule.courseTitle}</p>
+                                )}
                                 {schedule.subjectName && schedule.subjectName !== schedule.courseName && (
                                   <p className="text-sm text-muted-foreground">{schedule.subjectName}</p>
                                 )}
