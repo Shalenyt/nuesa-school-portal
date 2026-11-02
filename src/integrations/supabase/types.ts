@@ -2091,6 +2091,17 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
       promote_students: { Args: { p_student_ids: string[] }; Returns: number }
+      quiz_questions_for_student: {
+        Args: { p_quiz_id: string }
+        Returns: {
+          id: string
+          options: Json
+          points: number
+          question_text: string
+          quiz_id: string
+          sort_order: number
+        }[]
+      }
       verify_student_by_code: {
         Args: { p_code: string }
         Returns: {
