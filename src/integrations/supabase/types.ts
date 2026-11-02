@@ -2021,6 +2021,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
+      promote_students: { Args: { p_student_ids: string[] }; Returns: number }
       verify_student_by_code: {
         Args: { p_code: string }
         Returns: {
