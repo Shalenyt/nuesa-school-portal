@@ -58,10 +58,10 @@ export function HardestQuestions() {
   // Show the card with a message instead of hiding it, so the page isn't blank
   if (loading || questions.length === 0) {
     return (
-      <Card>
+      <Card className="min-w-0">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
+          <CardTitle className="flex items-start gap-2 leading-tight">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
             Hardest Questions (Most Failed)
           </CardTitle>
         </CardHeader>
@@ -75,19 +75,20 @@ export function HardestQuestions() {
   }
 
   return (
-    <Card>
+    // min-w-0 stops long question text from stretching the card past the screen on phones
+    <Card className="min-w-0">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5" />
+        <CardTitle className="flex items-start gap-2 leading-tight">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
           Hardest Questions (Most Failed)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {questions.map((q, i) => (
           <div key={i} className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="truncate flex-1">{q.questionText.substring(0, 50)}...</span>
-              <span className="text-destructive font-medium ml-2">{q.failRate}% failed</span>
+            <div className="flex justify-between gap-2 text-sm">
+              <span className="min-w-0 flex-1 truncate">{q.questionText}</span>
+              <span className="shrink-0 whitespace-nowrap text-destructive font-medium">{q.failRate}% failed</span>
             </div>
             <Progress value={q.failRate} className="h-2 [&>div]:bg-destructive" />
             <p className="text-xs text-muted-foreground">{q.quizTitle}</p>
