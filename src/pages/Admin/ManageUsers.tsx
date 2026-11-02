@@ -66,10 +66,15 @@ export default function ManageUsers() {
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     if (status === 'approved' || status === 'rejected') {
       try {
-        await supabase.functions.invoke('send-notification-email', {
+        const { error: emailError } = await supabase.functions.invoke('send-notification-email', {
           body: { to: user.email, name: user.full_name, type: status, role: user.role }
         });
-      } catch (e) { console.error('Email failed:', e); }
+        if (emailError) throw emailError;
+      } catch (e) {
+        console.error('Email failed:', e);
+        // The status change worked; only the email didn't go out
+        toast({ title: 'Email not sent', description: `${user.full_name} was ${status}, but the email to ${user.email} could not be sent.`, variant: 'destructive' });
+      }
     }
     logAudit({
       action: status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : 'status_change',

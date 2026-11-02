@@ -109,38 +109,40 @@ serve(async (req) => {
 
       // Send to old email
       try {
-        await fetch("https://api.resend.com/emails", {
+        const r = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${resendApiKey}`,
           },
           body: JSON.stringify({
-            from: "NUESA Portal <noreply@notify.nuesa.com.ng>",
+            from: "NUESA Portal <noreply@nuesa.org>",
             to: [oldEmail],
             subject: "Your NUESA Portal email has been changed",
             html: oldEmailHtml,
           }),
         });
+        if (!r.ok) console.error("Resend refused the old-address email:", await r.text());
       } catch (e) {
         console.error("Failed to send old email notification:", e);
       }
 
       // Send to new email
       try {
-        await fetch("https://api.resend.com/emails", {
+        const r = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${resendApiKey}`,
           },
           body: JSON.stringify({
-            from: "NUESA Portal <noreply@notify.nuesa.com.ng>",
+            from: "NUESA Portal <noreply@nuesa.org>",
             to: [newEmail],
             subject: "Welcome to NUESA Portal with your new email!",
             html: newEmailHtml,
           }),
         });
+        if (!r.ok) console.error("Resend refused the new-address email:", await r.text());
       } catch (e) {
         console.error("Failed to send new email notification:", e);
       }
