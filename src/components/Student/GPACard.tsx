@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { GraduationCap } from 'lucide-react';
 import { calculateStudentGPA, type GPAResult } from '@/lib/gpa';
 
-export function GPACard({ studentId }: { studentId?: string }) {
+export function GPACard({ studentId, showEmpty = false }: { studentId?: string; showEmpty?: boolean }) {
   const { profile } = useAuth();
   const [result, setResult] = useState<GPAResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,25 @@ export function GPACard({ studentId }: { studentId?: string }) {
     return 'text-red-600';
   };
 
-  if (loading || !result || result.courseGrades.length === 0) return null;
+  if ((loading || !result || result.courseGrades.length === 0) && !showEmpty) return null;
+  // Show the card with a message instead of hiding it, so the page isn't blank
+  if (loading || !result || result.courseGrades.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5" />
+            GPA Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {loading ? 'Loading...' : 'No graded results yet. Your CGPA appears here once your lecturers release grades.'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

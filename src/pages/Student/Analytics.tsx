@@ -12,7 +12,7 @@ export default function StudentAnalytics() {
           <p className="text-muted-foreground">Your academic performance overview</p>
         </div>
 
-        <GPACard />
+        <GPACard showEmpty />
 
         <div className="grid gap-6 md:grid-cols-2">
           <AttendanceChart />

@@ -39,7 +39,24 @@ export function QuizPerformanceChart() {
     }
   };
 
-  if (loading || data.length === 0) return null;
+  // Show the card with a message instead of hiding it, so the page isn't blank
+  if (loading || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Quiz Performance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {loading ? 'Loading...' : 'No quiz results yet. Your scores appear here once you take quizzes and results are released.'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const avg = Math.round(data.reduce((a, d) => a + d.score, 0) / data.length);
   const trend = data.length >= 2 ? data[data.length - 1].score - data[0].score : 0;
