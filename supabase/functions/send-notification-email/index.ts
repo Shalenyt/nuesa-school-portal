@@ -278,13 +278,22 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "NUESA Portal <noreply@notify.nuesa.com.ng>",
+      from: "NUESA Portal <noreply@nuesa.org>",
       to: [to],
       subject,
       html,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    // Resend reports problems in the response instead of throwing, and these
+    // used to be logged as "sent successfully"
+    if (emailResponse.error) {
+      console.error("Resend refused the email:", emailResponse.error);
+      return new Response(JSON.stringify({ error: "Email could not be sent", detail: emailResponse.error.message }), {
+        status: 502,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    console.log("Email sent:", emailResponse.data?.id);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

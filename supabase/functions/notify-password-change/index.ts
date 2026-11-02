@@ -60,14 +60,15 @@ serve(async (req) => {
   </div>
 </div>`;
 
-    await resend.emails.send({
-      from: "NUESA Portal <noreply@notify.nuesa.com.ng>",
+    const { error: sendError } = await resend.emails.send({
+      from: "NUESA Portal <noreply@nuesa.org>",
       to: [email],
       subject: "Your NUESA Portal password has been changed 🔐",
       html,
     });
+    if (sendError) console.error("Resend refused the email:", sendError);
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: !sendError }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
