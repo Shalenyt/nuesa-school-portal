@@ -133,20 +133,21 @@ export default function ManageUsers() {
   const students = filterBySearch(profiles.filter(p => p.role === 'student'));
 
   const renderUserCard = (profile: Profile) => (
-    <div key={profile.id} className="flex items-center justify-between p-4 border rounded-lg">
+    // Stacks on phones so the buttons no longer sit on top of the email and matric number
+    <div key={profile.id} className="flex flex-col gap-3 p-4 border rounded-lg sm:flex-row sm:items-center sm:justify-between">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3 mb-1">
-          <h3 className="font-medium">{profile.full_name}</h3>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
+          <h3 className="font-medium break-words">{profile.full_name}</h3>
           <Badge variant={profile.status === 'approved' ? 'default' : profile.status === 'pending' ? 'secondary' : 'destructive'}>{profile.status}</Badge>
         </div>
         <div className="text-sm text-muted-foreground space-y-0.5">
-          <p>{profile.email}</p>
+          <p className="break-all">{profile.email}</p>
           {profile.student_id && <p>Matric: {profile.student_id}</p>}
           {profile.staff_id && <p>Staff ID: {profile.staff_id}</p>}
           <p>Joined: {new Date(profile.created_at).toLocaleDateString()}</p>
         </div>
       </div>
-      <div className="flex gap-2 flex-wrap justify-end">
+      <div className="flex gap-2 flex-wrap sm:justify-end sm:shrink-0">
         {profile.status === 'pending' && (
           <>
             <Button size="sm" onClick={() => updateUserStatus(profile.id, 'approved')}><Check className="h-4 w-4 mr-1" />Approve</Button>
@@ -220,7 +221,7 @@ export default function ManageUsers() {
         <Card>
           <CardContent className="pt-4">
             <div className="grid gap-3 md:grid-cols-4">
-              <div className="relative">
+              <div className="relative min-w-0">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search name, email, ID..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
               </div>
@@ -253,10 +254,11 @@ export default function ManageUsers() {
 
         {loading ? <div className="text-center py-8">Loading...</div> : (
           <Tabs defaultValue="students">
-            <TabsList>
-              <TabsTrigger value="admins"><Users className="h-4 w-4 mr-1" /> Admins ({admins.length})</TabsTrigger>
-              <TabsTrigger value="lecturers"><Users className="h-4 w-4 mr-1" /> Lecturers ({lecturers.length})</TabsTrigger>
-              <TabsTrigger value="students"><Users className="h-4 w-4 mr-1" /> Students ({students.length})</TabsTrigger>
+            {/* Equal-width tabs so Students no longer runs off the screen on phones */}
+            <TabsList className="grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
+              <TabsTrigger value="admins" className="px-2 text-xs sm:px-3 sm:text-sm"><Users className="hidden h-4 w-4 mr-1 sm:inline" /> Admins ({admins.length})</TabsTrigger>
+              <TabsTrigger value="lecturers" className="px-2 text-xs sm:px-3 sm:text-sm"><Users className="hidden h-4 w-4 mr-1 sm:inline" /> Lecturers ({lecturers.length})</TabsTrigger>
+              <TabsTrigger value="students" className="px-2 text-xs sm:px-3 sm:text-sm"><Users className="hidden h-4 w-4 mr-1 sm:inline" /> Students ({students.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="admins">{renderUserList(admins, 'admins')}</TabsContent>
             <TabsContent value="lecturers">{renderUserList(lecturers, 'lecturers')}</TabsContent>
