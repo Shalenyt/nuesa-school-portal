@@ -14,6 +14,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { Calendar, Plus, Trash2, Pencil, Save, X } from 'lucide-react';
 import { PromoteStudents } from '@/components/Admin/PromoteStudents';
+import { DateInput } from '@/components/ui/date-input';
 
 type Term = 'FIRST' | 'SECOND';
 
@@ -193,11 +194,11 @@ export default function SemesterSettings() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs">Resumption</Label>
-              <Input type="date" value={editDates.start} onChange={(e) => setEditDates((d) => ({ ...d, start: e.target.value }))} />
+              <DateInput value={editDates.start} onChange={(v) => setEditDates((d) => ({ ...d, start: v }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Vacation</Label>
-              <Input type="date" value={editDates.end} onChange={(e) => setEditDates((d) => ({ ...d, end: e.target.value }))} />
+              <DateInput value={editDates.end} onChange={(v) => setEditDates((d) => ({ ...d, end: v }))} />
             </div>
           </div>
         ) : (
@@ -247,11 +248,11 @@ export default function SemesterSettings() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Resumption</Label>
-                    <Input type="date" value={form.firstStart} onChange={(e) => setForm({ ...form, firstStart: e.target.value })} />
+                    <DateInput value={form.firstStart} onChange={(v) => setForm({ ...form, firstStart: v })} />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Vacation</Label>
-                    <Input type="date" value={form.firstEnd} onChange={(e) => setForm({ ...form, firstEnd: e.target.value })} />
+                    <DateInput value={form.firstEnd} onChange={(v) => setForm({ ...form, firstEnd: v })} />
                   </div>
                 </div>
               </div>
@@ -260,11 +261,11 @@ export default function SemesterSettings() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Resumption</Label>
-                    <Input type="date" value={form.secondStart} onChange={(e) => setForm({ ...form, secondStart: e.target.value })} />
+                    <DateInput value={form.secondStart} onChange={(v) => setForm({ ...form, secondStart: v })} />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Vacation</Label>
-                    <Input type="date" value={form.secondEnd} onChange={(e) => setForm({ ...form, secondEnd: e.target.value })} />
+                    <DateInput value={form.secondEnd} onChange={(v) => setForm({ ...form, secondEnd: v })} />
                   </div>
                 </div>
               </div>

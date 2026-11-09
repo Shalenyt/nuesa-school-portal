@@ -15,6 +15,7 @@ import { CreditCard, Plus, Download, Upload, Trash2, Search, Users } from 'lucid
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { PaymentExports } from '@/components/Admin/PaymentExports';
+import { DateInput } from '@/components/ui/date-input';
 
 
 export default function AdminPayments() {
@@ -246,7 +247,7 @@ export default function AdminPayments() {
                     <SelectItem value="department">Department</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input type="date" value={newPayment.due_date} onChange={(e) => setNewPayment(p => ({ ...p, due_date: e.target.value }))} />
+                <DateInput value={newPayment.due_date} onChange={(v) => setNewPayment(p => ({ ...p, due_date: v }))} />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <Select value={newPayment.department_id || 'none'} onValueChange={(v) => setNewPayment(p => ({ ...p, department_id: v === 'none' ? '' : v }))}>

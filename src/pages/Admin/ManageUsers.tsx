@@ -46,6 +46,9 @@ export default function ManageUsers() {
   const [bulk, setBulk] = useState<null | { label: string; done: number; total: number }>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+  // Other accounts seen on the same device or network, per user
+  type Other = { id: string; name: string; status: string };
+  const [signals, setSignals] = useState<Record<string, { same_device: Other[]; same_network: Other[] }>>({});
 
   // A new tab, status, search or filter shows a different list, so start a fresh selection
   useEffect(() => { setSelected(new Set()); }, [tab, filter, searchTerm, deptFilter, levelFilter]);
@@ -68,6 +71,10 @@ export default function ManageUsers() {
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
     setProfiles(data || []);
     setLoading(false);
+    const { data: sig } = await supabase.rpc('admin_account_signals' as any);
+    const map: Record<string, { same_device: Other[]; same_network: Other[] }> = {};
+    ((sig as any[]) || []).forEach((r) => { map[r.user_id] = { same_device: r.same_device || [], same_network: r.same_network || [] }; });
+    setSignals(map);
   };
 
   const updateUserStatus = async (userId: string, status: 'pending' | 'approved' | 'rejected') => {
@@ -284,13 +291,23 @@ export default function ManageUsers() {
           {profile.student_id && <p>Matric: {profile.student_id}</p>}
           {profile.staff_id && <p>Staff ID: {profile.staff_id}</p>}
           {profile.role === 'student' && (
-            <p>
-              Department: <span className="font-medium text-foreground">{deptName(profile.department_id) || 'Not set'}</span>
-              {levelName(profile.level_id) && <> · Level: <span className="font-medium text-foreground">{levelName(profile.level_id)}</span></>}
-            </p>
+            <>
+              <p>Department: <span className="font-medium text-foreground">{deptName(profile.department_id) || 'Not set'}</span></p>
+              <p>Level: <span className="font-medium text-foreground">{levelName(profile.level_id) || 'Not set'}</span></p>
+            </>
           )}
           <p>Joined: {joinedAt(profile.created_at)}</p>
         </div>
+        {signals[profile.id]?.same_device?.length > 0 && (
+          <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+            <span className="font-semibold">Same phone or computer</span> as {signals[profile.id].same_device.map(o => `${o.name} (${o.status})`).join(', ')}. Possibly the same person.
+          </div>
+        )}
+        {signals[profile.id]?.same_network?.length > 0 && !(signals[profile.id]?.same_device?.length > 0) && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Same internet connection as {signals[profile.id].same_network.length} other account{signals[profile.id].same_network.length === 1 ? '' : 's'} ({signals[profile.id].same_network.slice(0, 3).map(o => o.name).join(', ')}{signals[profile.id].same_network.length > 3 ? '…' : ''}). Common on shared Wi-Fi.
+          </p>
+        )}
       </div>
       <div className="flex gap-2 flex-wrap sm:justify-end sm:shrink-0">
         {profile.status === 'pending' && (

@@ -10,6 +10,7 @@ import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { notifyEnrolledStudents } from '@/lib/notifications';
+import { DateInput, DateTimeInput } from '@/components/ui/date-input';
 
 export default function TeacherAssignments() {
   const { profile } = useAuth();
@@ -194,11 +195,7 @@ export default function TeacherAssignments() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
-                  type="datetime-local"
-                  value={newAssignment.due_date}
-                  onChange={(e) => setNewAssignment(prev => ({ ...prev, due_date: e.target.value }))}
-                />
+                <DateTimeInput value={newAssignment.due_date} onChange={(v) => setNewAssignment(prev => ({ ...prev, due_date: v }))} />
                 <Input
                   type="number"
                   placeholder="Max points"
