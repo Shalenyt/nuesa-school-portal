@@ -30,9 +30,7 @@ export default function ResetPassword() {
     // This fires when the user clicks {{ .ConfirmationURL }} in the email,
     // which goes through Supabase's server to verify the token and redirect here
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[ResetPassword] auth event:', event);
       if (event === 'PASSWORD_RECOVERY') {
-        console.log('[ResetPassword] PASSWORD_RECOVERY event received, session ready');
         setSessionReady(true);
       }
       // Also handle if user arrives with a valid session from token exchange
@@ -40,7 +38,6 @@ export default function ResetPassword() {
         // Check if we're on the reset password page with hash params
         const hash = window.location.hash;
         if (hash.includes('type=recovery')) {
-          console.log('[ResetPassword] SIGNED_IN with recovery type, session ready');
           setSessionReady(true);
         }
       }

@@ -33,7 +33,6 @@ export default function StudentCourses() {
         .maybeSingle();
 
       if (!profile?.department_id || !profile?.level_id) {
-        console.log('Student profile missing department or level');
         setCourses([]);
         setLoading(false);
         return;
@@ -48,7 +47,6 @@ export default function StudentCourses() {
         .maybeSingle();
 
       if (!courseListData?.course_ids) {
-        console.log('No course list found for student level/department');
         setCourses([]);
         setLoading(false);
         return;

@@ -87,7 +87,6 @@ export default function StudentProfile() {
         .maybeSingle();
 
       if (courseListError || !courseListData?.course_ids) {
-        console.log('No course list found for this student level/department combination');
         setCourses([]);
         return;
       }

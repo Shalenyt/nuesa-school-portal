@@ -183,7 +183,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive"
       });
     } else {
-      console.log('[Auth] Password reset email requested successfully');
     }
 
     return { error };
