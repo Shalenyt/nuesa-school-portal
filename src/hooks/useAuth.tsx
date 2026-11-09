@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { recordAccountSignal } from '@/lib/accountSignals';
 import { logAudit } from '@/lib/audit';
 import { toast } from '@/hooks/use-toast';
 
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          if (event === 'SIGNED_IN') recordAccountSignal('sign_in');
           // Fetch user profile
           setTimeout(async () => {
             const { data: profile, error } = await supabase
@@ -88,6 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (raw.includes('confirmation email') || raw.includes('sending email') || raw.includes('smtp')) {
         description =
           "We couldn't send your verification email right now, so your account was not created. Please try again shortly or contact the NUESA Portal Engineering Team.";
+      } else if (raw.includes('database error saving new user')) {
+        description = 'This matric number is already registered to another account. If it is yours, sign in or reset your password.';
       } else if (raw.includes('already registered') || raw.includes('already been registered')) {
         description = 'An account with this email already exists. Try signing in or resetting your password.';
       } else if (raw.includes('rate limit') || error.status === 429) {

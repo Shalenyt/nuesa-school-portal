@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowUpDown, Download, Search } from 'lucide-react';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
+import { DateInput } from '@/components/ui/date-input';
 
 interface Row {
   id: string;
@@ -168,8 +169,8 @@ export function PaymentExports() {
               {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Paid from date" />
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Paid to date" />
+          <DateInput value={from} onChange={(v) => setFrom(v)} aria-label="Paid from date" />
+          <DateInput value={to} onChange={(v) => setTo(v)} aria-label="Paid to date" />
           <Button variant="outline" onClick={() => setSortAsc(v => !v)}>
             <ArrowUpDown className="h-4 w-4 mr-2" aria-hidden="true" />
             Date {sortAsc ? 'oldest first' : 'newest first'}

@@ -18,6 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { DateInput } from '@/components/ui/date-input';
 
 const TIME_SLOTS = {
   morning: { label: 'Morning (8:00 AM – 11:00 AM)', start: '08:00', end: '11:00' },
@@ -620,8 +621,8 @@ export default function AdminExamTimetable() {
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="exam-date">Date</Label>
-                      <Input id="exam-date" type="date" value={form.exam_date} min={activeSemester.start_date} max={activeSemester.end_date}
-                        onChange={(e) => setForm((p) => ({ ...p, exam_date: e.target.value }))} />
+                      <DateInput id="exam-date" value={form.exam_date} min={activeSemester.start_date} max={activeSemester.end_date}
+                        onChange={(v) => setForm((p) => ({ ...p, exam_date: v }))} />
                     </div>
                   </div>
 

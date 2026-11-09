@@ -86,9 +86,25 @@ export default function Apply() {
       return;
     }
 
+    // One account per matric number, written the way it is on the ID card
+    const matric = formData.studentId.replace(/\s/g, '').toUpperCase();
+    if (formData.role === 'student' && !/^\d{2}\/\d{3}[A-Z]{3}\/\d{3}$/.test(matric)) {
+      stop('Check your matric number', 'Type it exactly as on your ID card, for example 22/205CIE/123.');
+      return;
+    }
+
     setLoading(true);
 
     try {
+      if (formData.role === 'student') {
+        const { data: available } = await supabase.rpc('matric_available' as any, { p_student_id: matric });
+        if (available === false) {
+          stop('Matric number already registered', 'An account already uses this matric number. If it is yours, sign in or reset your password.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const { error } = await signUp(formData.email.trim(), formData.password, {
         lastName: formData.lastName.trim(),
         firstName: formData.firstName.trim(),
@@ -98,7 +114,7 @@ export default function Apply() {
           .filter(Boolean)
           .join(' '),
         role: formData.role,
-        studentId: formData.role === 'student' ? formData.studentId : null,
+        studentId: formData.role === 'student' ? matric : null,
         staffId: formData.role !== 'student' ? formData.staffId : null,
         classId: formData.role === 'student' ? formData.classId : null,
         subjectId: formData.role === 'student' ? formData.subjectId : null

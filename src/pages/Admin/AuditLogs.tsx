@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { auditActionClass, auditActionLabel } from '@/lib/audit';
 import { ShieldCheck, RefreshCw, Search } from 'lucide-react';
+import { DateInput } from '@/components/ui/date-input';
 
 interface AuditRow {
   id: string;
@@ -150,8 +151,8 @@ export default function AuditLogs() {
               </SelectContent>
             </Select>
             <div className="flex gap-2">
-              <Input type="date" value={fromDate} onChange={(e) => { setPage(0); setFromDate(e.target.value); }} aria-label="From date" />
-              <Input type="date" value={toDate} onChange={(e) => { setPage(0); setToDate(e.target.value); }} aria-label="To date" />
+              <DateInput value={fromDate} onChange={(v) => { setPage(0); setFromDate(v); }} aria-label="From date" />
+              <DateInput value={toDate} onChange={(v) => { setPage(0); setToDate(v); }} aria-label="To date" />
             </div>
           </CardContent>
         </Card>

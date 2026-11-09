@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, CheckCircle, XCircle, Users, BarChart3, Download, Vote, Eye, Trash2, Clock, Trophy, StopCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { DateInput } from '@/components/ui/date-input';
 
 export default function AdminVoting() {
   const { profile } = useAuth();
@@ -332,7 +333,7 @@ export default function AdminVoting() {
                   <div className="grid grid-cols-2 gap-4 ml-6">
                     <div>
                       <Label className="text-xs">End Date</Label>
-                      <Input type="date" value={newPosition.endDate} onChange={e => setNewPosition(p => ({ ...p, endDate: e.target.value }))} />
+                      <DateInput value={newPosition.endDate} onChange={(v) => setNewPosition(p => ({ ...p, endDate: v }))} />
                     </div>
                     <div>
                       <Label className="text-xs">End Time</Label>

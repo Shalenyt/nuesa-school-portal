@@ -27,6 +27,7 @@ import {
   touchPendingOtp,
 } from '@/lib/otpFlow';
 import oaustechLogo from '@/assets/oaustech-logo.png';
+import { recordAccountSignal } from '@/lib/accountSignals';
 
 type Status = 'idle' | 'verifying' | 'error' | 'success';
 
@@ -133,7 +134,9 @@ export default function VerifyCode() {
     if (pending.purpose === 'signup') {
       const { error } = await supabase.auth.verifyOtp({ email: pending.email, token, type: 'signup' });
       if (error) return fail(error.message);
-      // Email confirmed. The account still waits for an admin, so no session is kept.
+      // Email confirmed. Note this device for duplicate checks, then sign out:
+      // the account still waits for an admin.
+      await recordAccountSignal('sign_up');
       await supabase.auth.signOut();
       clearPendingOtp();
       return succeed(() => setDone('signup'));
