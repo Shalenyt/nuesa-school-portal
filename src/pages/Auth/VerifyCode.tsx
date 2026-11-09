@@ -260,7 +260,7 @@ export default function VerifyCode() {
         <img
           src={settings?.logo_url || oaustechLogo}
           alt={`${settings?.school_name || 'NUESA'} Logo`}
-          className="h-16 w-16 object-contain"
+          className="h-32 w-32 sm:h-36 sm:w-36 object-contain"
         />
 
         <div className="flex h-16 items-center justify-center">
