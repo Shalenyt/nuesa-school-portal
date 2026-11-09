@@ -196,7 +196,6 @@ export default function TeacherClassSchedule() {
   };
 
   const deleteSchedule = async (id: string) => {
-    console.log('Attempting to delete schedule with ID:', id);
     
     try {
       // First check if the schedule exists and belongs to this teacher
@@ -210,7 +209,6 @@ export default function TeacherClassSchedule() {
         .eq('courses.teacher_id', profile?.id)
         .single();
 
-      console.log('Schedule check result:', scheduleCheck, checkError);
 
       if (checkError) {
         console.error('Error checking schedule:', checkError);
@@ -223,7 +221,6 @@ export default function TeacherClassSchedule() {
         .eq('id', id)
         .select();
 
-      console.log('Delete result:', data, error);
 
       if (error) throw error;
 

@@ -37,7 +37,6 @@ export function usePushNotifications() {
     try {
       // For now, we use basic Notification API (not full Push API which requires a push server)
       // Store that the user has granted permission
-      console.log('[Push] Notifications enabled for user:', profile.id);
     } catch (err) {
       console.error('[Push] Subscription failed:', err);
     }
