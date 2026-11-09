@@ -14,9 +14,9 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' && componentTagger(),
     VitePWA({
-      // 'prompt': a new version waits until the person taps "Update now"
-      // (see src/components/UpdatePrompt.tsx), instead of silently swapping
-      // in the background and leaving the open page on the old version.
+      // A new version installs and takes over on its own (skipWaiting below),
+      // so the next open always gets it. Open pages are handled in
+      // src/components/UpdatePrompt.tsx: reload when safe, otherwise a banner.
       registerType: 'prompt',
       // Registered from UpdatePrompt via virtual:pwa-register/react
       injectRegister: false,
@@ -27,6 +27,8 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // Remove files from older versions once a new one takes over
         cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
       },
       manifest: {
         name: 'NUESA Portal',
