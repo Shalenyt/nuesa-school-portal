@@ -61,115 +61,16 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { position_id, mode } = body;
+    const { position_id } = body;
 
-    let positionsToClose: any[] = [];
-
-    if (position_id) {
-      const { data } = await supabase
-        .from("electoral_positions")
-        .select("*")
-        .eq("id", position_id)
-        .eq("voting_open", true)
-        .single();
-      if (data) positionsToClose = [data];
-    } else {
-      const { data } = await supabase
-        .from("electoral_positions")
-        .select("*")
-        .eq("voting_open", true)
-        .not("voting_end_time", "is", null)
-        .lte("voting_end_time", new Date().toISOString());
-      positionsToClose = data || [];
-    }
-
-    if (positionsToClose.length === 0) {
-      return new Response(JSON.stringify({ message: "No elections to close" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const results: any[] = [];
-
-    for (const pos of positionsToClose) {
-      await supabase
-        .from("electoral_positions")
-        .update({ voting_open: false, election_status: "closed" })
-        .eq("id", pos.id);
-
-      const { data: candidates } = await supabase
-        .from("candidates")
-        .select("id, student_id, profiles:student_id(full_name)")
-        .eq("position_id", pos.id)
-        .eq("approved", true);
-
-      const candidateResults: any[] = [];
-      let maxVotes = 0;
-
-      for (const cand of candidates || []) {
-        const { count } = await supabase
-          .from("votes")
-          .select("*", { count: "exact", head: true })
-          .eq("position_id", pos.id)
-          .eq("candidate_id", cand.id);
-
-        const voteCount = count || 0;
-        if (voteCount > maxVotes) maxVotes = voteCount;
-        candidateResults.push({
-          candidate_id: cand.id,
-          student_id: cand.student_id,
-          name: (cand as any).profiles?.full_name || "Unknown",
-          vote_count: voteCount,
-        });
-      }
-
-      await supabase.from("election_results").delete().eq("position_id", pos.id);
-
-      for (const cr of candidateResults) {
-        await supabase.from("election_results").insert({
-          position_id: pos.id,
-          candidate_id: cr.candidate_id,
-          vote_count: cr.vote_count,
-          is_winner: cr.vote_count === maxVotes && maxVotes > 0,
-        });
-      }
-
-      const winner = candidateResults.find(
-        (c) => c.vote_count === maxVotes && maxVotes > 0
-      );
-      const totalVotes = candidateResults.reduce((s, c) => s + c.vote_count, 0);
-
-      results.push({
-        position: pos.name,
-        winner: winner?.name || "No votes",
-        votes: winner?.vote_count || 0,
-        total: totalVotes,
-      });
-
-      const { data: allProfiles } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("status", "approved");
-
-      if (allProfiles && allProfiles.length > 0) {
-        const notifications = allProfiles.map((p: any) => ({
-          user_id: p.id,
-          title: `🏆 Election Result: ${pos.name}`,
-          message: winner
-            ? `${winner.name} has won the position of ${pos.name} with ${winner.vote_count} vote(s) out of ${totalVotes} total votes.`
-            : `The election for ${pos.name} has ended with no votes cast.`,
-          type: "election_result",
-          priority: "urgent",
-          is_read: false,
-        }));
-
-        for (let i = 0; i < notifications.length; i += 500) {
-          await supabase
-            .from("notifications")
-            .insert(notifications.slice(i, i + 500));
-        }
-      }
-    }
+    // Closing now happens in the database (close_election / close_expired_elections):
+    // it locks the election, counts every vote in one query, records ties and
+    // notifies the eligible voters. This function remains for older callers.
+    const { data, error } = position_id
+      ? await supabase.rpc("close_election", { p_position_id: position_id })
+      : await supabase.rpc("close_expired_elections");
+    if (error) throw error;
+    const results = position_id ? [data] : data;
 
     return new Response(JSON.stringify({ closed: results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
