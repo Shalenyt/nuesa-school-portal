@@ -45,6 +45,7 @@ export default function ManageUsers() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulk, setBulk] = useState<null | { label: string; done: number; total: number }>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
 
   // A new tab, status, search or filter shows a different list, so start a fresh selection
   useEffect(() => { setSelected(new Set()); }, [tab, filter, searchTerm, deptFilter, levelFilter]);
@@ -72,8 +73,14 @@ export default function ManageUsers() {
   const updateUserStatus = async (userId: string, status: 'pending' | 'approved' | 'rejected') => {
     const user = profiles.find(p => p.id === userId);
     if (!user) return;
-    const { error } = await supabase.from('profiles').update({ status }).eq('id', userId);
-    if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
+    if (busyIds.has(userId)) return; // a second tap while the first is still saving
+    setBusyIds(prev => new Set(prev).add(userId));
+    const done = () => setBusyIds(prev => { const n = new Set(prev); n.delete(userId); return n; });
+    // Only rows whose status really changes come back, so a double tap or two
+    // admins approving at once can't send the email twice
+    const { data: changed, error } = await supabase.from('profiles').update({ status }).eq('id', userId).neq('status', status).select('id');
+    if (error) { done(); toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
+    if (!changed || changed.length === 0) { done(); fetchProfiles(); return; }
     if (status === 'approved' || status === 'rejected') {
       try {
         const { error: emailError } = await supabase.functions.invoke('send-notification-email', {
@@ -96,6 +103,7 @@ export default function ManageUsers() {
       newValues: { status },
     });
     toast({ title: 'Success', description: `User ${status} successfully` });
+    done();
     fetchProfiles();
   };
 
@@ -174,8 +182,10 @@ export default function ManageUsers() {
 
     // One update for everyone, in chunks so very large selections stay quick
     const ids = targets.map(p => p.id);
+    const changedIds = new Set<string>();
     for (let i = 0; i < ids.length; i += 100) {
-      const { error } = await supabase.from('profiles').update({ status }).in('id', ids.slice(i, i + 100));
+      const { data, error } = await supabase.from('profiles').update({ status }).in('id', ids.slice(i, i + 100)).neq('status', status).select('id');
+      (data || []).forEach(r => changedIds.add(r.id));
       if (error) {
         setBulk(null);
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -184,11 +194,12 @@ export default function ManageUsers() {
       }
     }
 
-    // Emails one by one: the email service accepts about two per second
+    // Emails one by one, only to people whose status really changed
     const failed: string[] = [];
-    for (let i = 0; i < targets.length; i++) {
-      const u = targets[i];
-      setBulk({ label: `Sending emails`, done: i, total: targets.length });
+    const toEmail = targets.filter(p => changedIds.has(p.id));
+    for (let i = 0; i < toEmail.length; i++) {
+      const u = toEmail[i];
+      setBulk({ label: `Sending emails`, done: i, total: toEmail.length });
       try {
         const { error } = await supabase.functions.invoke('send-notification-email', {
           body: { to: u.email, name: u.full_name, type: status, role: u.role },
@@ -206,12 +217,12 @@ export default function ManageUsers() {
         oldValues: { status: u.status },
         newValues: { status },
       });
-      if (i < targets.length - 1) await sleep(600);
+      if (i < toEmail.length - 1) await sleep(250);
     }
     setBulk(null);
     setSelected(new Set());
     toast({
-      title: `${targets.length} users ${status}`,
+      title: `${toEmail.length} users ${status}`,
       description: failed.length
         ? `${failed.length} email${failed.length === 1 ? '' : 's'} could not be sent (daily email limit or bad address). Their accounts were still ${status}.`
         : `Everyone was emailed.`,
@@ -268,8 +279,8 @@ export default function ManageUsers() {
       <div className="flex gap-2 flex-wrap sm:justify-end sm:shrink-0">
         {profile.status === 'pending' && (
           <>
-            <Button size="sm" onClick={() => updateUserStatus(profile.id, 'approved')}><Check className="h-4 w-4 mr-1" />Approve</Button>
-            <Button size="sm" variant="destructive" onClick={() => updateUserStatus(profile.id, 'rejected')}><X className="h-4 w-4 mr-1" />Reject</Button>
+            <Button size="sm" disabled={busyIds.has(profile.id)} onClick={() => updateUserStatus(profile.id, 'approved')}><Check className="h-4 w-4 mr-1" />Approve</Button>
+            <Button size="sm" variant="destructive" disabled={busyIds.has(profile.id)} onClick={() => updateUserStatus(profile.id, 'rejected')}><X className="h-4 w-4 mr-1" />Reject</Button>
           </>
         )}
         {profile.status === 'approved' && (
