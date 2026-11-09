@@ -342,6 +342,7 @@ export default function StudentVoting() {
                             <BarChart3 className="h-4 w-4" /> {pos.name}
                             {isClosed && <Badge variant="destructive" className="ml-1">Closed</Badge>}
                             {live && <Badge className="ml-1 bg-green-600">Live</Badge>}
+                            {!live && !isClosed && <Badge variant="secondary" className="ml-1">Not started</Badge>}
                           </CardTitle>
                           {winners.length > 0 && (
                             <Badge className="bg-yellow-500 text-black flex items-center gap-1">
@@ -349,7 +350,9 @@ export default function StudentVoting() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">Total votes: {totalVotes}{live ? ' · updates every few seconds' : ''}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {!live && !isClosed ? 'Voting has not started yet.' : `Total votes: ${totalVotes}${live ? ' · updates every few seconds' : ''}`}
+                        </p>
                       </CardHeader>
                       <CardContent className="space-y-3">
                         {posCandidates.map(cand => {
@@ -375,7 +378,7 @@ export default function StudentVoting() {
                             </div>
                           );
                         })}
-                        {posCandidates.length === 0 && <p className="text-muted-foreground text-sm">No candidates</p>}
+                        {posCandidates.length === 0 && <p className="text-muted-foreground text-sm">No approved candidates yet</p>}
                       </CardContent>
                     </Card>
                   );
