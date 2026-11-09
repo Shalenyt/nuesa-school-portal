@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { useThemeSync } from '@/hooks/useThemeSync';
@@ -7,16 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { BookOpen, Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import oaustechLogo from '@/assets/oaustech-logo.png';
+import { savePendingOtp } from '@/lib/otpFlow';
 
 export default function RecoverPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
   const { resetPassword } = useAuth();
   const { settings } = useSchoolSettings();
+  const navigate = useNavigate();
   
   // Initialize theme sync
   useThemeSync();
@@ -25,63 +26,15 @@ export default function RecoverPassword() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await resetPassword(email);
-    
-    if (!error) {
-      setSent(true);
-    }
-
+    const address = email.trim();
+    const { error } = await resetPassword(address);
     setLoading(false);
+
+    if (!error) {
+      savePendingOtp({ purpose: 'recovery', email: address, back: '/auth/forgot-password' });
+      navigate('/auth/verify-code');
+    }
   };
-
-  if (sent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background relative p-4">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-        
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <img 
-                src={settings?.logo_url || oaustechLogo} 
-              alt={`${settings?.school_name || 'NUESA'} Logo`} 
-              className="h-12 w-12 object-contain" 
-            />
-              <h1 className="text-3xl font-black text-primary">
-                {settings?.portal_name || 'NUESA Portal'}
-              </h1>
-            </div>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Check Your Email</CardTitle>
-              <CardDescription>
-                We've sent a password reset link to {email}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Click the link in the email to reset your password. If you don't see the email, 
-                  check your spam folder.
-                </p>
-                
-                <Link to="/auth/login">
-                  <Button variant="outline" className="w-full">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Sign In
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative p-4">
@@ -108,7 +61,7 @@ export default function RecoverPassword() {
           <CardHeader>
             <CardTitle>Forgot Password</CardTitle>
             <CardDescription>
-              Enter your email address and we'll send you a link to reset your password
+              Enter your email address and we'll send you a 6-digit code to reset your password
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -127,7 +80,7 @@ export default function RecoverPassword() {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Send Reset Link
+                Send Code
               </Button>
             </form>
 

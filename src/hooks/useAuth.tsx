@@ -66,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: 'https://www.nuesa.org/auth/success',
         data: {
           full_name: userData.fullName,
           first_name: userData.firstName,
@@ -102,12 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description,
         variant: 'destructive'
       });
-    } else {
-      toast({
-        title: 'Application submitted',
-        description:
-          'Check your inbox to verify your email address. An administrator will review your application after verification.',
-      });
     }
 
     return { error };
@@ -124,10 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = error.message.toLowerCase();
       let description = error.message;
 
+      // Unverified email: the login page sends a fresh code and opens the code screen
       if (raw.includes('email not confirmed')) {
-        description =
-          'Your email address is not verified yet. Open the verification link we sent you, then sign in again.';
-      } else if (raw.includes('invalid login credentials')) {
+        return { error, profile: null };
+      }
+      if (raw.includes('invalid login credentials')) {
         description = 'Incorrect email or password. Please try again.';
       } else if (raw.includes('rate limit') || error.status === 429) {
         description = 'Too many sign-in attempts. Please wait a few minutes and try again.';
@@ -175,10 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    console.log('[Auth] Requesting password reset for:', email);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://www.nuesa.org/auth/reset-password'
-    });
+    // Sends a 6-digit code (Reset password email template uses {{ .Token }})
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
 
     if (error) {
       console.error('[Auth] Password reset error:', error.message, error.status);

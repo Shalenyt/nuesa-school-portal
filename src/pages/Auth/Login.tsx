@@ -14,6 +14,7 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import oaustechLogo from '@/assets/oaustech-logo.png';
+import { savePendingOtp } from '@/lib/otpFlow';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -30,6 +31,21 @@ export default function Login() {
     setLoading(true);
 
     const result = await signIn(email, password);
+
+    // Email never verified: send a fresh code and open the code screen
+    if (result.error && result.error.message?.toLowerCase().includes('email not confirmed')) {
+      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email });
+      const recentlySent = resendError && /rate|seconds/i.test(resendError.message);
+      if (resendError && !recentlySent) {
+        toast({ title: "Couldn't send a verification code", description: 'Please try again shortly.', variant: 'destructive' });
+        setLoading(false);
+        return;
+      }
+      savePendingOtp({ purpose: 'signup', email, back: '/auth/login' });
+      setLoading(false);
+      navigate('/auth/verify-code');
+      return;
+    }
 
     // Not approved yet (or turned down): explain, sign out and stay on this page
     if (!result.error && result.profile && result.profile.status !== 'approved') {

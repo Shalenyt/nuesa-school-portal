@@ -26,6 +26,7 @@ function lazyPage<T extends ComponentType<any>>(load: () => Promise<{ default: T
 const Apply = lazyPage(() => import("./pages/Auth/Apply"));
 const RecoverPassword = lazyPage(() => import("./pages/Auth/RecoverPassword"));
 const ResetPassword = lazyPage(() => import("./pages/Auth/ResetPassword"));
+const VerifyCode = lazyPage(() => import("./pages/Auth/VerifyCode"));
 const Success = lazyPage(() => import("./pages/Auth/Success"));
 const ChangeEmail = lazyPage(() => import("./pages/Auth/ChangeEmail"));
 
@@ -122,6 +123,7 @@ function AppRoutes() {
       <Route path="/auth/forgot-password" element={<RecoverPassword />} />
       <Route path="/auth/recover-password" element={<Navigate to="/auth/forgot-password" replace />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
+      <Route path="/auth/verify-code" element={<VerifyCode />} />
       <Route path="/auth/success" element={<Success />} />
       <Route path="/dashboard/change-email" element={<ProtectedRoute allowedRoles={['admin','teacher','student']}><ChangeEmail /></ProtectedRoute>} />
       

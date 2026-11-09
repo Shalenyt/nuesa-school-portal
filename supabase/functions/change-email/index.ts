@@ -36,41 +36,40 @@ serve(async (req) => {
       });
     }
 
-    const { newEmail } = await req.json();
-    if (!newEmail) {
-      return new Response(JSON.stringify({ error: "New email is required" }), {
-        status: 400,
+    // This function no longer changes addresses. Email changes go through
+    // Supabase's 6-digit code (supabase.auth.updateUser + verifyOtp). Once the
+    // code is accepted, a database trigger logs the change; this function only
+    // tells the old and new addresses about it.
+    const body = await req.json().catch(() => ({}));
+    if (body?.newEmail) {
+      return new Response(JSON.stringify({ error: "Please refresh the page and try again." }), {
+        status: 410,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const oldEmail = user.email!;
-
-    // Use admin client to update email directly (no confirmation needed)
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { data: change } = await adminClient
+      .from("email_change_log")
+      .select("id, old_email, new_email")
+      .eq("user_id", user.id)
+      .is("notified_at", null)
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, {
-      email: newEmail,
-      email_confirm: true,
-    });
-
-    if (updateError) {
-      console.error("Email update error:", updateError);
-      return new Response(JSON.stringify({ error: updateError.message }), {
-        status: 400,
+    if (!change || change.new_email?.toLowerCase() !== user.email?.toLowerCase()) {
+      return new Response(JSON.stringify({ success: true, notified: false }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    await adminClient.from("email_change_log").update({ notified_at: new Date().toISOString() }).eq("id", change.id);
 
-    // Update the profile table email too
-    const { error: profileError } = await adminClient
-      .from("profiles")
-      .update({ email: newEmail })
-      .eq("id", user.id);
-
-    if (profileError) {
-      console.error("Profile email update error:", profileError);
-    }
+    const oldEmail = change.old_email as string;
+    const newEmail = change.new_email as string;
 
     // Send notification emails via Resend
     if (resendApiKey) {
@@ -149,12 +148,12 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, oldEmail, newEmail }),
+      JSON.stringify({ success: true, notified: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Change email error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

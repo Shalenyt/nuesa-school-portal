@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { useThemeSync } from '@/hooks/useThemeSync';
@@ -9,20 +9,12 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { BookOpen, Loader2, CheckCircle2, Mail, ShieldCheck } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-} from '@/components/ui/alert-dialog';
 import oaustechLogo from '@/assets/oaustech-logo.png';
+import { savePendingOtp } from '@/lib/otpFlow';
 
 export default function Apply() {
   const [formData, setFormData] = useState({
@@ -39,44 +31,12 @@ export default function Apply() {
     subjectId: ''
   });
   const [loading, setLoading] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
-  const [cooldown, setCooldown] = useState(0);
-  const [resending, setResending] = useState(false);
   const { signUp } = useAuth();
   const { settings } = useSchoolSettings();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [cooldown]);
-
-  const handleResend = async () => {
-    if (cooldown > 0 || !formData.email) return;
-    setResending(true);
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: formData.email,
-      options: { emailRedirectTo: 'https://www.nuesa.org/auth/success' },
-    });
-    setResending(false);
-    if (error) {
-      toast({
-        title: 'Could not resend',
-        description: error.message.toLowerCase().includes('rate')
-          ? 'Please wait a moment before requesting another email.'
-          : "We couldn't resend the verification email right now. Please try again shortly.",
-        variant: 'destructive',
-      });
-      return;
-    }
-    setCooldown(60);
-    toast({ title: 'Verification email sent', description: `We sent a new link to ${formData.email}.` });
-  };
-
-  
   // Initialize theme sync
   useThemeSync();
 
@@ -129,7 +89,7 @@ export default function Apply() {
     setLoading(true);
 
     try {
-      const { error } = await signUp(formData.email, formData.password, {
+      const { error } = await signUp(formData.email.trim(), formData.password, {
         lastName: formData.lastName.trim(),
         firstName: formData.firstName.trim(),
         middleName: formData.middleName.trim(),
@@ -144,7 +104,9 @@ export default function Apply() {
         subjectId: formData.role === 'student' ? formData.subjectId : null
       });
       if (!error) {
-        setShowSuccess(true);
+        // Code is on its way: open the code screen
+        savePendingOtp({ purpose: 'signup', email: formData.email.trim(), back: '/auth/apply' });
+        navigate('/auth/verify-code');
       }
     } catch (error) {
       console.error('Application error:', error);
@@ -339,53 +301,6 @@ export default function Apply() {
           </CardContent>
         </Card>
       </div>
-      <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
-        <AlertDialogContent className="max-w-md text-center">
-          <AlertDialogHeader className="flex flex-col items-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <CheckCircle2 className="h-9 w-9 text-primary" />
-            </div>
-            <AlertDialogTitle className="text-xl">Application Submitted!</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-4 text-sm text-muted-foreground">
-                <p>Your application has been received successfully. Here's what happens next:</p>
-                <div className="flex items-start gap-3 text-left">
-                  <Mail className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <p>Check your email (<span className="font-medium text-foreground">{formData.email}</span>) for a verification link to confirm your account.</p>
-                </div>
-                <div className="flex items-start gap-3 text-left">
-                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <p>After verifying your email, an administrator will review and approve your application. You'll be notified once approved.</p>
-                </div>
-                <div className="text-left text-xs">
-                  Didn't get the email? Check your spam folder, or{' '}
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={cooldown > 0 || resending}
-                    className="font-medium text-primary underline-offset-2 hover:underline disabled:opacity-60 disabled:no-underline"
-                  >
-                    {resending
-                      ? 'sending…'
-                      : cooldown > 0
-                        ? `resend in ${cooldown}s`
-                        : 'resend the verification link'}
-                  </button>
-                  .
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:justify-center">
-            <AlertDialogAction asChild>
-              <Button onClick={() => window.location.href = '/auth/login'}>
-                Go to Login
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
