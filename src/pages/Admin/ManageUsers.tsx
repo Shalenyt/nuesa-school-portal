@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { logAudit } from '@/lib/audit';
-import { Check, X, Users, Trash2, Eye, Search, Crown, ShieldOff } from 'lucide-react';
+import { Check, X, Users, Trash2, Eye, Search, Crown, ShieldOff, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -38,6 +40,14 @@ export default function ManageUsers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
   const [levelFilter, setLevelFilter] = useState('all');
+  const [tab, setTab] = useState<'admins' | 'lecturers' | 'students'>('students');
+  // Bulk actions: ids ticked in the list currently on screen
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulk, setBulk] = useState<null | { label: string; done: number; total: number }>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // A new tab, status, search or filter shows a different list, so start a fresh selection
+  useEffect(() => { setSelected(new Set()); }, [tab, filter, searchTerm, deptFilter, levelFilter]);
 
   useEffect(() => { fetchProfiles(); fetchFilters(); }, [filter]);
 
@@ -91,7 +101,8 @@ export default function ManageUsers() {
 
   const deleteUser = async (userId: string, email: string) => {
     try {
-      await supabase.functions.invoke('admin-delete-user', { body: { userId } });
+      const { error } = await supabase.functions.invoke('admin-delete-user', { body: { userId } });
+      if (error) throw error;
       logAudit({ action: 'delete', resourceType: 'user', resourceId: userId, resourceLabel: email, description: 'Account permanently deleted' });
       toast({ title: 'Deleted', description: `${email} removed from system` });
       fetchProfiles();
@@ -137,9 +148,111 @@ export default function ManageUsers() {
   const lecturers = filterBySearch(profiles.filter(p => p.role === 'teacher'));
   const students = filterBySearch(profiles.filter(p => p.role === 'student'));
 
+  const visible = tab === 'admins' ? admins : tab === 'lecturers' ? lecturers : students;
+  // You can't bulk change or delete your own account
+  const selectable = useMemo(() => visible.filter(p => p.id !== me?.id), [visible, me?.id]);
+  const selectedUsers = selectable.filter(p => selected.has(p.id));
+  const allSelected = selectable.length > 0 && selectedUsers.length === selectable.length;
+
+  const toggle = (id: string) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(selectable.map(p => p.id)));
+
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+  const bulkStatus = async (status: 'approved' | 'rejected') => {
+    const targets = selectedUsers.filter(p => p.status !== status);
+    if (targets.length === 0) {
+      toast({ title: `Already ${status}`, description: `Every selected user is already ${status}.` });
+      return;
+    }
+    const verb = status === 'approved' ? 'Approving' : 'Rejecting';
+    setBulk({ label: `${verb} ${targets.length} users`, done: 0, total: targets.length });
+
+    // One update for everyone, in chunks so very large selections stay quick
+    const ids = targets.map(p => p.id);
+    for (let i = 0; i < ids.length; i += 100) {
+      const { error } = await supabase.from('profiles').update({ status }).in('id', ids.slice(i, i + 100));
+      if (error) {
+        setBulk(null);
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        fetchProfiles();
+        return;
+      }
+    }
+
+    // Emails one by one: the email service accepts about two per second
+    const failed: string[] = [];
+    for (let i = 0; i < targets.length; i++) {
+      const u = targets[i];
+      setBulk({ label: `Sending emails`, done: i, total: targets.length });
+      try {
+        const { error } = await supabase.functions.invoke('send-notification-email', {
+          body: { to: u.email, name: u.full_name, type: status, role: u.role },
+        });
+        if (error) throw error;
+      } catch {
+        failed.push(u.email);
+      }
+      logAudit({
+        action: status === 'approved' ? 'approve' : 'reject',
+        resourceType: 'user',
+        resourceId: u.id,
+        resourceLabel: u.full_name,
+        description: `Account ${status} (bulk)`,
+        oldValues: { status: u.status },
+        newValues: { status },
+      });
+      if (i < targets.length - 1) await sleep(600);
+    }
+    setBulk(null);
+    setSelected(new Set());
+    toast({
+      title: `${targets.length} users ${status}`,
+      description: failed.length
+        ? `${failed.length} email${failed.length === 1 ? '' : 's'} could not be sent (daily email limit or bad address). Their accounts were still ${status}.`
+        : `Everyone was emailed.`,
+      variant: failed.length ? 'destructive' : 'default',
+    });
+    fetchProfiles();
+  };
+
+  const bulkDelete = async () => {
+    setConfirmDelete(false);
+    const targets = selectedUsers;
+    const failed: string[] = [];
+    for (let i = 0; i < targets.length; i++) {
+      const u = targets[i];
+      setBulk({ label: `Deleting ${targets.length} users`, done: i, total: targets.length });
+      const { error } = await supabase.functions.invoke('admin-delete-user', { body: { userId: u.id } });
+      if (error) failed.push(u.email);
+      else logAudit({ action: 'delete', resourceType: 'user', resourceId: u.id, resourceLabel: u.email, description: 'Account permanently deleted (bulk)' });
+    }
+    setBulk(null);
+    setSelected(new Set());
+    toast({
+      title: `${targets.length - failed.length} users deleted`,
+      description: failed.length ? `${failed.length} could not be deleted. Try them again.` : undefined,
+      variant: failed.length ? 'destructive' : 'default',
+    });
+    fetchProfiles();
+  };
+
   const renderUserCard = (profile: Profile) => (
     // Stacks on phones so the buttons no longer sit on top of the email and matric number
-    <div key={profile.id} className="flex flex-col gap-3 p-4 border rounded-lg sm:flex-row sm:items-center sm:justify-between">
+    <div key={profile.id} className={`flex flex-col gap-3 p-4 border rounded-lg sm:flex-row sm:items-center sm:justify-between ${selected.has(profile.id) ? 'border-primary bg-primary/5' : ''}`}>
+      {profile.id !== me?.id && (
+        <Checkbox
+          checked={selected.has(profile.id)}
+          onCheckedChange={() => toggle(profile.id)}
+          disabled={!!bulk}
+          aria-label={`Select ${profile.full_name}`}
+          className="h-5 w-5 sm:mr-1"
+        />
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
           <h3 className="font-medium break-words">{profile.full_name}</h3>
@@ -211,7 +324,16 @@ export default function ManageUsers() {
     users.length === 0 ? (
       <div className="text-center py-8 text-muted-foreground">No {label} found</div>
     ) : (
-      <div className="space-y-3">{users.map(renderUserCard)}</div>
+      <div className="space-y-3">
+        {selectable.length > 0 && (
+          <label className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-muted-foreground">
+            <Checkbox checked={allSelected} onCheckedChange={toggleAll} disabled={!!bulk} className="h-5 w-5" />
+            Select all {selectable.length} {label}
+            {selectedUsers.length > 0 && !allSelected && <span className="text-foreground">({selectedUsers.length} selected)</span>}
+          </label>
+        )}
+        {users.map(renderUserCard)}
+      </div>
     )
   );
 
@@ -258,7 +380,7 @@ export default function ManageUsers() {
         </Card>
 
         {loading ? <div className="text-center py-8">Loading...</div> : (
-          <Tabs defaultValue="students">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
             {/* Equal-width tabs so Students no longer runs off the screen on phones */}
             <TabsList className="grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
               <TabsTrigger value="admins" className="px-2 text-xs sm:px-3 sm:text-sm"><Users className="hidden h-4 w-4 mr-1 sm:inline" /> Admins ({admins.length})</TabsTrigger>
@@ -270,6 +392,46 @@ export default function ManageUsers() {
             <TabsContent value="students">{renderUserList(students, 'students')}</TabsContent>
           </Tabs>
         )}
+
+        {/* Bulk action bar */}
+        {(selectedUsers.length > 0 || bulk) && (
+          <div className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-2xl rounded-xl border bg-background p-3 shadow-xl sm:inset-x-auto sm:left-1/2 sm:w-[min(42rem,calc(100%-2rem))] sm:-translate-x-1/2">
+            {bulk ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  {bulk.label} {bulk.done}/{bulk.total}
+                </div>
+                <Progress value={(bulk.done / bulk.total) * 100} />
+                <p className="text-xs text-muted-foreground">Keep this page open until it finishes.</p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mr-auto text-sm font-medium">{selectedUsers.length} selected</span>
+                <Button size="sm" onClick={() => bulkStatus('approved')}><Check className="mr-1 h-4 w-4" />Approve</Button>
+                <Button size="sm" variant="outline" onClick={() => bulkStatus('rejected')}><X className="mr-1 h-4 w-4" />Reject</Button>
+                <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}><Trash2 className="mr-1 h-4 w-4" />Delete</Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+              </div>
+            )}
+          </div>
+        )}
+        {selectedUsers.length > 0 && <div className="h-20" aria-hidden />}
+
+        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedUsers.length} users permanently?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Their accounts, enrollments, votes and everything linked to them will be removed. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={bulkDelete} className="bg-destructive hover:bg-destructive/90">Delete {selectedUsers.length}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
