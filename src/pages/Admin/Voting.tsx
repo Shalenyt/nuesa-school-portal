@@ -292,7 +292,7 @@ export default function AdminVoting() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Voting Management</h1>
             <p className="text-muted-foreground">Manage electoral positions, candidates, and results</p>
@@ -351,9 +351,10 @@ export default function AdminVoting() {
 
         <Tabs defaultValue="positions" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="positions">Manage Positions</TabsTrigger>
-            <TabsTrigger value="candidates">Approve Candidates</TabsTrigger>
-            <TabsTrigger value="results">Results</TabsTrigger>
+            {/* Short labels on phones so the three tabs don't run into each other */}
+            <TabsTrigger value="positions" className="px-1 text-xs sm:text-sm"><span className="sm:hidden">Positions</span><span className="hidden sm:inline">Manage Positions</span></TabsTrigger>
+            <TabsTrigger value="candidates" className="px-1 text-xs sm:text-sm"><span className="sm:hidden">Candidates</span><span className="hidden sm:inline">Approve Candidates</span></TabsTrigger>
+            <TabsTrigger value="results" className="px-1 text-xs sm:text-sm">Results</TabsTrigger>
           </TabsList>
 
           <TabsContent value="positions">
