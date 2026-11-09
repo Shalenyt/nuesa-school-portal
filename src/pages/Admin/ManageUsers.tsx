@@ -141,6 +141,16 @@ export default function ManageUsers() {
     fetchProfiles();
   };
 
+  const deptName = (id?: string | null) => departments.find(d => d.id === id)?.name as string | undefined;
+  const levelName = (id?: string | null) => levels.find(l => l.id === id)?.name as string | undefined;
+  // Exact sign up time in Nigerian time, e.g. 09/11/2026, 21:16:51
+  const joinedAt = (iso: string) =>
+    new Date(iso).toLocaleString('en-GB', {
+      timeZone: 'Africa/Lagos',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    });
+
   const filterBySearch = (list: Profile[]) => {
     let filtered = list;
     if (searchTerm) {
@@ -273,7 +283,13 @@ export default function ManageUsers() {
           <p className="break-all">{profile.email}</p>
           {profile.student_id && <p>Matric: {profile.student_id}</p>}
           {profile.staff_id && <p>Staff ID: {profile.staff_id}</p>}
-          <p>Joined: {new Date(profile.created_at).toLocaleDateString()}</p>
+          {profile.role === 'student' && (
+            <p>
+              Department: <span className="font-medium text-foreground">{deptName(profile.department_id) || 'Not set'}</span>
+              {levelName(profile.level_id) && <> · Level: <span className="font-medium text-foreground">{levelName(profile.level_id)}</span></>}
+            </p>
+          )}
+          <p>Joined: {joinedAt(profile.created_at)}</p>
         </div>
       </div>
       <div className="flex gap-2 flex-wrap sm:justify-end sm:shrink-0">
