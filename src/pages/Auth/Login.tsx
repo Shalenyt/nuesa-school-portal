@@ -211,7 +211,7 @@ export default function Login() {
             <img 
               src={settings?.logo_url || oaustechLogo} 
               alt={`${settings?.school_name || 'NUESA'} Logo`} 
-              className="h-16 w-16 object-contain" 
+              className="h-28 w-28 sm:h-32 sm:w-32 object-contain" 
             />
             <h1 className="text-3xl font-black text-primary">
               {settings?.portal_name || 'NUESA Portal'}

@@ -27,11 +27,11 @@ export default function Success() {
       
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4">
+          <div className="mx-auto w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center mb-4">
             <img 
               src={settings?.logo_url || oaustechLogo} 
               alt={`${settings?.school_name || 'NUESA'} Logo`} 
-              className="h-16 w-16 object-contain" 
+              className="h-28 w-28 sm:h-32 sm:w-32 object-contain" 
             />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -41,7 +41,7 @@ export default function Success() {
 
         <Card>
           <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4 bg-green-100 rounded-full">
+            <div className="mx-auto w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center mb-4 bg-green-100 rounded-full">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
             <CardTitle className="text-2xl text-green-700">Application Successful!</CardTitle>

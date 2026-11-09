@@ -44,11 +44,11 @@ export default function RecoverPassword() {
       
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="flex flex-col items-center justify-center gap-3 mb-4">
             <img 
               src={settings?.logo_url || oaustechLogo} 
               alt={`${settings?.school_name || 'NUESA'} Logo`} 
-              className="h-12 w-12 object-contain" 
+              className="h-28 w-28 sm:h-32 sm:w-32 object-contain" 
             />
               <h1 className="text-3xl font-black text-primary">
                 {settings?.portal_name || 'NUESA Portal'}
