@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { REGEXP_ONLY_DIGITS } from 'input-otp';
+import { OTPInput, OTPInputContext, REGEXP_ONLY_DIGITS } from 'input-otp';
 import { ArrowLeft, CheckCircle2, Loader2, Mail, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { useThemeSync } from '@/hooks/useThemeSync';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,8 +28,55 @@ import {
 } from '@/lib/otpFlow';
 import oaustechLogo from '@/assets/oaustech-logo.png';
 
+type Status = 'idle' | 'verifying' | 'error' | 'success';
+
 const secondsLeft = (sentAt: number) =>
   Math.max(0, RESEND_SECONDS - Math.floor((Date.now() - sentAt) / 1000));
+
+// One code box. The digit pops in when typed or autofilled.
+function CodeSlot({ index, status }: { index: number; status: Status }) {
+  const ctx = useContext(OTPInputContext);
+  const { char, hasFakeCaret, isActive } = ctx.slots[index];
+  return (
+    <div
+      className={cn(
+        'relative flex h-11 w-10 items-center justify-center rounded-lg border border-input bg-background text-lg font-semibold transition-all duration-200 sm:h-12 sm:w-11 sm:text-xl',
+        char && 'border-primary/50 bg-primary/[0.03]',
+        isActive && status === 'idle' && 'border-primary ring-2 ring-primary/20',
+        status === 'verifying' && 'animate-pulse border-primary/40',
+        status === 'error' && 'border-destructive bg-destructive/5 text-destructive'
+      )}
+    >
+      {char && (
+        <span
+          key={char}
+          className="animate-[otp-pop_0.22s_ease-out_both]"
+          style={{ animationDelay: `${index * 25}ms` }}
+        >
+          {char}
+        </span>
+      )}
+      {hasFakeCaret && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-5 w-px animate-caret-blink bg-foreground duration-1000" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SuccessCheck() {
+  return (
+    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-600 shadow-lg shadow-green-600/25 animate-[otp-check-pop_0.4s_cubic-bezier(0.2,1.3,0.4,1)_both]">
+      <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="white" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+        <path
+          d="M5 12.5l4.5 4.5L19 7.5"
+          style={{ strokeDasharray: 24, strokeDashoffset: 24, animation: 'otp-check-draw 0.35s 0.25s ease-out forwards' }}
+        />
+      </svg>
+    </div>
+  );
+}
 
 export default function VerifyCode() {
   const navigate = useNavigate();
@@ -38,12 +85,14 @@ export default function VerifyCode() {
 
   const [pending] = useState<PendingOtp | null>(() => loadPendingOtp());
   const [code, setCode] = useState('');
-  const [verifying, setVerifying] = useState(false);
+  const [status, setStatus] = useState<Status>('idle');
+  const [errorText, setErrorText] = useState('');
   const [resending, setResending] = useState(false);
   const [left, setLeft] = useState(() => (pending ? secondsLeft(pending.sentAt) : 0));
   const [done, setDone] = useState<null | 'signup' | 'email_change'>(null);
   const [shake, setShake] = useState(false);
   const sentAtRef = useRef(pending?.sentAt ?? 0);
+  const inputRef = useRef<HTMLInputElement>(null);
   // Email change with secure change on: both addresses get a code
   const verifiedRef = useRef<{ newDone: boolean; oldDone: boolean }>({ newDone: false, oldDone: false });
 
@@ -60,66 +109,79 @@ export default function VerifyCode() {
 
   const fail = (message?: string) => {
     const raw = (message || '').toLowerCase();
-    toast({
-      title: raw.includes('rate') || raw.includes('too many')
-        ? 'Too many attempts. Wait a few minutes and try again.'
-        : 'Incorrect or expired code',
-      variant: 'destructive',
-    });
+    setErrorText(raw.includes('rate') || raw.includes('too many') ? 'Too many attempts. Try again shortly.' : 'Incorrect OTP');
+    setStatus('error');
     setShake(true);
-    setTimeout(() => setShake(false), 450);
-    setCode('');
+    setTimeout(() => setShake(false), 500);
+    setTimeout(() => {
+      setCode('');
+      inputRef.current?.focus();
+    }, 700);
+  };
+
+  // Show the check, then move on
+  const succeed = (next: () => void) => {
+    setStatus('success');
+    setTimeout(next, 1200);
   };
 
   const verify = async (token: string) => {
-    if (verifying || token.length !== 6) return;
-    setVerifying(true);
-    try {
-      if (pending.purpose === 'signup') {
-        const { error } = await supabase.auth.verifyOtp({ email: pending.email, token, type: 'signup' });
-        if (error) return fail(error.message);
-        // Email confirmed. The account still waits for an admin, so no session is kept.
-        await supabase.auth.signOut();
-        clearPendingOtp();
-        setDone('signup');
-        return;
-      }
+    if (status === 'verifying' || status === 'success' || token.length !== 6) return;
+    setStatus('verifying');
+    setErrorText('');
 
-      if (pending.purpose === 'recovery') {
-        const { data, error } = await supabase.auth.verifyOtp({ email: pending.email, token, type: 'recovery' });
-        if (error || !data.user) return fail(error?.message);
-        markRecoveryVerified(data.user.id);
-        clearPendingOtp();
-        navigate('/auth/reset-password', { replace: true });
-        return;
-      }
-
-      // Email change: the code may belong to the new or the current address
-      const tryVerify = async (email: string) =>
-        (await supabase.auth.verifyOtp({ email, token, type: 'email_change' })).error;
-
-      let err = verifiedRef.current.newDone ? new Error('skip') : await tryVerify(pending.email);
-      if (!err) verifiedRef.current.newDone = true;
-      else if (pending.oldEmail && !verifiedRef.current.oldDone) {
-        const err2 = await tryVerify(pending.oldEmail);
-        if (!err2) { verifiedRef.current.oldDone = true; err = null; }
-        else err = err2;
-      }
-      if (err) return fail(err.message);
-
-      const { data: fresh } = await supabase.auth.getUser();
-      if (fresh.user?.email?.toLowerCase() === pending.email.toLowerCase()) {
-        // Tell both addresses about the change (server checks it really happened)
-        await supabase.functions.invoke('change-email', { body: {} }).catch(() => undefined);
-        clearPendingOtp();
-        setDone('email_change');
-      } else {
-        // First of two codes accepted, wait for the code sent to the other address
-        setCode('');
-      }
-    } finally {
-      setVerifying(false);
+    if (pending.purpose === 'signup') {
+      const { error } = await supabase.auth.verifyOtp({ email: pending.email, token, type: 'signup' });
+      if (error) return fail(error.message);
+      // Email confirmed. The account still waits for an admin, so no session is kept.
+      await supabase.auth.signOut();
+      clearPendingOtp();
+      return succeed(() => setDone('signup'));
     }
+
+    if (pending.purpose === 'recovery') {
+      const { data, error } = await supabase.auth.verifyOtp({ email: pending.email, token, type: 'recovery' });
+      if (error || !data.user) return fail(error?.message);
+      markRecoveryVerified(data.user.id);
+      clearPendingOtp();
+      return succeed(() => navigate('/auth/reset-password', { replace: true }));
+    }
+
+    // Email change: the code may belong to the new or the current address
+    const tryVerify = async (email: string) =>
+      (await supabase.auth.verifyOtp({ email, token, type: 'email_change' })).error;
+
+    let err: { message: string } | null = verifiedRef.current.newDone ? { message: 'skip' } : await tryVerify(pending.email);
+    if (!err) verifiedRef.current.newDone = true;
+    else if (pending.oldEmail && !verifiedRef.current.oldDone) {
+      const err2 = await tryVerify(pending.oldEmail);
+      if (!err2) { verifiedRef.current.oldDone = true; err = null; }
+      else err = err2;
+    }
+    if (err) return fail(err.message);
+
+    const { data: fresh } = await supabase.auth.getUser();
+    if (fresh.user?.email?.toLowerCase() === pending.email.toLowerCase()) {
+      // Tell both addresses about the change (server checks it really happened)
+      await supabase.functions.invoke('change-email', { body: {} }).catch(() => undefined);
+      clearPendingOtp();
+      return succeed(() => setDone('email_change'));
+    }
+    // First of two codes accepted: clear the boxes for the code sent to the other address
+    setStatus('success');
+    setTimeout(() => {
+      setStatus('idle');
+      setCode('');
+      inputRef.current?.focus();
+    }, 1200);
+  };
+
+  const onChange = (value: string) => {
+    if (status === 'error') {
+      setStatus('idle');
+      setErrorText('');
+    }
+    setCode(value);
   };
 
   const resend = async () => {
@@ -148,6 +210,9 @@ export default function VerifyCode() {
     sentAtRef.current = Date.now();
     setLeft(RESEND_SECONDS);
     setCode('');
+    setStatus('idle');
+    setErrorText('');
+    inputRef.current?.focus();
   };
 
   const finish = async () => {
@@ -157,7 +222,6 @@ export default function VerifyCode() {
 
   const mm = Math.floor(left / 60);
   const ss = String(left % 60).padStart(2, '0');
-  const slot = 'h-12 w-11 text-xl font-semibold sm:h-14 sm:w-12 sm:text-2xl';
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
@@ -180,38 +244,39 @@ export default function VerifyCode() {
           className="h-16 w-16 object-contain"
         />
 
-        <div className={shake ? 'animate-[otp-shake_0.45s_ease-in-out]' : ''}>
-          <InputOTP
-            maxLength={6}
-            value={code}
-            onChange={setCode}
-            onComplete={verify}
-            pattern={REGEXP_ONLY_DIGITS}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            autoFocus
-            disabled={verifying}
-            aria-label="Verification code"
-            containerClassName="gap-3"
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} className={slot} />
-              <InputOTPSlot index={1} className={slot} />
-              <InputOTPSlot index={2} className={slot} />
-            </InputOTPGroup>
-            <span aria-hidden className="text-2xl font-light text-muted-foreground">-</span>
-            <InputOTPGroup>
-              <InputOTPSlot index={3} className={slot} />
-              <InputOTPSlot index={4} className={slot} />
-              <InputOTPSlot index={5} className={slot} />
-            </InputOTPGroup>
-          </InputOTP>
+        <div className="flex h-16 items-center justify-center">
+          {status === 'success' ? (
+            <SuccessCheck />
+          ) : (
+            <div className={shake ? 'animate-[otp-shake_0.45s_ease-in-out]' : ''}>
+              <OTPInput
+                ref={inputRef}
+                maxLength={6}
+                value={code}
+                onChange={onChange}
+                onComplete={verify}
+                pattern={REGEXP_ONLY_DIGITS}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                disabled={status === 'verifying'}
+                aria-label="Verification code"
+                containerClassName="flex items-center gap-1.5 sm:gap-2"
+              >
+                {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <CodeSlot key={i} index={i} status={status} />
+                ))}
+              </OTPInput>
+            </div>
+          )}
         </div>
 
-        <div className="flex h-9 items-center justify-center">
-          {verifying ? (
+        <div className="flex h-12 flex-col items-center justify-start gap-1">
+          {status === 'error' && errorText ? (
+            <span className="text-sm font-medium text-destructive">{errorText}</span>
+          ) : status === 'verifying' ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          ) : left > 0 ? (
+          ) : status === 'success' ? null : left > 0 ? (
             <span className="font-mono text-sm tabular-nums text-muted-foreground">
               {mm}:{ss}
             </span>
