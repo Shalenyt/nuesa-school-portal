@@ -12,6 +12,7 @@ import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from '@/hooks/use-toast';
 import oaustechLogo from '@/assets/oaustech-logo.png';
+import { clearRecoveryVerified, isRecoveryVerified } from '@/lib/otpFlow';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -48,9 +49,9 @@ export default function ResetPassword() {
     // Check if there's already a session (e.g., if the page was refreshed after token exchange)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // Check URL hash for recovery type
+        // Reached here from an accepted reset code, or from an older reset link
         const hash = window.location.hash;
-        if (hash.includes('type=recovery')) {
+        if (isRecoveryVerified(session.user.id) || hash.includes('type=recovery')) {
           setSessionReady(true);
         }
       }
@@ -61,15 +62,15 @@ export default function ResetPassword() {
       setSessionReady((prev) => {
         if (!prev) {
           toast({
-            title: "Invalid reset link",
-            description: "This password reset link is invalid or has expired. Please request a new one.",
+            title: "Reset session expired",
+            description: "Request a new reset code and try again.",
             variant: "destructive"
           });
           navigate('/auth/forgot-password');
         }
         return prev;
       });
-    }, 8000);
+    }, 6000);
 
     return () => {
       subscription.unsubscribe();
@@ -112,6 +113,7 @@ export default function ResetPassword() {
         console.error('Failed to send password change notification:', emailErr);
       }
 
+      clearRecoveryVerified();
       setShowSuccessDialog(true);
     } catch (error: any) {
       console.error('Password update error:', error);
@@ -141,7 +143,7 @@ export default function ResetPassword() {
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-                <p className="text-muted-foreground">Verifying reset link...</p>
+                <p className="text-muted-foreground">Verifying...</p>
               </div>
             </CardContent>
           </Card>

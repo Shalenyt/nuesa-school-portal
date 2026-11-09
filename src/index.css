@@ -143,3 +143,10 @@ img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP"] {
   display: inline !important;
   vertical-align: baseline !important;
 }
+
+/* Wrong verification code */
+@keyframes otp-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
