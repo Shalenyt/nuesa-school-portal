@@ -14,7 +14,7 @@ export interface PendingOtp {
 
 const KEY = 'nuesa_pending_otp';
 const MAX_AGE_MS = 60 * 60 * 1000;
-export const RESEND_SECONDS = 30;
+export const RESEND_SECONDS = 60;
 
 export function savePendingOtp(p: Omit<PendingOtp, 'sentAt'> & { sentAt?: number }) {
   try {
