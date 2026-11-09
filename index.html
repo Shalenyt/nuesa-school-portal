@@ -3,9 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      // One address for the portal: passkeys and sign ins are tied to www.nuesa.org
+      // One address for the portal: passkeys and sign ins are tied to www.nuesa.org.
+      // Browsers keep logins per address, so carry the current login across in the
+      // part of the link after # (never sent to any server) and clear it here.
       if (location.hostname === 'nuesa.org') {
-        location.replace('https://www.nuesa.org' + location.pathname + location.search + location.hash);
+        var to = 'https://www.nuesa.org' + location.pathname + location.search;
+        try {
+          var key = 'sb-nzxvupidbjcfinoztmrd-auth-token';
+          var saved = JSON.parse(localStorage.getItem(key) || 'null');
+          var rt = saved && (saved.refresh_token || (saved.currentSession && saved.currentSession.refresh_token));
+          if (rt) {
+            localStorage.removeItem(key);
+            to += '#nuesa_handoff=' + encodeURIComponent(rt);
+          } else {
+            to += location.hash;
+          }
+        } catch (e) {
+          to += location.hash;
+        }
+        location.replace(to);
       }
     </script>
     <link rel="icon" type="image/png" href="/favicon.png" />
