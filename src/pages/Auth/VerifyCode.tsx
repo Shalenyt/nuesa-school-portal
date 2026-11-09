@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { OTPInput, OTPInputContext, REGEXP_ONLY_DIGITS } from 'input-otp';
-import { ArrowLeft, CheckCircle2, Loader2, Mail, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ClipboardPaste, Loader2, Mail, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSchoolSettings } from '@/hooks/useSchoolSettings';
 import { useThemeSync } from '@/hooks/useThemeSync';
@@ -58,7 +58,7 @@ function CodeSlot({ index, status }: { index: number; status: Status }) {
       )}
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-5 w-px animate-caret-blink bg-foreground duration-1000" />
+          <div className="h-5 w-[1.5px] rounded-full bg-primary animate-[otp-caret-blink_1s_step-end_infinite]" />
         </div>
       )}
     </div>
@@ -176,6 +176,25 @@ export default function VerifyCode() {
     }, 1200);
   };
 
+  // One tap paste for codes copied from Gmail (iPhone only suggests codes from Apple Mail)
+  const canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard?.readText;
+  const pasteCode = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const digits = (text.match(/\d{6}/) || [])[0];
+      if (!digits) {
+        toast({ title: 'No 6-digit code copied', description: 'Copy the code from the email, then tap paste.' });
+        return;
+      }
+      setStatus('idle');
+      setErrorText('');
+      setCode(digits);
+      verify(digits);
+    } catch {
+      /* paste refused */
+    }
+  };
+
   const onChange = (value: string) => {
     if (status === 'error') {
       setStatus('idle');
@@ -277,14 +296,38 @@ export default function VerifyCode() {
           ) : status === 'verifying' ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           ) : status === 'success' ? null : left > 0 ? (
-            <span className="font-mono text-sm tabular-nums text-muted-foreground">
-              {mm}:{ss}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-sm tabular-nums text-muted-foreground">
+                {mm}:{ss}
+              </span>
+              {canPaste && (
+                <button
+                  type="button"
+                  aria-label="Paste code"
+                  onClick={pasteCode}
+                  className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <ClipboardPaste className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           ) : (
-            <Button variant="ghost" size="sm" onClick={resend} disabled={resending} className="text-primary">
-              {resending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Resend code
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={resend} disabled={resending} className="text-primary">
+                {resending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Resend code
+              </Button>
+              {canPaste && (
+                <button
+                  type="button"
+                  aria-label="Paste code"
+                  onClick={pasteCode}
+                  className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <ClipboardPaste className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

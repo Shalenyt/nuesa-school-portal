@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useThemeSync } from "@/hooks/useThemeSync";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { UpdatePrompt } from "@/components/UpdatePrompt";
+import { PasskeyOffer } from "@/components/PasskeyOffer";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 import { HighPriorityNotification } from "@/components/HighPriorityNotification";
 
@@ -216,6 +217,7 @@ const App = () => {
             <AppRoutes />
             <PushNotificationPrompt />
             <UpdatePrompt />
+            <PasskeyOffer />
             <SessionTimeoutWarning />
             <HighPriorityNotification />
           </BrowserRouter>
