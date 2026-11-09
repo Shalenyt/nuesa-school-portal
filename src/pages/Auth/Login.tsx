@@ -18,6 +18,7 @@ import oaustechLogo from '@/assets/oaustech-logo.png';
 import { savePendingOtp } from '@/lib/otpFlow';
 import { markPasskeyOffer } from '@/components/PasskeyOffer';
 import {
+  PasskeyError,
   PreparedSignIn,
   conditionalPasskeysAvailable,
   isCancel,
@@ -107,7 +108,8 @@ export default function Login() {
         if (stopped) return;
         const ctrl = new AbortController();
         autofillAbort.current = ctrl;
-        const timer = setTimeout(() => ctrl.abort(), 4 * 60 * 1000);
+        let expired = false;
+        const timer = setTimeout(() => { expired = true; ctrl.abort(); }, 4 * 60 * 1000);
         try {
           const userId = await signInWithPasskey(prepared, { mediation: 'conditional', signal: ctrl.signal });
           clearTimeout(timer);
@@ -116,9 +118,13 @@ export default function Login() {
           setPasskeyLoading(false);
         } catch (e: any) {
           clearTimeout(timer);
-          if (!stopped && !isCancel(e)) passkeyFailed(e);
-          // Challenge expired or prompt closed: listen again with a fresh one
-          if (!stopped && autofillAbort.current === ctrl) startAutofill();
+          setPasskeyLoading(false);
+          if (stopped || autofillAbort.current !== ctrl) return;
+          // A passkey was picked but the server refused it: say so
+          if (e instanceof PasskeyError && e.code !== 'cancelled') passkeyFailed(e);
+          // Only listen again when the challenge simply ran out; any other
+          // browser refusal would just fail again
+          if (expired || (e as any)?.code === 'webauthn_challenge_expired') startAutofill();
         }
       } catch {
         /* passkeys unavailable right now */
