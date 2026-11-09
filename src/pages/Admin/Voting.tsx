@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/Layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, CheckCircle, XCircle, Users, BarChart3, Download, Vote, Eye, Trash2, Clock, Trophy, StopCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,10 +23,13 @@ export default function AdminVoting() {
   const { profile } = useAuth();
   const [positions, setPositions] = useState<any[]>([]);
   const [candidates, setCandidates] = useState<any[]>([]);
-  const [votes, setVotes] = useState<any[]>([]);
+  // Live counts per position and candidate, from the database (election_tallies)
+  const [tallies, setTallies] = useState<Record<string, Record<string, number>>>({});
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [loadingVoters, setLoadingVoters] = useState(false);
   const [electionResults, setElectionResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newPosition, setNewPosition] = useState({ name: '', description: '', closingMode: 'manual' as 'manual' | 'scheduled', endDate: '', endTime: '' });
+  const [newPosition, setNewPosition] = useState({ name: '', description: '', departmentId: 'all', closingMode: 'manual' as 'manual' | 'scheduled', endDate: '', endTime: '' });
   const [creating, setCreating] = useState(false);
   const [voterDetails, setVoterDetails] = useState<any[]>([]);
   const [showVoters, setShowVoters] = useState(false);
@@ -33,45 +37,79 @@ export default function AdminVoting() {
   const [closing, setClosing] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'position' | 'result'; id: string; name: string } | null>(null);
 
-  // Return the cleanup so leaving the page removes the realtime channel instead of stacking a new one each visit
-  useEffect(() => { fetchAll(); return setupRealtime(); }, []);
+  const closeRequested = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    const interval = setInterval(() => { checkAutoClose(); }, 30000);
-    return () => clearInterval(interval);
-  }, [positions]);
-
-  const checkAutoClose = async () => {
-    const now = new Date();
-    const expiredPositions = positions.filter(p => p.voting_open && p.voting_end_time && new Date(p.voting_end_time) <= now);
-    if (expiredPositions.length > 0) {
-      await supabase.functions.invoke('close-election', { body: {} });
-      fetchAll();
+  const fetchTallies = useCallback(async () => {
+    const { data, error } = await (supabase as any).rpc('election_tallies');
+    if (error) { console.error('Tallies failed:', error); return; }
+    const t: Record<string, Record<string, number>> = {};
+    for (const row of data || []) {
+      t[row.position_id] = t[row.position_id] || {};
+      t[row.position_id][row.candidate_id] = Number(row.vote_count) || 0;
     }
-  };
+    setTallies(t);
+  }, []);
 
-  const setupRealtime = () => {
-    const channel = supabase
-      .channel('voting-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, () => fetchAll())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'candidates' }, () => fetchAll())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'electoral_positions' }, () => fetchAll())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  };
-
-  const fetchAll = async () => {
-    const [posRes, candRes, votesRes, resultsRes] = await Promise.all([
-      (supabase as any).from('electoral_positions').select('*').order('created_at', { ascending: false }),
+  const fetchAll = useCallback(async () => {
+    const [posRes, candRes, resultsRes, deptRes] = await Promise.all([
+      (supabase as any).from('electoral_positions').select('*, subjects:department_id(name)').order('created_at', { ascending: false }),
       (supabase as any).from('candidates').select('*, profiles:student_id(full_name, student_id, department_id, level_id, profile_photo_url, subjects:department_id(name), classes:level_id(name))').order('created_at'),
-      (supabase as any).from('votes').select('*, profiles:voter_id(full_name, student_id, subjects:department_id(name), classes:level_id(name))').order('created_at', { ascending: false }),
       (supabase as any).from('election_results').select('*').order('vote_count', { ascending: false }),
+      supabase.from('subjects').select('id, name').order('name'),
     ]);
     setPositions(posRes.data || []);
     setCandidates(candRes.data || []);
-    setVotes(votesRes.data || []);
     setElectionResults(resultsRes.data || []);
+    setDepartments(deptRes.data || []);
+    await fetchTallies();
     setLoading(false);
+  }, [fetchTallies]);
+
+  // Position changes arrive live; leaving the page removes the channel
+  useEffect(() => {
+    fetchAll();
+    const channel = supabase
+      .channel('admin-voting-positions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'electoral_positions' }, () => fetchAll())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchAll]);
+
+  // Live counts every 5 seconds while an election is open and the tab is visible.
+  // (Refetching every vote row on each new vote, as before, would not survive a busy election.)
+  const anyOpen = positions.some(p => p.voting_open && p.election_status !== 'closed');
+  useEffect(() => {
+    if (!anyOpen) return;
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') fetchTallies(); }, 5000);
+    return () => clearInterval(timer);
+  }, [anyOpen, fetchTallies]);
+
+  // Scheduled elections close themselves when their time is up
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const expired = positions.filter(p => p.voting_open && p.election_status !== 'closed' && p.voting_end_time
+        && new Date(p.voting_end_time) <= new Date() && !closeRequested.current.has(p.id));
+      if (expired.length === 0) return;
+      expired.forEach(p => closeRequested.current.add(p.id));
+      (supabase as any).rpc('close_expired_elections').then(() => fetchAll());
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [positions, fetchAll]);
+
+  // Every vote for a position, in pages of 1000 (the API's limit per request)
+  const fetchVotes = async (posId: string, candId?: string) => {
+    const all: any[] = [];
+    for (let from = 0; ; from += 1000) {
+      let q = (supabase as any).from('votes')
+        .select('*, profiles:voter_id(full_name, student_id, subjects:department_id(name), classes:level_id(name))')
+        .eq('position_id', posId).order('created_at', { ascending: true }).range(from, from + 999);
+      if (candId) q = q.eq('candidate_id', candId);
+      const { data, error } = await q;
+      if (error) throw error;
+      all.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    return all;
   };
 
   const createPosition = async () => {
@@ -85,16 +123,18 @@ export default function AdminVoting() {
       description: newPosition.description.trim() || null,
       voting_end_time: votingEndTime,
       election_status: 'draft',
+      department_id: newPosition.departmentId === 'all' ? null : newPosition.departmentId,
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Position created" });
-    setNewPosition({ name: '', description: '', closingMode: 'manual', endDate: '', endTime: '' });
+    setNewPosition({ name: '', description: '', departmentId: 'all', closingMode: 'manual', endDate: '', endTime: '' });
     setCreating(false);
     fetchAll();
   };
 
   const togglePublish = async (pos: any) => {
-    await (supabase as any).from('electoral_positions').update({ published: !pos.published, election_status: !pos.published ? 'published' : 'draft' }).eq('id', pos.id);
+    const { error } = await (supabase as any).from('electoral_positions').update({ published: !pos.published, election_status: !pos.published ? 'published' : 'draft' }).eq('id', pos.id);
+    if (error) toast({ title: "Couldn't change", description: error.message, variant: "destructive" });
     fetchAll();
   };
 
@@ -103,7 +143,8 @@ export default function AdminVoting() {
       toast({ title: "Election Closed", description: "This election has been permanently closed.", variant: "destructive" });
       return;
     }
-    await (supabase as any).from('electoral_positions').update({ voting_open: !pos.voting_open, election_status: !pos.voting_open ? 'voting' : 'published' }).eq('id', pos.id);
+    const { error } = await (supabase as any).from('electoral_positions').update({ voting_open: !pos.voting_open, election_status: !pos.voting_open ? 'voting' : 'published' }).eq('id', pos.id);
+    if (error) toast({ title: "Couldn't change", description: error.message, variant: "destructive" });
     fetchAll();
   };
 
@@ -111,11 +152,10 @@ export default function AdminVoting() {
     if (!confirmClose) return;
     setClosing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('close-election', {
-        body: { position_id: confirmClose.id, mode: 'manual' }
-      });
+      // Locks the election, counts every vote in one go, records ties and notifies voters
+      const { data, error } = await (supabase as any).rpc('close_election', { p_position_id: confirmClose.id });
       if (error) throw error;
-      toast({ title: "Election Closed", description: `Results calculated and notifications sent for ${confirmClose.name}.` });
+      toast({ title: "Election Closed", description: data?.message || `Results calculated for ${confirmClose.name}.` });
       fetchAll();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -129,16 +169,9 @@ export default function AdminVoting() {
     if (!deleteTarget) return;
     try {
       if (deleteTarget.type === 'position') {
-        // Delete results, votes, candidates, then position
-        const posCandidates = candidates.filter(c => c.position_id === deleteTarget.id);
-        const candIds = posCandidates.map(c => c.id);
-        if (candIds.length > 0) {
-          await (supabase as any).from('election_results').delete().in('candidate_id', candIds);
-          await (supabase as any).from('votes').delete().eq('position_id', deleteTarget.id);
-          await (supabase as any).from('candidates').delete().eq('position_id', deleteTarget.id);
-        }
-        await (supabase as any).from('election_results').delete().eq('position_id', deleteTarget.id);
-        await (supabase as any).from('electoral_positions').delete().eq('id', deleteTarget.id);
+        // Candidates, votes and results are removed with the position
+        const { error } = await (supabase as any).from('electoral_positions').delete().eq('id', deleteTarget.id);
+        if (error) throw error;
         toast({ title: "Position deleted", description: `"${deleteTarget.name}" and all related data removed.` });
       } else if (deleteTarget.type === 'result') {
         await (supabase as any).from('election_results').delete().eq('position_id', deleteTarget.id);
@@ -190,28 +223,44 @@ export default function AdminVoting() {
     fetchAll();
   };
 
-  const viewVoters = (posId: string, candId: string) => {
-    const posVotes = votes.filter(v => v.position_id === posId && v.candidate_id === candId);
-    setVoterDetails(posVotes);
+  const viewVoters = async (posId: string, candId: string) => {
+    setVoterDetails([]);
     setShowVoters(true);
+    setLoadingVoters(true);
+    try { setVoterDetails(await fetchVotes(posId, candId)); }
+    catch (e: any) { toast({ title: "Couldn't load voters", description: e.message, variant: "destructive" }); }
+    finally { setLoadingVoters(false); }
   };
 
-  const exportVotes = (posId: string) => {
-    const posVotes = votes.filter(v => v.position_id === posId);
+  const exportVotes = async (posId: string) => {
     const pos = positions.find(p => p.id === posId);
+    let posVotes: any[] = [];
+    try { posVotes = await fetchVotes(posId); }
+    catch (e: any) { toast({ title: "Export failed", description: e.message, variant: "destructive" }); return; }
+    // Quote every cell so names with commas or quotes don't break the columns
+    const cell = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const headers = ['Voter Name', 'Matric No', 'Department', 'Level', 'Candidate', 'Timestamp'];
     const rows = posVotes.map(v => {
       const cand = candidates.find(c => c.id === v.candidate_id);
-      return [v.profiles?.full_name || '', v.profiles?.student_id || '', v.profiles?.subjects?.name || '', v.profiles?.classes?.name || '', cand?.profiles?.full_name || '', new Date(v.created_at).toLocaleString()];
+      return [v.profiles?.full_name, v.profiles?.student_id, v.profiles?.subjects?.name, v.profiles?.classes?.name, cand?.profiles?.full_name, new Date(v.created_at).toLocaleString()];
     });
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map(cell).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `votes-${pos?.name || 'export'}.csv`; a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const getVoteCount = (posId: string, candId: string) => votes.filter(v => v.position_id === posId && v.candidate_id === candId).length;
-  const getTotalVotes = (posId: string) => votes.filter(v => v.position_id === posId).length;
+  const getVoteCount = (posId: string, candId: string) => {
+    const pos = positions.find(p => p.id === posId);
+    if (pos?.election_status === 'closed') {
+      const r = electionResults.find(x => x.position_id === posId && x.candidate_id === candId);
+      if (r) return r.vote_count;
+    }
+    return tallies[posId]?.[candId] || 0;
+  };
+  const getTotalVotes = (posId: string) =>
+    candidates.filter(c => c.position_id === posId && c.approved).reduce((s, c) => s + getVoteCount(posId, c.id), 0);
 
   const getStatusBadge = (pos: any) => {
     if (pos.election_status === 'closed') return <Badge variant="destructive">Closed</Badge>;
@@ -229,11 +278,15 @@ export default function AdminVoting() {
     return `${hours}h ${mins}m`;
   };
 
-  const getWinner = (posId: string) => {
-    const result = electionResults.find(r => r.position_id === posId && r.is_winner);
-    if (!result) return null;
-    const cand = candidates.find(c => c.id === result.candidate_id);
-    return { ...result, name: cand?.profiles?.full_name };
+  // Every top scorer (more than one means a tie)
+  const getWinners = (posId: string) =>
+    electionResults
+      .filter(r => r.position_id === posId && r.is_winner)
+      .map(r => ({ ...r, name: candidates.find(c => c.id === r.candidate_id)?.profiles?.full_name }));
+  const winnerLabel = (posId: string) => {
+    const w = getWinners(posId);
+    if (w.length === 0) return null;
+    return w.length > 1 ? `Tie: ${w.map(x => x.name).join(' & ')} (${w[0].vote_count} each)` : `${w[0].name} (${w[0].vote_count} votes)`;
   };
 
   return (
@@ -253,6 +306,16 @@ export default function AdminVoting() {
             <CardContent className="space-y-4">
               <Input placeholder="Position name (e.g. President)" value={newPosition.name} onChange={e => setNewPosition(p => ({ ...p, name: e.target.value }))} />
               <Textarea placeholder="Description (optional)" value={newPosition.description} onChange={e => setNewPosition(p => ({ ...p, description: e.target.value }))} />
+              <div className="space-y-1">
+                <Label className="font-semibold">Who can vote and apply</Label>
+                <Select value={newPosition.departmentId} onValueChange={(v) => setNewPosition(p => ({ ...p, departmentId: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All departments</SelectItem>
+                    {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name} only</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-3">
                 <Label className="font-semibold">Election Closing Method</Label>
                 <RadioGroup value={newPosition.closingMode} onValueChange={(v: 'manual' | 'scheduled') => setNewPosition(p => ({ ...p, closingMode: v }))}>
@@ -304,6 +367,7 @@ export default function AdminVoting() {
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div>
                           <CardTitle className="text-base">{pos.name}</CardTitle>
+                          <p className="text-xs text-muted-foreground mt-1">{pos.subjects?.name ? `${pos.subjects.name} students only` : 'All departments'}</p>
                           {pos.description && <p className="text-sm text-muted-foreground mt-1">{pos.description}</p>}
                         </div>
                         <div className="flex items-center gap-2">
@@ -323,15 +387,14 @@ export default function AdminVoting() {
                             <StopCircle className="h-4 w-4" />
                             <span className="text-sm font-medium">Election Permanently Closed</span>
                           </div>
-                          {(() => {
-                            const winner = getWinner(pos.id);
-                            return winner ? (
-                              <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
-                                <Trophy className="h-4 w-4 text-yellow-500" />
-                                <span className="text-sm font-medium">Winner: {winner.name} ({winner.vote_count} votes)</span>
-                              </div>
-                            ) : null;
-                          })()}
+                          {winnerLabel(pos.id) ? (
+                            <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                              <Trophy className="h-4 w-4 text-yellow-500" />
+                              <span className="text-sm font-medium">Winner: {winnerLabel(pos.id)}</span>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No votes were cast.</p>
+                          )}
                           <Button variant="destructive" size="sm" onClick={() => setDeleteTarget({ type: 'position', id: pos.id, name: pos.name })}>
                             <Trash2 className="h-3 w-3 mr-1" /> Delete Position
                           </Button>
@@ -398,7 +461,7 @@ export default function AdminVoting() {
                                 </Button>
                               </>
                             )}
-                            {cand.approved && (
+                            {cand.approved && pos.election_status !== 'closed' && (
                               <Button size="sm" variant="destructive" onClick={() => setRejectTarget(cand)}>
                                 <XCircle className="h-3 w-3 mr-1" /> Revoke
                               </Button>
@@ -420,7 +483,8 @@ export default function AdminVoting() {
                 const posCandidates = candidates.filter(c => c.position_id === pos.id && c.approved);
                 const totalVotes = getTotalVotes(pos.id);
                 const isClosed = pos.election_status === 'closed';
-                const winner = getWinner(pos.id);
+                const winners = isClosed ? getWinners(pos.id) : [];
+                const live = pos.voting_open && !isClosed;
 
                 return (
                   <Card key={pos.id}>
@@ -430,13 +494,14 @@ export default function AdminVoting() {
                           <CardTitle className="text-base flex items-center gap-2">
                             <Vote className="h-4 w-4" /> {pos.name}
                             {isClosed && <Badge variant="destructive" className="ml-2">Closed</Badge>}
+                            {live && <Badge className="ml-2 bg-green-600">Live</Badge>}
                           </CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">Total votes: {totalVotes}</p>
+                          <p className="text-sm text-muted-foreground mt-1">Total votes: {totalVotes}{live ? ' · updates every 5 seconds' : ''}</p>
                         </div>
                         <div className="flex gap-2">
-                          {isClosed && winner && (
+                          {winners.length > 0 && (
                             <Badge className="bg-yellow-500 text-black flex items-center gap-1">
-                              <Trophy className="h-3 w-3" /> Winner: {winner.name}
+                              <Trophy className="h-3 w-3" /> {winners.length > 1 ? `Tie: ${winners.map(w => w.name).join(' & ')}` : `Winner: ${winners[0].name}`}
                             </Badge>
                           )}
                           <Button size="sm" variant="outline" onClick={() => exportVotes(pos.id)}>
@@ -454,7 +519,7 @@ export default function AdminVoting() {
                       {posCandidates.map(cand => {
                         const voteCount = getVoteCount(pos.id, cand.id);
                         const percentage = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
-                        const isWinner = isClosed && winner?.candidate_id === cand.id;
+                        const isWinner = winners.some(w => w.candidate_id === cand.id);
                         return (
                           <div key={cand.id} className={`flex items-center gap-4 p-3 border rounded-lg ${isWinner ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20' : ''}`}>
                             <Avatar className="h-10 w-10">
@@ -520,7 +585,8 @@ export default function AdminVoting() {
               <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm space-y-1">
                 <p>• Voting will be <strong>permanently disabled</strong></p>
                 <p>• Results will be <strong>calculated immediately</strong></p>
-                <p>• <strong>Urgent notifications</strong> will be sent to all users</p>
+                <p>• The result is sent to <strong>{confirmClose?.subjects?.name ? `all ${confirmClose.subjects.name} students` : 'all students'}</strong> and admins</p>
+                <p>• Votes arriving while it closes are counted or refused, never lost</p>
                 <p>• This action <strong>cannot be undone</strong></p>
               </div>
             </div>
@@ -536,8 +602,10 @@ export default function AdminVoting() {
         {/* Voter Details Dialog */}
         <Dialog open={showVoters} onOpenChange={setShowVoters}>
           <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Voter Details ({voterDetails.length})</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Voter Details ({loadingVoters ? '…' : voterDetails.length})</DialogTitle></DialogHeader>
             <div className="space-y-2">
+              {loadingVoters && <p className="text-sm text-muted-foreground">Loading...</p>}
+              {!loadingVoters && voterDetails.length === 0 && <p className="text-sm text-muted-foreground">No votes yet.</p>}
               {voterDetails.map(v => (
                 <div key={v.id} className="flex items-center justify-between p-3 border rounded-lg text-sm">
                   <div>
@@ -557,7 +625,10 @@ export default function AdminVoting() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure you want to reject and delete this application?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently remove {rejectTarget?.profiles?.full_name}'s application. This action cannot be undone.
+                This will permanently remove {rejectTarget?.profiles?.full_name}'s application.
+                {rejectTarget && getVoteCount(rejectTarget.position_id, rejectTarget.id) > 0
+                  ? ` Their ${getVoteCount(rejectTarget.position_id, rejectTarget.id)} vote(s) will be deleted too, and those students will be able to vote again.`
+                  : ''} This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
