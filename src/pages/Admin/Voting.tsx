@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
+import { CandidatePreview } from '@/components/Shared/CandidatePreview';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, CheckCircle, XCircle, Users, BarChart3, Download, Vote, Eye, Trash2, Clock, Trophy, StopCircle } from 'lucide-react';
@@ -187,6 +188,7 @@ export default function AdminVoting() {
   };
 
   const [rejectTarget, setRejectTarget] = useState<any>(null);
+  const [preview, setPreview] = useState<{ candidate: any; position: any } | null>(null);
 
   const approveCandidate = async (cand: any) => {
     const posName = positions.find(p => p.id === cand.position_id)?.name || 'Unknown Position';
@@ -441,7 +443,14 @@ export default function AdminVoting() {
                     <CardHeader><CardTitle className="text-base">{pos.name} - Applicants ({posCandidates.length})</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
                       {posCandidates.map(cand => (
-                        <div key={cand.id} className="flex items-center gap-4 p-3 border rounded-lg">
+                        <div
+                          key={cand.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setPreview({ candidate: cand, position: pos })}
+                          onKeyDown={(e) => { if (e.key === 'Enter') setPreview({ candidate: cand, position: pos }); }}
+                          className="flex cursor-pointer flex-col gap-3 rounded-2xl border p-3 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:gap-4"
+                        >
                           <Avatar className="h-12 w-12">
                             <SignedAvatarImage src={cand.profile_pic || cand.profiles?.profile_photo_url} />
                             <AvatarFallback>{cand.profiles?.full_name?.charAt(0)}</AvatarFallback>
@@ -451,7 +460,7 @@ export default function AdminVoting() {
                             <p className="text-xs text-muted-foreground">{cand.profiles?.student_id} • {cand.profiles?.subjects?.name} • {cand.profiles?.classes?.name}</p>
                             {cand.manifesto && <p className="text-xs mt-1 text-muted-foreground line-clamp-2">{cand.manifesto}</p>}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <Badge variant={cand.approved ? 'default' : 'secondary'}>{cand.approved ? 'Approved' : 'Pending'}</Badge>
                             {!cand.approved && (
                               <>
@@ -640,6 +649,22 @@ export default function AdminVoting() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      <CandidatePreview
+        candidate={preview?.candidate ?? null}
+        positionName={preview?.position?.name}
+        showMatric
+        onClose={() => setPreview(null)}
+        actions={preview && !preview.candidate.approved ? (
+          <div className="grid grid-cols-2 gap-2">
+            <Button className="rounded-xl" onClick={() => { const c = preview.candidate; setPreview(null); approveCandidate(c); }}>
+              <CheckCircle className="mr-1 h-4 w-4" /> Approve
+            </Button>
+            <Button variant="destructive" className="rounded-xl" onClick={() => { const c = preview.candidate; setPreview(null); setRejectTarget(c); }}>
+              <XCircle className="mr-1 h-4 w-4" /> Reject
+            </Button>
+          </div>
+        ) : null}
+      />
     </DashboardLayout>
   );
 }
