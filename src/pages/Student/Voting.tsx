@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
+import { CandidatePreview } from '@/components/Shared/CandidatePreview';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, Vote, User, Send, BarChart3, Trophy, Clock, StopCircle } from 'lucide-react';
@@ -57,6 +58,7 @@ export default function StudentVoting() {
   const [applyPosition, setApplyPosition] = useState('');
   const [manifesto, setManifesto] = useState('');
   const [applying, setApplying] = useState(false);
+  const [preview, setPreview] = useState<{ candidate: any; position: any } | null>(null);
   const [confirmVote, setConfirmVote] = useState<{ candidate: any; position: any } | null>(null);
   const [voting, setVoting] = useState(false);
   const [voteCounts, setVoteCounts] = useState<Record<string, Record<string, number>>>({});
@@ -281,7 +283,14 @@ export default function StudentVoting() {
                         {posCandidates.length === 0 && <p className="text-sm text-muted-foreground">No approved candidates yet.</p>}
                         <div className="grid gap-4 md:grid-cols-2">
                           {posCandidates.map(cand => (
-                            <Card key={cand.id} className={`overflow-hidden ${voted || !open ? 'opacity-75' : 'hover:shadow-md transition-shadow'} ${myChoice === cand.id ? 'border-green-600' : ''}`}>
+                            <Card
+                              key={cand.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setPreview({ candidate: cand, position: pos })}
+                              onKeyDown={(e) => { if (e.key === 'Enter') setPreview({ candidate: cand, position: pos }); }}
+                              className={`cursor-pointer overflow-hidden rounded-2xl transition-shadow hover:shadow-md ${voted || !open ? 'opacity-75' : ''} ${myChoice === cand.id ? 'border-green-600' : ''}`}
+                            >
                               <CardContent className="p-4">
                                 <div className="flex items-start gap-3">
                                   <Avatar className="h-16 w-16">
@@ -291,12 +300,13 @@ export default function StudentVoting() {
                                   <div className="flex-1 min-w-0">
                                     <p className="font-bold break-words">{cand.profiles?.full_name}</p>
                                     <p className="text-xs text-muted-foreground">{cand.profiles?.subjects?.name} • {cand.profiles?.classes?.name}</p>
-                                    {cand.manifesto && <p className="text-xs mt-2 text-muted-foreground break-words">{cand.manifesto}</p>}
+                                    {cand.manifesto && <p className="text-xs mt-2 text-muted-foreground break-words line-clamp-2">{cand.manifesto}</p>}
+                                    <p className="text-xs mt-1 font-medium text-primary">Tap to view profile</p>
                                     {myChoice === cand.id && <p className="text-xs mt-2 font-medium text-green-700">Your vote</p>}
                                   </div>
                                 </div>
                                 {!voted && open && (
-                                  <Button className="w-full mt-3" onClick={() => setConfirmVote({ candidate: cand, position: pos })}>
+                                  <Button className="w-full mt-3" onClick={(e) => { e.stopPropagation(); setConfirmVote({ candidate: cand, position: pos }); }}>
                                     Vote for {cand.profiles?.full_name?.split(' ')[0]}
                                   </Button>
                                 )}
@@ -409,6 +419,18 @@ export default function StudentVoting() {
           </DialogContent>
         </Dialog>
       </div>
+      <CandidatePreview
+        candidate={preview?.candidate ?? null}
+        positionName={preview?.position?.name}
+        onClose={() => setPreview(null)}
+        note={preview && myVotes.find(v => v.position_id === preview.position.id)?.candidate_id === preview.candidate.id
+          ? <p className="text-sm font-medium text-green-700">✓ Your vote</p> : null}
+        actions={preview && !hasVoted(preview.position.id) && canVote(preview.position) ? (
+          <Button className="w-full rounded-xl" size="lg" onClick={() => { const p = preview; setPreview(null); setConfirmVote(p); }}>
+            Vote for {preview.candidate.profiles?.full_name?.split(' ')[0]}
+          </Button>
+        ) : null}
+      />
     </DashboardLayout>
   );
 }
