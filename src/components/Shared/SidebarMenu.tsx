@@ -2,8 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, BarChart3, Settings, BookOpen, FileText, MessageSquare, Upload,
-  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode, Vote, MessageCircle, FileSpreadsheet, LifeBuoy, ScrollText
-} from 'lucide-react';
+  GraduationCap, Calendar, Bell, ClipboardList, Building2, Shield, CreditCard, QrCode, Vote, MessageCircle, FileSpreadsheet, LifeBuoy, ScrollText, Newspaper } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu as SidebarMenuPrimitive, SidebarMenuButton, SidebarMenuItem,
@@ -20,6 +19,7 @@ const adminMenuItems = [
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Structure", url: "/admin/manage-structure", icon: Building2 },
   { title: "Announcements", url: "/admin/announcements", icon: MessageSquare },
+  { title: "Blog", url: "/admin/blog", icon: Newspaper },
   { title: "Courses", url: "/admin/courses", icon: BookOpen },
   { title: "Course Lists", url: "/admin/course-lists", icon: FileText },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },

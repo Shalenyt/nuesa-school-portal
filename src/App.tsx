@@ -28,6 +28,19 @@ const Apply = lazyPage(() => import("./pages/Auth/Apply"));
 const RecoverPassword = lazyPage(() => import("./pages/Auth/RecoverPassword"));
 const ResetPassword = lazyPage(() => import("./pages/Auth/ResetPassword"));
 const VerifyCode = lazyPage(() => import("./pages/Auth/VerifyCode"));
+
+// Public blog (front page of nuesa.org)
+const BlogNews = lazyPage(() => import("./pages/Blog/News"));
+const BlogArticles = lazyPage(() => import("./pages/Blog/Articles"));
+const BlogArticle = lazyPage(() => import("./pages/Blog/Article"));
+const BlogLeadership = lazyPage(() => import("./pages/Blog/Leadership"));
+const BlogEngineering = lazyPage(() => import("./pages/Blog/Engineering").then((m) => ({ default: m.BlogEngineering })));
+const BlogDiscipline = lazyPage(() => import("./pages/Blog/Engineering").then((m) => ({ default: m.BlogDiscipline })));
+const BlogAbout = lazyPage(() => import("./pages/Blog/InfoPages").then((m) => ({ default: m.BlogAbout })));
+const BlogResources = lazyPage(() => import("./pages/Blog/InfoPages").then((m) => ({ default: m.BlogResources })));
+const BlogEvents = lazyPage(() => import("./pages/Blog/InfoPages").then((m) => ({ default: m.BlogEvents })));
+const BlogSearch = lazyPage(() => import("./pages/Blog/InfoPages").then((m) => ({ default: m.BlogSearch })));
+const AdminBlog = lazyPage(() => import("./pages/Admin/Blog"));
 const Success = lazyPage(() => import("./pages/Auth/Success"));
 const ChangeEmail = lazyPage(() => import("./pages/Auth/ChangeEmail"));
 
@@ -93,6 +106,7 @@ const VerifyPayment = lazyPage(() => import("./pages/VerifyPayment"));
 
 
 import Index from "./pages/Index";
+import BlogHome from "./pages/Blog/Home";
 import NotFound from "./pages/NotFound";
 
 const TeacherAnalytics = lazyPage(() => import("./pages/Teacher/Analytics"));
@@ -116,7 +130,19 @@ function AppRoutes() {
     // (everything used to ship in one 578 KB file).
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
     <Routes>
-      <Route path="/" element={<Index />} />
+      <Route path="/" element={<BlogHome />} />
+      <Route path="/portal" element={<Index />} />
+      <Route path="/news" element={<BlogNews />} />
+      <Route path="/articles" element={<BlogArticles />} />
+      <Route path="/articles/:slug" element={<BlogArticle />} />
+      <Route path="/leadership" element={<BlogLeadership />} />
+      <Route path="/engineering" element={<BlogEngineering />} />
+      <Route path="/engineering/:slug" element={<BlogDiscipline />} />
+      <Route path="/events" element={<BlogEvents />} />
+      <Route path="/about" element={<BlogAbout />} />
+      <Route path="/resources" element={<BlogResources />} />
+      <Route path="/search" element={<BlogSearch />} />
+      <Route path="/admin/blog" element={<ProtectedRoute allowedRoles={['admin']}><AdminBlog /></ProtectedRoute>} />
       
       {/* Auth Routes */}
       <Route path="/auth/login" element={<Login />} />
