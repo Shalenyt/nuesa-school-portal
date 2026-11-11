@@ -9,6 +9,7 @@
 -- blog_state    when news was last collected
 --
 -- Everyone (signed in or not) can read what is published; only admins write.
+-- Public read rules must not call is_admin(): visitors may not run it.
 
 CREATE TABLE IF NOT EXISTS public.blog_posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -96,18 +97,18 @@ ALTER TABLE public.blog_leaders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_state ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone reads published posts" ON public.blog_posts FOR SELECT USING (published OR (SELECT public.is_admin()));
+CREATE POLICY "Anyone reads published posts" ON public.blog_posts FOR SELECT USING (published);
 CREATE POLICY "Admins manage posts" ON public.blog_posts FOR ALL TO authenticated USING ((SELECT public.is_admin())) WITH CHECK ((SELECT public.is_admin()));
 
-CREATE POLICY "Anyone reads visible news" ON public.blog_news FOR SELECT USING (NOT hidden OR (SELECT public.is_admin()));
+CREATE POLICY "Anyone reads visible news" ON public.blog_news FOR SELECT USING (NOT hidden);
 CREATE POLICY "Admins manage news" ON public.blog_news FOR ALL TO authenticated USING ((SELECT public.is_admin())) WITH CHECK ((SELECT public.is_admin()));
 
 CREATE POLICY "Admins manage feeds" ON public.blog_feeds FOR ALL TO authenticated USING ((SELECT public.is_admin())) WITH CHECK ((SELECT public.is_admin()));
 
-CREATE POLICY "Anyone reads active leaders" ON public.blog_leaders FOR SELECT USING (active OR (SELECT public.is_admin()));
+CREATE POLICY "Anyone reads active leaders" ON public.blog_leaders FOR SELECT USING (active);
 CREATE POLICY "Admins manage leaders" ON public.blog_leaders FOR ALL TO authenticated USING ((SELECT public.is_admin())) WITH CHECK ((SELECT public.is_admin()));
 
-CREATE POLICY "Anyone reads published events" ON public.blog_events FOR SELECT USING (published OR (SELECT public.is_admin()));
+CREATE POLICY "Anyone reads published events" ON public.blog_events FOR SELECT USING (published);
 CREATE POLICY "Admins manage events" ON public.blog_events FOR ALL TO authenticated USING ((SELECT public.is_admin())) WITH CHECK ((SELECT public.is_admin()));
 
 CREATE POLICY "Anyone reads blog state" ON public.blog_state FOR SELECT USING (true);
