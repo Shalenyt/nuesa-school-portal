@@ -101,8 +101,8 @@ export default function BlogHome() {
           ) : (
             <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
               <Link to={`/articles/${featured.slug}`} className="group relative overflow-hidden rounded-3xl border">
-                <div className="aspect-[16/11] sm:aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[420px]">
-                  <Cover src={featured.cover_url} category={featured.category} className="transition duration-700 group-hover:scale-105" />
+                <div className="h-[380px] sm:h-auto sm:aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[420px]">
+                  <Cover src={featured.cover_url} category={featured.category} label={false} className="transition duration-700 group-hover:scale-105" />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 space-y-3 p-5 text-white sm:p-7">

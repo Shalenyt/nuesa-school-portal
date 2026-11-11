@@ -170,12 +170,12 @@ export function SectionHeader({ title, subtitle, to, linkLabel = 'See all' }: { 
 }
 
 /** Cover image, or a branded pattern when there is none */
-export function Cover({ src, category, className = '' }: { src?: string | null; category?: string | null; className?: string }) {
+export function Cover({ src, category, className = '', label = true }: { src?: string | null; category?: string | null; className?: string; label?: boolean }) {
   if (src) return <img src={src} alt="" loading="lazy" className={`h-full w-full object-cover ${className}`} />;
   return (
     <div className={`relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 ${className}`}>
       <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:18px_18px]" />
-      <span className="relative text-sm font-bold uppercase tracking-[0.2em] text-white/90">{categoryLabel(category)}</span>
+      {label && <span className="relative text-sm font-bold uppercase tracking-[0.2em] text-white/90">{categoryLabel(category)}</span>}
     </div>
   );
 }
