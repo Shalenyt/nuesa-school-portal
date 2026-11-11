@@ -19,12 +19,27 @@ export const IMAGES = {
   solar: asset('solar.jpg'),
 };
 
+/** Files that ship with the site in public/blog */
+const local = (path: string) => `/blog/${path}`;
+
 export const LOGOS: Record<string, string> = {
   NSE: asset('logo-nse.png'),
   'NSE Abuja': asset('logo-nse.png'),
   COREN: asset('logo-coren.jpg'),
   NSChE: asset('logo-nsche.png'),
   NIMechE: asset('logo-nimeche.jpg'),
+  NICE: local('logos/logo-nice.jpg'),
+  NIEEE: local('logos/logo-nieee.jpg'),
+  NIAE: local('logos/logo-niae.jpg'),
+  INAE: local('logos/logo-inae.jpg'),
+  NRC: local('logos/logo-nrc.jpg'),
+  UniAbuja: local('logos/logo-uniabuja.jpg'),
+  Faculty: local('logos/logo-uniabuja.jpg'),
+  'NUESA National': local('logos/logo-nuesa-national.jpg'),
+  NUESA: local('logos/logo-nuesa-national.jpg'),
+  'NUESA UniAbuja': '/logo.png',
+  NUC: local('logos/logo-nuc.jpg'),
+  ITF: local('logos/logo-itf.jpg'),
 };
 
 /** A fitting photo for each category, used when an article or headline has no picture of its own */
@@ -40,7 +55,6 @@ export const CATEGORY_IMAGES: Record<string, string> = {
   guides: asset('uniabuja-library.jpg'),
   opinion: asset('lekki-port.jpg'),
 };
-export const categoryImage = (c?: string | null) => (c && CATEGORY_IMAGES[c]) || asset('civil.jpg');
 
 /** Photos come from Wikimedia Commons. CC BY-SA asks us to credit the photographer. */
 export const PHOTO_CREDITS: { what: string; by: string; licence: string }[] = [
@@ -86,8 +100,8 @@ export interface Discipline {
   atUniAbuja: boolean;
   /** Real photo of this kind of work in Nigeria (see PHOTO_CREDITS) */
   image: string;
-  /** Logo of the professional body for this discipline, when one could be found */
-  logo?: string;
+  /** Key into LOGOS for this discipline's professional body */
+  logoKey?: string;
   summary: string;
   work: string[];
   careers: string[];
@@ -98,53 +112,53 @@ export interface Discipline {
 // come first; then other disciplines taught across Nigeria.
 export const DISCIPLINES: Discipline[] = [
   {
-    slug: 'civil', name: 'Civil Engineering', atUniAbuja: true, image: asset('civil.jpg'),
+    slug: 'civil', logoKey: 'NICE', name: 'Civil Engineering', atUniAbuja: true, image: asset('civil.jpg'),
     summary: 'Plans, designs and builds the roads, bridges, buildings, dams, water supply and drainage that every community depends on.',
     work: ['Structural design of buildings and bridges', 'Highway and transportation engineering', 'Water resources, hydrology and sanitation', 'Geotechnical and foundation engineering', 'Construction and project management'],
     careers: ['Construction firms and contractors', 'Consulting engineering firms', 'Federal and state ministries of works', 'Water boards and river basin authorities', 'Real estate and infrastructure developers'],
     bodies: ['Nigerian Institution of Civil Engineers (NICE), a division of NSE', 'COREN registration'],
   },
   {
-    slug: 'electrical', name: 'Electrical and Electronics Engineering', atUniAbuja: true, image: asset('electrical.jpg'),
+    slug: 'electrical', logoKey: 'NIEEE', name: 'Electrical and Electronics Engineering', atUniAbuja: true, image: asset('electrical.jpg'),
     summary: 'Generates, transmits and uses electrical power, and designs the electronics and communication systems around us.',
     work: ['Power generation, transmission and distribution', 'Electronics and embedded systems', 'Telecommunications', 'Control and instrumentation', 'Renewable energy and solar systems'],
     careers: ['Power generation and distribution companies', 'Telecom operators', 'Oil, gas and manufacturing plants', 'Renewable energy companies', 'Electronics design and repair'],
     bodies: ['Nigerian Institution of Electrical and Electronic Engineers (NIEEE), a division of NSE', 'COREN registration'],
   },
   {
-    slug: 'mechanical', name: 'Mechanical Engineering', atUniAbuja: true, image: asset('mechanical.jpg'), logo: asset('logo-nimeche.jpg'),
+    slug: 'mechanical', name: 'Mechanical Engineering', atUniAbuja: true, image: asset('mechanical.jpg'), logoKey: 'NIMechE',
     summary: 'Designs and maintains machines, engines, vehicles, plants and the systems that move energy and heat.',
     work: ['Machine and product design', 'Thermodynamics, heating and cooling', 'Automotive and production engineering', 'Plant maintenance and reliability', 'Manufacturing processes'],
     careers: ['Manufacturing and assembly plants', 'Oil and gas', 'Automotive and heavy equipment', 'Power plants', 'Building services (HVAC)'],
     bodies: ['Nigerian Institution of Mechanical Engineers (NIMechE), a division of NSE', 'COREN registration'],
   },
   {
-    slug: 'chemical', name: 'Chemical Engineering', atUniAbuja: true, image: asset('chemical.jpg'), logo: asset('logo-nsche.png'),
+    slug: 'chemical', name: 'Chemical Engineering', atUniAbuja: true, image: asset('chemical.jpg'), logoKey: 'NSChE',
     summary: 'Turns raw materials into useful products at scale: fuels, food, medicines, plastics, fertiliser and clean water.',
     work: ['Process design and plant operations', 'Petroleum refining and petrochemicals', 'Food and pharmaceutical processing', 'Environmental and waste treatment', 'Materials and polymers'],
     careers: ['Refineries and petrochemical plants', 'Food, beverage and drug manufacturers', 'Cement, fertiliser and chemical plants', 'Environmental consulting', 'Research institutes'],
     bodies: ['Nigerian Society of Chemical Engineers (NSChE), a division of NSE', 'COREN registration'],
   },
   {
-    slug: 'agricultural', name: 'Agricultural Engineering', atUniAbuja: true, image: asset('agricultural.jpg'),
+    slug: 'agricultural', logoKey: 'NIAE', name: 'Agricultural Engineering', atUniAbuja: true, image: asset('agricultural.jpg'),
     summary: 'Applies engineering to farming: machinery, irrigation, storage and processing that help Nigeria feed itself.',
     work: ['Farm power and machinery', 'Irrigation and soil and water conservation', 'Crop processing and storage', 'Agricultural structures', 'Food engineering'],
     careers: ['Agro-processing companies', 'Irrigation and river basin projects', 'Farm equipment suppliers', 'Research institutes and ADPs', 'Agribusiness start-ups'],
     bodies: ['Nigerian Institution of Agricultural Engineers (NIAE), a division of NSE', 'COREN registration'],
   },
   {
-    slug: 'aeronautical', name: 'Aeronautical Engineering', atUniAbuja: true, image: asset('aeronautical.jpg'),
+    slug: 'aeronautical', logoKey: 'INAE', name: 'Aeronautical Engineering', atUniAbuja: true, image: asset('aeronautical.jpg'),
     summary: 'Designs, builds and maintains aircraft and the systems that keep them flying safely.',
     work: ['Aerodynamics and flight mechanics', 'Aircraft structures and materials', 'Propulsion and engines', 'Avionics', 'Aircraft maintenance and airworthiness'],
     careers: ['Airlines and maintenance organisations', 'Nigerian Air Force and defence industry', 'Aviation regulators and agencies', 'Airports', 'Drone and aerospace start-ups'],
-    bodies: ['Nigerian Institution of Aerospace Engineers, a division of NSE', 'COREN registration'],
+    bodies: ['Institute of Nigerian Aeronautical Engineers (INAE)', 'COREN registration'],
   },
   {
-    slug: 'railway', name: 'Railway Engineering', atUniAbuja: true, image: asset('railway.jpg'),
+    slug: 'railway', logoKey: 'NRC', name: 'Railway Engineering', atUniAbuja: true, image: asset('railway.jpg'),
     summary: 'Builds and runs rail systems: track, rolling stock, signalling and the operations behind Nigeria\'s growing rail network.',
     work: ['Track design and maintenance', 'Rolling stock (locomotives and coaches)', 'Signalling and train control', 'Railway operations and safety', 'Urban and light rail systems'],
     careers: ['Nigerian Railway Corporation', 'Rail construction contractors', 'Urban mass transit projects', 'Ministries of transportation', 'Rolling stock maintenance'],
-    bodies: ['COREN registration'],
+    bodies: ['Nigerian Railway Corporation (NRC), the national rail operator', 'COREN registration'],
   },
   {
     slug: 'petroleum', name: 'Petroleum Engineering', atUniAbuja: false, image: asset('petroleum.jpg'),
@@ -195,9 +209,9 @@ export const REGISTRATION_STEPS = [
 export const USEFUL_LINKS: { label: string; url: string; note: string; short: string; logo?: string }[] = [
   { label: 'Nigerian Society of Engineers (NSE)', logo: 'NSE', short: 'NSE', url: 'https://nse.org.ng', note: 'Membership, branches, divisions and news' },
   { label: 'COREN', logo: 'COREN', short: 'COREN', url: 'https://coren.gov.ng', note: 'Registration of engineers and accreditation' },
-  { label: 'Industrial Training Fund (SIWES)', short: 'ITF', url: 'https://itf.gov.ng', note: 'SIWES placement and logbooks' },
-  { label: 'National Universities Commission', short: 'NUC', url: 'https://nuc.edu.ng', note: 'Approved universities and programmes' },
-  { label: 'University of Abuja', short: 'UNI', url: 'https://uniabuja.edu.ng', note: 'Official university website' },
+  { label: 'Industrial Training Fund (SIWES)', short: 'ITF', logo: 'ITF', url: 'https://itf.gov.ng', note: 'SIWES placement and logbooks' },
+  { label: 'National Universities Commission', short: 'NUC', logo: 'NUC', url: 'https://nuc.edu.ng', note: 'Approved universities and programmes' },
+  { label: 'University of Abuja', short: 'UNI', logo: 'UniAbuja', url: 'https://uniabuja.edu.ng', note: 'Official university website' },
 ];
 
 export const FAQS = [
@@ -207,3 +221,26 @@ export const FAQS = [
   { q: 'Where do the news headlines come from?', a: 'The news page collects engineering headlines from Nigerian and international news sites every couple of hours. Tap any headline to read the full story on the publisher\'s website.' },
   { q: 'Can I write for the blog?', a: 'Yes. Send your article idea through the Feedback page in the portal, or speak to the NUESA executives. Articles are reviewed before they are published.' },
 ];
+
+/* ---------- editable image slots ---------- */
+
+export interface ImageSlot { key: string; label: string; group: string; url: string; logo?: boolean }
+
+const IMAGE_LABELS: Record<string, string> = {
+  hero: 'Home page main photo', gate: 'Campus: main gate', senate: 'Campus: senate building', library: 'Campus: library',
+  lab: 'Laboratory', student: 'Student at work (portal banner)', roadEngineers: 'Resources page banner',
+  construction: 'Building site', tower: 'Tower under construction', port: 'Port', solar: 'Solar panels',
+};
+
+/** Every logo and photo the blog uses. Admins can replace any of them in Admin, Blog, Images. */
+export const IMAGE_SLOTS: ImageSlot[] = [
+  ...Object.entries(IMAGES).map(([k, url]) => ({ key: `site.${k}`, label: IMAGE_LABELS[k] || k, group: 'Site photos', url })),
+  ...DISCIPLINES.map((d) => ({ key: `dept.${d.slug}`, label: d.name, group: 'Department photos', url: d.image })),
+  ...Object.entries(LOGOS).filter(([k]) => !['NSE Abuja', 'Faculty', 'NUESA'].includes(k))
+    .map(([k, url]) => ({ key: `logo.${k}`, label: k === 'NUESA UniAbuja' ? 'NUESA UniAbuja (chapter)' : k, group: 'Logos', url, logo: true })),
+  ...Object.entries(CATEGORY_IMAGES).map(([k, url]) => ({ key: `cat.${k}`, label: `${CATEGORIES[k]?.label || k} articles`, group: 'Default article photos', url })),
+];
+
+/** Logo keys that share another logo */
+export const LOGO_ALIASES: Record<string, string> = { 'NSE Abuja': 'NSE', Faculty: 'UniAbuja', NUESA: 'NUESA National' };
+export const DEFAULT_IMAGES: Record<string, string> = Object.fromEntries(IMAGE_SLOTS.map((s) => [s.key, s.url]));

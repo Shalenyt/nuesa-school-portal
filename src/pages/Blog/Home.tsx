@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { ArrowRight, CalendarDays, MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BlogLayout } from './BlogLayout';
-import { DISCIPLINES, IMAGES, LOGOS, REGISTRATION_STEPS } from './content';
+import { DISCIPLINES, REGISTRATION_STEPS } from './content';
 import {
   BlogEvent, Cover, EmptyState, Leader, LeaderCard, NewsItem, NewsRow, Post, PostCard, SectionHeader, SkeletonCards,
-  CategoryBadge, fetchBlogState, fetchEvents, fetchLeaders, fetchNews, fetchPosts, longDate, readingTime, timeAgo, useBlogData, useTitle,
-} from './shared';
+  CategoryBadge, fetchBlogState, fetchEvents, fetchLeaders, fetchNews, fetchPosts, longDate, readingTime, timeAgo, useBlogData, useTitle, useSiteImages } from './shared';
 
 export default function BlogHome() {
+  const img = useSiteImages();
   useTitle('');
   const navigate = useNavigate();
   const [q, setQ] = useState('');
@@ -51,7 +51,7 @@ export default function BlogHome() {
             </div>
           </div>
           <figure className="overflow-hidden rounded-3xl border bg-card">
-            <img src={IMAGES.hero} alt="Faculty of Engineering building, University of Abuja" className="aspect-[4/3] w-full object-cover" />
+            <img src={img.site('hero')} alt="Faculty of Engineering building, University of Abuja" className="aspect-[4/3] w-full object-cover" />
             <figcaption className="px-4 py-2.5 text-xs text-muted-foreground">Faculty of Engineering, University of Abuja</figcaption>
           </figure>
         </div>
@@ -124,8 +124,8 @@ export default function BlogHome() {
         <section>
           <SectionHeader title="Who leads Nigerian engineering" subtitle="The people at the head of the profession today" to="/leadership" linkLabel="All leaders" />
           <div className="mb-4 flex items-center gap-4">
-            <img src={LOGOS.NSE} alt="NSE logo" className="h-12 w-12 rounded-xl border bg-white object-contain p-1" />
-            <img src={LOGOS.COREN} alt="COREN logo" className="h-12 w-12 rounded-xl border bg-white object-contain p-1" />
+            <img src={img.logo('NSE')} alt="NSE logo" className="h-12 w-12 rounded-xl border bg-white object-contain p-1" />
+            <img src={img.logo('COREN')} alt="COREN logo" className="h-12 w-12 rounded-xl border bg-white object-contain p-1" />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {nsePresident && <LeaderCard leader={{ ...nsePresident, role: `NSE · ${nsePresident.role}` }} />}
@@ -139,7 +139,7 @@ export default function BlogHome() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {DISCIPLINES.filter((d) => d.atUniAbuja).map((d) => (
               <Link key={d.slug} to={`/engineering/${d.slug}`} className="group overflow-hidden rounded-2xl border bg-card transition hover:-translate-y-0.5 hover:shadow-md">
-                <div className="aspect-[4/3] overflow-hidden bg-muted"><img src={d.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /></div>
+                <div className="aspect-[4/3] overflow-hidden bg-muted"><img src={img.dept(d.slug)} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /></div>
                 <div className="p-3 sm:p-4">
                   <p className="font-bold leading-snug group-hover:text-primary">{d.name}</p>
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{d.summary}</p>
@@ -190,7 +190,7 @@ export default function BlogHome() {
 
         {/* Portal CTA */}
         <section className="grid overflow-hidden rounded-3xl border bg-card md:grid-cols-[1fr_1.2fr]">
-          <img src={IMAGES.student} alt="Engineering student at work" loading="lazy" className="h-56 w-full object-cover md:h-full" />
+          <img src={img.site('student')} alt="Engineering student at work" loading="lazy" className="h-56 w-full object-cover md:h-full" />
           <div className="space-y-4 p-6 sm:p-10">
             <h2 className="text-3xl font-extrabold tracking-tight">Studying engineering at UniAbuja?</h2>
             <p className="max-w-xl text-muted-foreground">Your courses, timetable, assignments, results, dues and elections are all in the NUESA Student Portal.</p>

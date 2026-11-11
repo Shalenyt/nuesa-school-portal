@@ -4,10 +4,9 @@ import { CalendarDays, ExternalLink, MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { BlogLayout } from './BlogLayout';
-import { DISCIPLINES, FAQS, IMAGES, LOGOS, PHOTO_CREDITS, REGISTRATION_STEPS, USEFUL_LINKS } from './content';
+import { DISCIPLINES, FAQS, PHOTO_CREDITS, REGISTRATION_STEPS, USEFUL_LINKS } from './content';
 import {
-  BlogEvent, EmptyState, NewsItem, NewsRow, Post, PostCard, fetchEvents, fetchNews, fetchPosts, longDate, useBlogData, useTitle,
-} from './shared';
+  BlogEvent, EmptyState, NewsItem, NewsRow, Post, PostCard, fetchEvents, fetchNews, fetchPosts, longDate, useBlogData, useTitle, useSiteImages } from './shared';
 
 function PageHero({ title, text }: { title: string; text: string }) {
   return (
@@ -21,13 +20,14 @@ function PageHero({ title, text }: { title: string; text: string }) {
 }
 
 export function BlogAbout() {
+  const img = useSiteImages();
   useTitle('About NUESA');
   const navigate = useNavigate();
   return (
     <BlogLayout>
       <PageHero title="About NUESA" text="The Nigerian Universities Engineering Students' Association, University of Abuja chapter." />
       <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6">
-        <img src={IMAGES.hero} alt="Faculty of Engineering, University of Abuja" className="aspect-[16/6] w-full rounded-3xl border object-cover" />
+        <img src={img.site('hero')} alt="Faculty of Engineering, University of Abuja" className="aspect-[16/6] w-full rounded-3xl border object-cover" />
       </div>
       <div className="mx-auto max-w-5xl space-y-12 px-4 py-10 sm:px-6">
         <section className="grid gap-6 md:grid-cols-2">
@@ -45,7 +45,7 @@ export function BlogAbout() {
               ['NUC', 'Approves universities and degree programmes.'],
             ].map(([k, v]) => (
               <div key={k} className="flex items-center gap-3">
-                {LOGOS[k] ? <img src={LOGOS[k]} alt="" className="h-10 w-10 shrink-0 rounded-lg border bg-white object-contain p-0.5" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary">{k}</span>}
+                {img.logo(k) ? <img src={img.logo(k)} alt="" className="h-10 w-10 shrink-0 rounded-lg border bg-white object-contain p-0.5" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary">{k}</span>}
                 <span className="text-sm"><span className="font-bold">{k}. </span><span className="text-muted-foreground">{v}</span></span>
               </div>
             ))}
@@ -57,7 +57,7 @@ export function BlogAbout() {
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             {DISCIPLINES.filter((d) => d.atUniAbuja).map((d) => (
               <Link key={d.slug} to={`/engineering/${d.slug}`} className="group overflow-hidden rounded-2xl border bg-card transition hover:border-primary/40 hover:shadow-md">
-                <div className="aspect-[4/3] overflow-hidden bg-muted"><img src={d.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /></div>
+                <div className="aspect-[4/3] overflow-hidden bg-muted"><img src={img.dept(d.slug)} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /></div>
                 <p className="p-3 text-sm font-semibold">{d.name}</p>
               </Link>
             ))}
@@ -68,9 +68,9 @@ export function BlogAbout() {
           <h2 className="text-2xl font-bold">Our campus</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             {[
-              [IMAGES.gate, 'Main gate'],
-              [IMAGES.senate, 'Senate building'],
-              [IMAGES.library, 'University library'],
+              [img.site('gate'), 'Main gate'],
+              [img.site('senate'), 'Senate building'],
+              [img.site('library'), 'University library'],
             ].map(([src, cap]) => (
               <figure key={cap} className="overflow-hidden rounded-2xl border bg-card">
                 <img src={src} alt={`University of Abuja ${cap.toLowerCase()}`} loading="lazy" className="aspect-[4/3] w-full object-cover" />
@@ -103,7 +103,7 @@ export function BlogAbout() {
           <ul className="mt-3 grid gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-2">
             {PHOTO_CREDITS.map((c) => <li key={c.what}>{c.what}: {c.by}, {c.licence}</li>)}
           </ul>
-          <p className="mt-3 text-xs text-muted-foreground">Logos belong to NSE, COREN, NSChE and NIMechE.</p>
+          <p className="mt-3 text-xs text-muted-foreground">Logos belong to their organisations: NSE, COREN, NUESA, NUC, ITF, the University of Abuja, NRC and the NSE divisions.</p>
         </section>
       </div>
     </BlogLayout>
@@ -111,13 +111,14 @@ export function BlogAbout() {
 }
 
 export function BlogResources() {
+  const img = useSiteImages();
   useTitle('Resources');
   return (
     <BlogLayout>
       <PageHero title="Resources" text="How you go from first year student to registered engineer in Nigeria, plus links you will need along the way." />
       <div className="mx-auto max-w-5xl space-y-12 px-4 py-10 sm:px-6">
         <figure className="overflow-hidden rounded-3xl border bg-card">
-          <img src={IMAGES.roadEngineers} alt="Engineers on a road construction site" className="aspect-[16/6] w-full object-cover" />
+          <img src={img.site('roadEngineers')} alt="Engineers on a road construction site" className="aspect-[16/6] w-full object-cover" />
           <figcaption className="px-4 py-2.5 text-xs text-muted-foreground">Engineers on a road project. Supervised site experience is part of the road to registration.</figcaption>
         </figure>
         <section>
@@ -140,7 +141,7 @@ export function BlogResources() {
             {USEFUL_LINKS.map((l) => (
               <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-md">
                 <div className="flex items-center gap-3">
-                  {l.logo ? <img src={LOGOS[l.logo]} alt="" className="h-10 w-10 shrink-0 rounded-lg border bg-white object-contain p-0.5" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary">{l.short}</span>}
+                  {l.logo ? <img src={img.logo(l.logo)} alt="" className="h-10 w-10 shrink-0 rounded-lg border bg-white object-contain p-0.5" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary">{l.short}</span>}
                   <div><p className="font-semibold group-hover:text-primary">{l.label}</p><p className="text-sm text-muted-foreground">{l.note}</p></div>
                 </div>
                 <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />

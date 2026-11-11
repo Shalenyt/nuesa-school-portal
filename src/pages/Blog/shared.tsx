@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ArrowRight, ExternalLink, Newspaper } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { LOGOS, categoryColor, categoryImage, categoryLabel } from './content';
+import { DEFAULT_IMAGES, LOGO_ALIASES, categoryColor, categoryLabel } from './content';
 
 const db = supabase as any;
 
@@ -67,6 +67,40 @@ export function nudgeNewsRefresh() {
   if (nudged) return;
   nudged = true;
   supabase.functions.invoke('fetch-news', { body: {} }).catch(() => undefined);
+}
+
+/* ---------- editable images ---------- */
+
+let imageOverrides: Record<string, string> = {};
+let imagesRequested = false;
+const imageListeners = new Set<() => void>();
+
+/** Load the admin's replacement images (once per page load, or again after an edit) */
+export async function loadSiteImages(force = false) {
+  if (imagesRequested && !force) return;
+  imagesRequested = true;
+  const { data } = await db.from('blog_images').select('key, url');
+  imageOverrides = Object.fromEntries(((data || []) as { key: string; url: string }[]).map((r) => [r.key, r.url]));
+  imageListeners.forEach((fn) => fn());
+}
+
+/** Returns helpers that give the current URL of a site image, a department photo or logo, or an organisation logo */
+export function useSiteImages() {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    const fn = () => bump((n) => n + 1);
+    imageListeners.add(fn);
+    loadSiteImages();
+    return () => { imageListeners.delete(fn); };
+  }, []);
+  const get = (key: string) => imageOverrides[key] || DEFAULT_IMAGES[key] || '';
+  return {
+    get,
+    site: (k: string) => get(`site.${k}`),
+    dept: (slug: string) => get(`dept.${slug}`),
+    logo: (body?: string | null) => (body ? get(`logo.${LOGO_ALIASES[body] || body}`) : ''),
+    category: (c?: string | null) => get(`cat.${c || 'engineering'}`) || get('cat.engineering'),
+  };
 }
 
 /* ---------- helpers ---------- */
@@ -176,7 +210,8 @@ export function SectionHeader({ title, subtitle, to, linkLabel = 'See all' }: { 
 /** Cover image, or a real photo that fits the category when there is none */
 export function Cover({ src, category, className = '' }: { src?: string | null; category?: string | null; className?: string; label?: boolean }) {
   const [broken, setBroken] = useState(false);
-  const url = src && !broken ? src : categoryImage(category);
+  const img = useSiteImages();
+  const url = src && !broken ? src : img.category(category);
   return <img src={url} alt="" loading="lazy" onError={() => setBroken(true)} className={`h-full w-full bg-muted object-cover ${className}`} />;
 }
 
@@ -220,11 +255,11 @@ export function NewsRow({ item, compact = false }: { item: NewsItem; compact?: b
 
 export function LeaderCard({ leader }: { leader: Leader }) {
   const initials = leader.name.replace(/^(Engr\.|Prof\.|Dr\.|\(Dr\.\)|\s)+/g, '').split(/\s+/).slice(0, 2).map((w) => w[0]).join('');
-  const logo = LOGOS[leader.body];
+  const logo = useSiteImages().logo(leader.body);
   return (
     <div className="flex gap-4 rounded-2xl border bg-card p-4">
       {leader.photo_url ? (
-        <img src={leader.photo_url} alt={leader.name} className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+        <img src={leader.photo_url} alt={leader.name} loading="lazy" className="h-20 w-20 shrink-0 rounded-2xl bg-muted object-cover object-top" />
       ) : logo ? (
         <div className="relative h-16 w-16 shrink-0">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl border bg-white p-2"><img src={logo} alt={leader.body} className="max-h-full max-w-full object-contain" /></div>
