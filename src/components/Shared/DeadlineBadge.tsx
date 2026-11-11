@@ -25,7 +25,7 @@ export function DeadlineBadge({ dueDate, className, showCategory = false }: Dead
         status.badgeClass,
         className,
       )}
-      title={`${status.category} — ${status.label}`}
+      title={`${status.category}: ${status.label}`}
     >
       <span className={cn('h-1.5 w-1.5 rounded-full', status.dotClass)} aria-hidden="true" />
       <span>{showCategory ? `${status.category} · ${status.label}` : status.label}</span>

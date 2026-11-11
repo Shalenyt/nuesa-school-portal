@@ -291,7 +291,7 @@ export default function GradeAssignments() {
                       </div>
                       {submission.file_name && (
                         <p className="text-sm text-muted-foreground truncate">
-                          📎 {submission.file_name}
+                          File: {submission.file_name}
                         </p>
                       )}
                       {submission.submission_text && (

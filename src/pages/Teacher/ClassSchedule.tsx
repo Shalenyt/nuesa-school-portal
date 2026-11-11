@@ -355,7 +355,7 @@ export default function TeacherClassSchedule() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    {String(schedule.start_time).slice(0, 5)} – {String(schedule.end_time).slice(0, 5)}
+                    {String(schedule.start_time).slice(0, 5)} to {String(schedule.end_time).slice(0, 5)}
                   </div>
                   {schedule.room && (
                     <div className="flex items-center gap-1">

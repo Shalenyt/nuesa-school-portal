@@ -245,7 +245,7 @@ export default function AdminSupport() {
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle className="pr-6">{active ? `#${active.ticket_number} — ${active.subject}` : ''}</DialogTitle>
+            <DialogTitle className="pr-6">{active ? `#${active.ticket_number}: ${active.subject}` : ''}</DialogTitle>
           </DialogHeader>
           {active && (
             <div className="space-y-4">

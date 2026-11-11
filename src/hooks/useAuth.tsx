@@ -238,7 +238,7 @@ const defaultAuthContext: AuthContextType = {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    console.warn('useAuth called outside AuthProvider – returning safe defaults');
+    console.warn('useAuth called outside AuthProvider, returning safe defaults');
     return defaultAuthContext;
   }
   return context;

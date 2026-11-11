@@ -58,16 +58,16 @@ export function PaymentExports() {
 
       setRows((data || []).map((r: any) => ({
         id: r.id,
-        student_name: r.profiles?.full_name || '—',
-        matric: r.profiles?.student_id || '—',
-        payment_title: r.payments?.title || '—',
+        student_name: r.profiles?.full_name || '-',
+        matric: r.profiles?.student_id || '-',
+        payment_title: r.payments?.title || '-',
         payment_type: r.payments?.payment_type || 'general',
         amount: Number(r.amount_paid) || 0,
         status: r.status || 'unknown',
-        department: r.profiles?.subjects?.name || '—',
-        level: r.profiles?.classes?.name || '—',
-        reference: r.reference || '—',
-        receipt_number: r.receipt_number || '—',
+        department: r.profiles?.subjects?.name || '-',
+        level: r.profiles?.classes?.name || '-',
+        reference: r.reference || '-',
+        receipt_number: r.receipt_number || '-',
         paid_at: r.paid_at,
         verified: !!r.verified_by || r.status === 'success',
       })));
@@ -78,8 +78,8 @@ export function PaymentExports() {
     }
   };
 
-  const departments = useMemo(() => Array.from(new Set(rows.map(r => r.department))).filter(d => d !== '—').sort(), [rows]);
-  const levels = useMemo(() => Array.from(new Set(rows.map(r => r.level))).filter(l => l !== '—').sort(), [rows]);
+  const departments = useMemo(() => Array.from(new Set(rows.map(r => r.department))).filter(d => d !== '-').sort(), [rows]);
+  const levels = useMemo(() => Array.from(new Set(rows.map(r => r.level))).filter(l => l !== '-').sort(), [rows]);
   const types = useMemo(() => Array.from(new Set(rows.map(r => r.payment_type))).sort(), [rows]);
   const statuses = useMemo(() => Array.from(new Set(rows.map(r => r.status))).sort(), [rows]);
 

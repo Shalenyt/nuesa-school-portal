@@ -77,9 +77,9 @@ serve(async (req) => {
 <div style="font-family: 'Segoe UI', sans-serif; background:#f6fff8; padding:40px;">
   <div style="max-width:600px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
     <img src="https://www.nuesa.org/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
-    <h2 style="color:#16a34a; margin-bottom:10px;">Email Successfully Changed 📧</h2>
+    <h2 style="color:#16a34a; margin-bottom:10px;">Your email was changed</h2>
     <p style="color:#444; font-size:15px;">
-      Your email for <strong>NUESA Portal – Faculty of Engineering</strong> has been changed from <strong>${oldEmail}</strong> to <strong>${newEmail}</strong>.
+      Your email for <strong>NUESA Portal, Faculty of Engineering</strong> has been changed from <strong>${oldEmail}</strong> to <strong>${newEmail}</strong>.
       If you did not request this change, please contact the <strong>NUESA Portal Engineering Team</strong> immediately.
     </p>
     <p style="margin-top:30px; font-size:12px; color:#888;">
@@ -92,7 +92,7 @@ serve(async (req) => {
 <div style="font-family: 'Segoe UI', sans-serif; background:#f6fff8; padding:40px;">
   <div style="max-width:600px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
     <img src="https://www.nuesa.org/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
-    <h2 style="color:#16a34a; margin-bottom:10px;">Welcome to NUESA Portal 🎉</h2>
+    <h2 style="color:#16a34a; margin-bottom:10px;">Your new email is set up</h2>
     <p style="color:#444; font-size:15px;">
       Your email has been successfully updated to <strong>${newEmail}</strong>. You can now sign in using this email to access your NUESA Portal account.
     </p>

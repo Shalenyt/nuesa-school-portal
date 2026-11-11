@@ -4,14 +4,14 @@ import { CalendarDays, ExternalLink, MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { BlogLayout } from './BlogLayout';
-import { DISCIPLINES, FAQS, REGISTRATION_STEPS, USEFUL_LINKS } from './content';
+import { DISCIPLINES, FAQS, IMAGES, LOGOS, PHOTO_CREDITS, REGISTRATION_STEPS, USEFUL_LINKS } from './content';
 import {
   BlogEvent, EmptyState, NewsItem, NewsRow, Post, PostCard, fetchEvents, fetchNews, fetchPosts, longDate, useBlogData, useTitle,
 } from './shared';
 
 function PageHero({ title, text }: { title: string; text: string }) {
   return (
-    <section className="border-b bg-gradient-to-b from-primary/10 to-transparent">
+    <section className="border-b bg-muted/40">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <h1 className="text-4xl font-extrabold tracking-tight">{title}</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">{text}</p>
@@ -26,6 +26,9 @@ export function BlogAbout() {
   return (
     <BlogLayout>
       <PageHero title="About NUESA" text="The Nigerian Universities Engineering Students' Association, University of Abuja chapter." />
+      <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6">
+        <img src={IMAGES.hero} alt="Faculty of Engineering, University of Abuja" className="aspect-[16/6] w-full rounded-3xl border object-cover" />
+      </div>
       <div className="mx-auto max-w-5xl space-y-12 px-4 py-10 sm:px-6">
         <section className="grid gap-6 md:grid-cols-2">
           <div className="space-y-4 text-[17px] leading-relaxed">
@@ -41,7 +44,10 @@ export function BlogAbout() {
               ['COREN', 'The regulator. Registers engineering practitioners and accredits programmes.'],
               ['NUC', 'Approves universities and degree programmes.'],
             ].map(([k, v]) => (
-              <div key={k} className="flex gap-3"><span className="w-16 shrink-0 font-bold text-primary">{k}</span><span className="text-sm text-muted-foreground">{v}</span></div>
+              <div key={k} className="flex items-center gap-3">
+                {LOGOS[k] ? <img src={LOGOS[k]} alt="" className="h-10 w-10 shrink-0 rounded-lg border bg-white object-contain p-0.5" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary">{k}</span>}
+                <span className="text-sm"><span className="font-bold">{k}. </span><span className="text-muted-foreground">{v}</span></span>
+              </div>
             ))}
           </div>
         </section>
@@ -50,9 +56,26 @@ export function BlogAbout() {
           <h2 className="text-2xl font-bold">Our departments</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             {DISCIPLINES.filter((d) => d.atUniAbuja).map((d) => (
-              <Link key={d.slug} to={`/engineering/${d.slug}`} className="rounded-2xl border bg-card p-4 text-center transition hover:border-primary/40 hover:shadow-md">
-                <div className="text-3xl">{d.icon}</div><p className="mt-2 text-sm font-semibold">{d.name}</p>
+              <Link key={d.slug} to={`/engineering/${d.slug}`} className="group overflow-hidden rounded-2xl border bg-card transition hover:border-primary/40 hover:shadow-md">
+                <div className="aspect-[4/3] overflow-hidden bg-muted"><img src={d.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /></div>
+                <p className="p-3 text-sm font-semibold">{d.name}</p>
               </Link>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-bold">Our campus</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {[
+              [IMAGES.gate, 'Main gate'],
+              [IMAGES.senate, 'Senate building'],
+              [IMAGES.library, 'University library'],
+            ].map(([src, cap]) => (
+              <figure key={cap} className="overflow-hidden rounded-2xl border bg-card">
+                <img src={src} alt={`University of Abuja ${cap.toLowerCase()}`} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                <figcaption className="px-3 py-2 text-xs text-muted-foreground">{cap}</figcaption>
+              </figure>
             ))}
           </div>
         </section>
@@ -69,9 +92,18 @@ export function BlogAbout() {
           </Accordion>
         </section>
 
-        <section className="flex flex-col items-start justify-between gap-4 rounded-3xl bg-primary/10 p-6 sm:flex-row sm:items-center">
+        <section className="flex flex-col items-start justify-between gap-4 rounded-3xl border bg-card p-6 sm:flex-row sm:items-center">
           <div><p className="text-lg font-bold">Ready to use the Student Portal?</p><p className="text-sm text-muted-foreground">Apply with your matric number, verify your email and wait for approval.</p></div>
           <div className="flex gap-2"><Button className="rounded-full" onClick={() => navigate('/auth/apply')}>Apply</Button><Button variant="outline" className="rounded-full" onClick={() => navigate('/auth/login')}>Log in</Button></div>
+        </section>
+
+        <section id="photo-credits" className="rounded-2xl border bg-card p-5">
+          <p className="font-bold">Photo credits</p>
+          <p className="mt-1 text-sm text-muted-foreground">Photos on this site come from Wikimedia Commons. Thank you to the photographers.</p>
+          <ul className="mt-3 grid gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-2">
+            {PHOTO_CREDITS.map((c) => <li key={c.what}>{c.what}: {c.by}, {c.licence}</li>)}
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">Logos belong to NSE, COREN, NSChE and NIMechE.</p>
         </section>
       </div>
     </BlogLayout>
@@ -82,8 +114,12 @@ export function BlogResources() {
   useTitle('Resources');
   return (
     <BlogLayout>
-      <PageHero title="Resources" text="From your first year to the title Engr.: the path to becoming a registered engineer in Nigeria, plus useful links." />
+      <PageHero title="Resources" text="How you go from first year student to registered engineer in Nigeria, plus links you will need along the way." />
       <div className="mx-auto max-w-5xl space-y-12 px-4 py-10 sm:px-6">
+        <figure className="overflow-hidden rounded-3xl border bg-card">
+          <img src={IMAGES.roadEngineers} alt="Engineers on a road construction site" className="aspect-[16/6] w-full object-cover" />
+          <figcaption className="px-4 py-2.5 text-xs text-muted-foreground">Engineers on a road project. Supervised site experience is part of the road to registration.</figcaption>
+        </figure>
         <section>
           <h2 className="text-2xl font-bold">Becoming a registered engineer</h2>
           <ol className="mt-6 space-y-0">
@@ -103,7 +139,10 @@ export function BlogResources() {
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {USEFUL_LINKS.map((l) => (
               <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-md">
-                <div><p className="font-semibold group-hover:text-primary">{l.label}</p><p className="text-sm text-muted-foreground">{l.note}</p></div>
+                <div className="flex items-center gap-3">
+                  {l.logo ? <img src={LOGOS[l.logo]} alt="" className="h-10 w-10 shrink-0 rounded-lg border bg-white object-contain p-0.5" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary">{l.short}</span>}
+                  <div><p className="font-semibold group-hover:text-primary">{l.label}</p><p className="text-sm text-muted-foreground">{l.note}</p></div>
+                </div>
                 <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
               </a>
             ))}
@@ -171,7 +210,7 @@ export function BlogSearch() {
 
   return (
     <BlogLayout>
-      <section className="border-b bg-gradient-to-b from-primary/10 to-transparent">
+      <section className="border-b bg-muted/40">
         <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
           <h1 className="text-3xl font-extrabold tracking-tight">Search</h1>
           <form onSubmit={(e) => { e.preventDefault(); setParams(q.trim() ? { q: q.trim() } : {}); }} className="relative mt-4 max-w-xl">

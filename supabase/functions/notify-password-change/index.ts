@@ -44,9 +44,9 @@ serve(async (req) => {
 <div style="font-family: 'Segoe UI', sans-serif; background:#f6fff8; padding:40px;">
   <div style="max-width:600px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
     <img src="https://www.nuesa.org/logo.png" alt="NUESA Logo" style="width:80px; margin-bottom:20px;" />
-    <h2 style="color:#16a34a;">Password Updated Successfully 🔐</h2>
+    <h2 style="color:#16a34a;">Your password was changed</h2>
     <p style="color:#444; font-size:15px;">
-      Hello 👋,<br><br>
+      Hello,<br><br>
       This is a confirmation that the password for your <strong>NUESA Portal</strong> account
       (<strong>${email}</strong>) has been successfully changed.
     </p>
@@ -63,7 +63,7 @@ serve(async (req) => {
     const { error: sendError } = await resend.emails.send({
       from: "NUESA Portal <noreply@nuesa.org>",
       to: [email],
-      subject: "Your NUESA Portal password has been changed 🔐",
+      subject: "Your NUESA Portal password has been changed",
       html,
     });
     if (sendError) console.error("Resend refused the email:", sendError);

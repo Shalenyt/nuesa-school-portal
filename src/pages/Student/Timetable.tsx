@@ -132,7 +132,7 @@ export default function StudentTimetable() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Timetable</h1>
           <p className="text-muted-foreground">
-            Your weekly class schedule — <span className="text-green-600 dark:text-green-400 font-semibold">green</span> courses are ones you're enrolled in
+            Your weekly class schedule. Courses in <span className="text-green-600 dark:text-green-400 font-semibold">green</span> are the ones you're enrolled in
           </p>
         </div>
 

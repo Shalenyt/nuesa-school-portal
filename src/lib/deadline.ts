@@ -123,8 +123,8 @@ export function getDeadlineStatus(
 
 export const URGENCY_LEGEND: { level: UrgencyLevel; short: string; description: string; dotClass: string }[] = [
   { level: 'comfortable', short: 'Comfortable', description: 'More than 7 days left', dotClass: META.comfortable.dot },
-  { level: 'upcoming', short: 'Upcoming', description: '3–7 days left', dotClass: META.upcoming.dot },
-  { level: 'approaching', short: 'Soon', description: '1–2 days left', dotClass: META.approaching.dot },
+  { level: 'upcoming', short: 'Upcoming', description: '3 to 7 days left', dotClass: META.upcoming.dot },
+  { level: 'approaching', short: 'Soon', description: '1 to 2 days left', dotClass: META.approaching.dot },
   { level: 'soon', short: '<24h', description: 'Less than 24 hours left', dotClass: META.soon.dot },
   { level: 'critical', short: 'Today', description: 'Due today', dotClass: META.critical.dot },
   { level: 'overdue', short: 'Overdue', description: 'Deadline has passed', dotClass: META.overdue.dot },

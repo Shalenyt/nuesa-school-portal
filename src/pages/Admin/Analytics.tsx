@@ -65,7 +65,7 @@ export default function Analytics() {
 
   // Growth = change in the number of students since the start of this month
   const growth = (() => {
-    if (!summary) return { value: '—', description: '' };
+    if (!summary) return { value: '-', description: '' };
     const start = summary.students_at_month_start;
     const now = summary.total_students;
     const detail = `${summary.new_students_this_month} new this month · ${summary.new_students_last_month} last month`;
@@ -135,7 +135,7 @@ export default function Analytics() {
                 <card.icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{loading ? '-' : card.value ?? '—'}</div>
+                <div className="text-2xl font-bold">{loading ? '-' : card.value ?? '-'}</div>
                 <p className="text-xs text-muted-foreground">{card.description}</p>
               </CardContent>
             </Card>

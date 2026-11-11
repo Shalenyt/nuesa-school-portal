@@ -54,7 +54,7 @@ export default function ResetPassword() {
       }
     });
 
-    // Timeout fallback — if no auth event fires within 8 seconds, redirect
+    // Timeout fallback, if no auth event fires within 8 seconds, redirect
     const timeout = setTimeout(() => {
       setSessionReady((prev) => {
         if (!prev) {

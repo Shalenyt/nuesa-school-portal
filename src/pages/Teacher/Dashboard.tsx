@@ -280,7 +280,7 @@ export default function TeacherDashboard() {
                       <p className="text-xs text-muted-foreground">{c.room || 'Venue TBA'}</p>
                     </div>
                     <span className="whitespace-nowrap rounded-full bg-theme-muted px-2 py-0.5 text-xs font-medium text-theme">
-                      {hhmm(c.start_time)} – {hhmm(c.end_time)}
+                      {hhmm(c.start_time)} to {hhmm(c.end_time)}
                     </span>
                   </div>
                 ))}
@@ -334,7 +334,7 @@ export default function TeacherDashboard() {
                     { label: 'Students', value: String(studentCount) },
                     { label: 'To grade', value: String(toGrade) },
                     { label: 'Quiz attempts today', value: String(quizToday) },
-                    { label: 'Semester', value: semester || '—', wrap: true },
+                    { label: 'Semester', value: semester || '-', wrap: true },
                   ].map((m) => (
                     <div key={m.label} className="rounded-md border border-theme-border/40 bg-theme-light/40 p-3">
                       <dt className="text-xs text-muted-foreground">{m.label}</dt>

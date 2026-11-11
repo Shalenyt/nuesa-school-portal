@@ -47,7 +47,7 @@ export default function BlogNews() {
 
   return (
     <BlogLayout>
-      <section className="border-b bg-gradient-to-b from-primary/10 to-transparent">
+      <section className="border-b bg-muted/40">
         <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
           <h1 className="text-4xl font-extrabold tracking-tight">Engineering news</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">Headlines about NSE, COREN, NUESA and Nigerian engineering, collected automatically from trusted outlets every two hours. Tap a story to read it at its source.</p>

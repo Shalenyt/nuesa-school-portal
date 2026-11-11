@@ -222,7 +222,7 @@ export default function StudentDashboard() {
 
       try {
         const result = await calculateStudentGPA(profile.id);
-        // No graded results yet: show "—" rather than 0.00
+        // No graded results yet: show '-' rather than 0.00
         setGpa(result.courseGrades.length ? result.gpa : null);
         setCompletedUnits(result.totalCredits);
       } catch {
@@ -353,7 +353,7 @@ export default function StudentDashboard() {
                       </p>
                     </div>
                     <span className="whitespace-nowrap rounded-full bg-theme-muted px-2 py-0.5 text-xs font-medium text-theme">
-                      {String(c.start_time).slice(0, 5)} – {String(c.end_time).slice(0, 5)}
+                      {String(c.start_time).slice(0, 5)} to {String(c.end_time).slice(0, 5)}
                     </span>
                   </div>
                 ))}
@@ -396,8 +396,8 @@ export default function StudentDashboard() {
               <CardContent>
                 <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                   {[
-                    { label: 'GPA', value: gpa != null ? gpa.toFixed(2) : '—' },
-                    { label: 'Semester', value: semester || '—', wrap: true },
+                    { label: 'GPA', value: gpa != null ? gpa.toFixed(2) : '-' },
+                    { label: 'Semester', value: semester || '-', wrap: true },
                     { label: 'Courses', value: String(courseCount) },
                     { label: 'Registered units', value: String(totalUnits) },
                     { label: 'Graded units', value: String(completedUnits) },

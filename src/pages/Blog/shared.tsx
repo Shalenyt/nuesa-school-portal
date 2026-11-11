@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ArrowRight, ExternalLink, Newspaper } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { categoryColor, categoryLabel } from './content';
+import { LOGOS, categoryColor, categoryImage, categoryLabel } from './content';
 
 const db = supabase as any;
 
@@ -169,15 +169,11 @@ export function SectionHeader({ title, subtitle, to, linkLabel = 'See all' }: { 
   );
 }
 
-/** Cover image, or a branded pattern when there is none */
-export function Cover({ src, category, className = '', label = true }: { src?: string | null; category?: string | null; className?: string; label?: boolean }) {
-  if (src) return <img src={src} alt="" loading="lazy" className={`h-full w-full object-cover ${className}`} />;
-  return (
-    <div className={`relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 ${className}`}>
-      <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:18px_18px]" />
-      {label && <span className="relative text-sm font-bold uppercase tracking-[0.2em] text-white/90">{categoryLabel(category)}</span>}
-    </div>
-  );
+/** Cover image, or a real photo that fits the category when there is none */
+export function Cover({ src, category, className = '' }: { src?: string | null; category?: string | null; className?: string; label?: boolean }) {
+  const [broken, setBroken] = useState(false);
+  const url = src && !broken ? src : categoryImage(category);
+  return <img src={url} alt="" loading="lazy" onError={() => setBroken(true)} className={`h-full w-full bg-muted object-cover ${className}`} />;
 }
 
 export function PostCard({ post, large = false }: { post: Post; large?: boolean }) {
@@ -220,12 +216,18 @@ export function NewsRow({ item, compact = false }: { item: NewsItem; compact?: b
 
 export function LeaderCard({ leader }: { leader: Leader }) {
   const initials = leader.name.replace(/^(Engr\.|Prof\.|Dr\.|\(Dr\.\)|\s)+/g, '').split(/\s+/).slice(0, 2).map((w) => w[0]).join('');
+  const logo = LOGOS[leader.body];
   return (
     <div className="flex gap-4 rounded-2xl border bg-card p-4">
       {leader.photo_url ? (
         <img src={leader.photo_url} alt={leader.name} className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+      ) : logo ? (
+        <div className="relative h-16 w-16 shrink-0">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border bg-white p-2"><img src={logo} alt={leader.body} className="max-h-full max-w-full object-contain" /></div>
+          <span className="absolute -bottom-1.5 -right-1.5 flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-card bg-primary px-1 text-[10px] font-bold text-primary-foreground">{initials}</span>
+        </div>
       ) : (
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 text-lg font-bold text-white">{initials}</div>
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-lg font-bold text-primary">{initials}</div>
       )}
       <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">{leader.role}</p>

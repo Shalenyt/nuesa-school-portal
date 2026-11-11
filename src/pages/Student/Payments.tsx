@@ -237,7 +237,7 @@ export default function StudentPayments() {
                     </CardContent></Card>
                   <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Next deadline</CardTitle></CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold">{nextDue ? new Date(nextDue.due_date).toLocaleDateString() : '—'}</p>
+                      <p className="text-2xl font-bold">{nextDue ? new Date(nextDue.due_date).toLocaleDateString() : '-'}</p>
                       <p className="text-xs text-muted-foreground truncate">{nextDue ? nextDue.title : 'Nothing scheduled'}</p>
                     </CardContent></Card>
                 </div>

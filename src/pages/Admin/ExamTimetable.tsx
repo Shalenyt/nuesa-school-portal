@@ -21,9 +21,9 @@ import jsPDF from 'jspdf';
 import { DateInput } from '@/components/ui/date-input';
 
 const TIME_SLOTS = {
-  morning: { label: 'Morning (8:00 AM – 11:00 AM)', start: '08:00', end: '11:00' },
-  afternoon: { label: 'Afternoon (11:30 AM – 2:30 PM)', start: '11:30', end: '14:30' },
-  evening: { label: 'Evening (3:00 PM – 5:00 PM)', start: '15:00', end: '17:00' },
+  morning: { label: 'Morning (8:00 AM, 11:00 AM)', start: '08:00', end: '11:00' },
+  afternoon: { label: 'Afternoon (11:30 AM, 2:30 PM)', start: '11:30', end: '14:30' },
+  evening: { label: 'Evening (3:00 PM, 5:00 PM)', start: '15:00', end: '17:00' },
 };
 
 type Slot = keyof typeof TIME_SLOTS;
@@ -148,7 +148,7 @@ export default function AdminExamTimetable() {
     }
     return [...byCode.entries()].map(([code, { c, depts, levels: lv }]) => ({
       value: code,
-      label: `${code}${c.description ? ' – ' + c.description : ''}`,
+      label: `${code}${c.description ? ': ' + c.description : ''}`,
       description: `${depts.size > 1 ? `${depts.size} departments` : [...depts][0] || ''} • ${[...lv].join(', ')} • ${c.credit_unit || 0} units`,
     }));
   }, [allCourses, filterDept, filterLevel, activeSemester?.term]);
@@ -383,7 +383,7 @@ export default function AdminExamTimetable() {
       return (<td className="border border-border p-2 text-center" colSpan={2}><span className="font-bold text-muted-foreground">FRIDAY PRAYER</span></td>);
     }
     if (items.length === 0) {
-      return (<><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td></>);
+      return (<><td className="border border-border p-2 text-center text-muted-foreground text-xs">-</td><td className="border border-border p-2 text-center text-muted-foreground text-xs">-</td></>);
     }
     return (
       <>
@@ -410,7 +410,7 @@ export default function AdminExamTimetable() {
         </td>
         <td className="border border-border p-2">
           <div className="space-y-1">
-            {items.map((e: any) => (<div key={e.id || e.course_code} className="text-sm text-muted-foreground">{e.venue || '—'}</div>))}
+            {items.map((e: any) => (<div key={e.id || e.course_code} className="text-sm text-muted-foreground">{e.venue || '-'}</div>))}
           </div>
         </td>
       </>
@@ -422,9 +422,9 @@ export default function AdminExamTimetable() {
       <thead>
         <tr className="bg-primary text-primary-foreground">
           <th className="border border-primary-foreground/30 p-2 text-center font-bold" rowSpan={2}>DAY & DATE</th>
-          <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>MORNING (8:00 – 11:00)</th>
-          <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>AFTERNOON (11:30 – 2:30)</th>
-          <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>EVENING (3:00 – 5:00)</th>
+          <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>MORNING (8:00 to 11:00)</th>
+          <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>AFTERNOON (11:30 to 2:30)</th>
+          <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>EVENING (3:00 to 5:00)</th>
         </tr>
         <tr className="bg-primary/90 text-primary-foreground text-xs">
           <th className="border border-primary-foreground/30 p-1 text-center">COURSE CODE</th>
@@ -632,9 +632,9 @@ export default function AdminExamTimetable() {
                   </div>
 
                   <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-                    {renderSessionForm('morning', 'Morning (8:00 – 11:00)')}
-                    {renderSessionForm('afternoon', 'Afternoon (11:30 – 2:30)')}
-                    {renderSessionForm('evening', 'Evening (3:00 – 5:00)')}
+                    {renderSessionForm('morning', 'Morning (8:00 to 11:00)')}
+                    {renderSessionForm('afternoon', 'Afternoon (11:30 to 2:30)')}
+                    {renderSessionForm('evening', 'Evening (3:00 to 5:00)')}
                   </div>
 
                   <div className="flex gap-2">
