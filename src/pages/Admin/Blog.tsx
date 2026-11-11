@@ -17,9 +17,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { DateInput } from '@/components/ui/date-input';
-import { ExternalLink, Eye, EyeOff, ImagePlus, Loader2, Pencil, Plus, RefreshCw, Star, Trash2 } from 'lucide-react';
-import { CATEGORIES } from '@/pages/Blog/content';
-import { Markdown, timeAgo } from '@/pages/Blog/shared';
+import { ExternalLink, Eye, EyeOff, ImagePlus, Loader2, Pencil, Plus, RefreshCw, RotateCcw, Star, Trash2 } from 'lucide-react';
+import { CATEGORIES, IMAGE_SLOTS } from '@/pages/Blog/content';
+import { Markdown, loadSiteImages, timeAgo } from '@/pages/Blog/shared';
 
 const db = supabase as any;
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
@@ -428,6 +428,84 @@ function SourcesTab() {
   );
 }
 
+/* ---------------- Images ---------------- */
+
+function ImagesTab() {
+  const { user } = useAuth();
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const load = async () => {
+    const { data } = await db.from('blog_images').select('key, url');
+    setOverrides(Object.fromEntries((data || []).map((r: any) => [r.key, r.url])));
+  };
+  useEffect(() => { load(); }, []);
+
+  const replace = async (key: string, file: File) => {
+    setBusy(key);
+    try {
+      const url = await uploadImage(file, 'site');
+      const { error } = await db.from('blog_images').upsert({ key, url, updated_at: new Date().toISOString(), updated_by: user?.id ?? null });
+      if (error) throw error;
+      toast({ title: 'Image updated', description: 'It now shows on the blog.' });
+      await load(); loadSiteImages(true);
+    } catch (err: any) {
+      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+    }
+    setBusy(null);
+  };
+  const reset = async (key: string) => {
+    setBusy(key);
+    const { error } = await db.from('blog_images').delete().eq('key', key);
+    if (error) toast({ title: "Couldn't reset", description: error.message, variant: 'destructive' });
+    else { toast({ title: 'Back to the original image' }); await load(); loadSiteImages(true); }
+    setBusy(null);
+  };
+
+  const groups = useMemo(() => {
+    const g: Record<string, typeof IMAGE_SLOTS> = {};
+    IMAGE_SLOTS.forEach((s) => (g[s.group] ||= []).push(s));
+    return g;
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Every logo and photo on the public blog. Upload a new one to replace it, or reset to go back to the original. Leader photos are changed in the Leaders tab.</p>
+      {Object.entries(groups).map(([group, slots]) => (
+        <Card key={group}>
+          <CardHeader className="pb-2"><CardTitle className="text-base">{group}</CardTitle></CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {slots.map((s) => {
+              const current = overrides[s.key] || s.url;
+              return (
+                <div key={s.key} className="overflow-hidden rounded-xl border">
+                  <div className={`flex h-32 items-center justify-center ${s.logo ? 'bg-white p-3' : 'bg-muted'}`}>
+                    {current ? <img src={current} alt="" className={s.logo ? 'max-h-full max-w-full object-contain' : 'h-full w-full object-cover'} /> : <span className="text-xs text-muted-foreground">No image yet</span>}
+                  </div>
+                  <div className="space-y-2 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-sm font-semibold">{s.label}</p>
+                      {overrides[s.key] && <Badge variant="secondary" className="shrink-0">Changed</Badge>}
+                    </div>
+                    <div className="flex gap-2">
+                      <label className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium hover:bg-muted">
+                        {busy === s.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />} Replace
+                        <input type="file" accept="image/*" className="hidden" disabled={!!busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) replace(s.key, f); }} />
+                      </label>
+                      {overrides[s.key] && (
+                        <Button size="sm" variant="ghost" className="h-auto px-2 py-1.5 text-xs" disabled={!!busy} onClick={() => reset(s.key)}><RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset</Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminBlog() {
   return (
     <DashboardLayout>
@@ -435,7 +513,7 @@ export default function AdminBlog() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">Blog</h1>
-            <p className="text-muted-foreground">Manage the public front page of nuesa.org: articles, news, leaders and events.</p>
+            <p className="text-muted-foreground">Manage the public front page of nuesa.org: articles, news, leaders, events and images.</p>
           </div>
           <Button variant="outline" asChild><a href="/" target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" /> View blog</a></Button>
         </div>
@@ -445,12 +523,14 @@ export default function AdminBlog() {
             <TabsTrigger value="news">News</TabsTrigger>
             <TabsTrigger value="leaders">Leaders</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
+            <TabsTrigger value="images">Images</TabsTrigger>
             <TabsTrigger value="sources">Sources</TabsTrigger>
           </TabsList>
           <TabsContent value="articles" className="mt-4"><ArticlesTab /></TabsContent>
           <TabsContent value="news" className="mt-4"><NewsTab /></TabsContent>
           <TabsContent value="leaders" className="mt-4"><LeadersTab /></TabsContent>
           <TabsContent value="events" className="mt-4"><EventsTab /></TabsContent>
+          <TabsContent value="images" className="mt-4"><ImagesTab /></TabsContent>
           <TabsContent value="sources" className="mt-4"><SourcesTab /></TabsContent>
         </Tabs>
       </div>

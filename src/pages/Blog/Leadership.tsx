@@ -1,6 +1,5 @@
 import { BlogLayout } from './BlogLayout';
-import { LOGOS } from './content';
-import { EmptyState, Leader, LeaderCard, fetchLeaders, useBlogData, useTitle } from './shared';
+import { EmptyState, Leader, LeaderCard, fetchLeaders, useBlogData, useTitle, useSiteImages } from './shared';
 
 const BODIES: { key: string; title: string; about: string }[] = [
   { key: 'NUESA UniAbuja', title: 'NUESA, University of Abuja chapter', about: 'The student executives who run our chapter.' },
@@ -12,6 +11,7 @@ const BODIES: { key: string; title: string; about: string }[] = [
 ];
 
 export default function BlogLeadership() {
+  const img = useSiteImages();
   useTitle('Leadership');
   const leaders = useBlogData<Leader[]>(() => fetchLeaders());
   const all = leaders.data || [];
@@ -33,7 +33,7 @@ export default function BlogLeadership() {
         {leaders.loading ? null : sections.length === 0 ? <EmptyState>Leadership details are being added.</EmptyState> : sections.map((s) => (
           <section key={s.key}>
             <div className="flex items-center gap-3">
-              {LOGOS[s.key] && <img src={LOGOS[s.key]} alt="" className="h-12 w-12 shrink-0 rounded-xl border bg-white object-contain p-1" />}
+              {img.logo(s.key) && <img src={img.logo(s.key)} alt="" className="h-12 w-12 shrink-0 rounded-xl border bg-white object-contain p-1" />}
               <h2 className="text-2xl font-bold">{s.title}</h2>
             </div>
             {s.about && <p className="mt-1 text-muted-foreground">{s.about}</p>}
