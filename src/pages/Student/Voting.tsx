@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
+import { prefetchImageUrls } from '@/lib/publicImage';
 import { CandidatePreview } from '@/components/Shared/CandidatePreview';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
@@ -89,6 +90,7 @@ export default function StudentVoting() {
     ]);
     setPositions(posRes.data || []);
     setCandidates(candRes.data || []);
+    prefetchImageUrls((candRes.data || []).map((c: any) => c.profile_pic || c.profiles?.profile_photo_url));
     setMyVotes(myVotesRes.data || []);
     setMyCandidacies(myCandRes.data || []);
     setElectionResults(resultsRes.data || []);
