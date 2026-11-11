@@ -92,7 +92,7 @@ export default function StudentExamTimetable() {
       return (<td className="border border-border p-2 text-center" colSpan={2}><span className="font-bold text-muted-foreground">FRIDAY PRAYER</span></td>);
     }
     if (items.length === 0) {
-      return (<><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td></>);
+      return (<><td className="border border-border p-2 text-center text-muted-foreground text-xs">-</td><td className="border border-border p-2 text-center text-muted-foreground text-xs">-</td></>);
     }
     return (
       <>
@@ -107,7 +107,7 @@ export default function StudentExamTimetable() {
         </td>
         <td className="border border-border p-2">
           <div className="space-y-1">
-            {items.map((e: any) => (<div key={e.id} className="text-sm text-muted-foreground">{e.venue || '—'}</div>))}
+            {items.map((e: any) => (<div key={e.id} className="text-sm text-muted-foreground">{e.venue || '-'}</div>))}
           </div>
         </td>
       </>
@@ -120,9 +120,9 @@ export default function StudentExamTimetable() {
         <thead>
           <tr className="bg-primary text-primary-foreground">
             <th className="border border-primary-foreground/30 p-2 text-center font-bold" rowSpan={2}>DAY & DATE</th>
-            <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>MORNING (8:00 – 11:00)</th>
-            <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>AFTERNOON (11:30 – 2:30)</th>
-            <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>EVENING (3:00 – 5:00)</th>
+            <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>MORNING (8:00 to 11:00)</th>
+            <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>AFTERNOON (11:30 to 2:30)</th>
+            <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>EVENING (3:00 to 5:00)</th>
           </tr>
           <tr className="bg-primary/90 text-primary-foreground text-xs">
             <th className="border border-primary-foreground/30 p-1 text-center">COURSE CODE</th>
@@ -200,8 +200,8 @@ export default function StudentExamTimetable() {
                           <div key={e.id} className={`flex items-center justify-between p-3 rounded-lg border-l-4 border-l-green-500 ${isToday(e.exam_date) ? 'border border-green-500 bg-green-50 dark:bg-green-950/30' : isTomorrow(e.exam_date) ? 'border border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20' : isPast ? 'opacity-50 border bg-muted' : 'border bg-green-50/50 dark:bg-green-950/10'}`}>
                             <div>
                               <p className="font-bold text-green-700 dark:text-green-400">{e.course_code}</p>
-                              <p className="text-sm text-muted-foreground">{e.day_label} – {examDate.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                              <p className="text-xs text-muted-foreground">{e.start_time} – {e.end_time}{e.venue ? ` | ${e.venue}` : ''}</p>
+                              <p className="text-sm text-muted-foreground">{e.day_label}, {examDate.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                              <p className="text-xs text-muted-foreground">{e.start_time} to {e.end_time}{e.venue ? ` | ${e.venue}` : ''}</p>
                             </div>
                             <div className="shrink-0">
                               {isToday(e.exam_date) && <Badge variant="destructive">TODAY</Badge>}

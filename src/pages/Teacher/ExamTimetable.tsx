@@ -69,7 +69,7 @@ export default function TeacherExamTimetable() {
       return (<td className="border border-border p-2 text-center" colSpan={2}><span className="font-bold text-muted-foreground">FRIDAY PRAYER</span></td>);
     }
     if (items.length === 0) {
-      return (<><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td><td className="border border-border p-2 text-center text-muted-foreground text-xs">—</td></>);
+      return (<><td className="border border-border p-2 text-center text-muted-foreground text-xs">-</td><td className="border border-border p-2 text-center text-muted-foreground text-xs">-</td></>);
     }
     return (
       <>
@@ -84,7 +84,7 @@ export default function TeacherExamTimetable() {
         </td>
         <td className="border border-border p-2">
           <div className="space-y-1">
-            {items.map((e: any) => (<div key={e.id} className="text-sm text-muted-foreground">{e.venue || '—'}</div>))}
+            {items.map((e: any) => (<div key={e.id} className="text-sm text-muted-foreground">{e.venue || '-'}</div>))}
           </div>
         </td>
       </>
@@ -113,9 +113,9 @@ export default function TeacherExamTimetable() {
                 <thead>
                   <tr className="bg-primary text-primary-foreground">
                     <th className="border border-primary-foreground/30 p-2 text-center font-bold" rowSpan={2}>DAY & DATE</th>
-                    <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>MORNING (8:00 – 11:00)</th>
-                    <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>AFTERNOON (11:30 – 2:30)</th>
-                    <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>EVENING (3:00 – 5:00)</th>
+                    <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>MORNING (8:00 to 11:00)</th>
+                    <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>AFTERNOON (11:30 to 2:30)</th>
+                    <th className="border border-primary-foreground/30 p-2 text-center font-bold" colSpan={2}>EVENING (3:00 to 5:00)</th>
                   </tr>
                   <tr className="bg-primary/90 text-primary-foreground text-xs">
                     <th className="border border-primary-foreground/30 p-1 text-center">COURSE CODE</th>

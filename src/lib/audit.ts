@@ -45,7 +45,7 @@ function sanitize<T extends Record<string, unknown> | null | undefined>(values: 
 }
 
 /**
- * Append an entry to the audit trail. Never throws — auditing must not break a
+ * Append an entry to the audit trail. Never throws, auditing must not break a
  * user action, failures are only reported to the console.
  */
 export async function logAudit(entry: AuditEntry) {

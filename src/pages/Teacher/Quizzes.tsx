@@ -304,7 +304,7 @@ export default function LecturerQuizzes() {
               <p className="font-medium">{idx + 1}. {q.question_text} <span className="text-sm text-muted-foreground">({q.points} pt{q.points > 1 ? 's' : ''})</span></p>
               <div className="grid gap-1 text-sm">
                 <p className={isCorrect ? 'text-green-600 font-medium' : 'text-destructive font-medium'}>
-                  Student's Answer: {studentAnswer} {isCorrect ? '✓' : '✗'}
+                  Student's Answer: {studentAnswer} {isCorrect ? '(correct)' : '(wrong)'}
                 </p>
                 {!isCorrect && (
                   <p className="text-green-600">Correct Answer: {correctAnswer}</p>
@@ -469,7 +469,7 @@ export default function LecturerQuizzes() {
                           />
                           <Input value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} placeholder={`Option ${oIdx + 1}`} />
                           {q.correct_answer === oIdx && (
-                            <Badge variant="default" className="shrink-0 text-xs">✓ Correct</Badge>
+                            <Badge variant="default" className="shrink-0 text-xs">Correct</Badge>
                           )}
                         </div>
                       ))}
@@ -494,7 +494,7 @@ export default function LecturerQuizzes() {
                 <CheckCircle className="h-4 w-4 mr-2" /> Auto-Grade All
               </Button>
               <Button onClick={() => setPublishDialogOpen(true)} variant="outline">
-                <Send className="h-4 w-4 mr-2" /> {selectedQuiz?.results_released ? 'Results Released ✓' : 'Release Results'}
+                <Send className="h-4 w-4 mr-2" /> {selectedQuiz?.results_released ? 'Results released' : 'Release Results'}
               </Button>
               <Button
                 variant={selectedQuiz?.grades_locked ? 'destructive' : 'outline'}

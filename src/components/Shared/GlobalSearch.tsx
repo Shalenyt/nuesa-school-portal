@@ -101,7 +101,7 @@ export function GlobalSearch() {
         url: role === 'student' ? '/student/notifications' : `/${role}/announcements`,
       })),
       tickets: (tickets.data ?? []).map((t) => ({
-        id: t.id, title: `#${t.ticket_number} — ${t.subject}`, subtitle: t.status.replace(/_/g, ' '),
+        id: t.id, title: `#${t.ticket_number}: ${t.subject}`, subtitle: t.status.replace(/_/g, ' '),
         url: role === 'student' ? '/student/support' : '/admin/support',
       })),
     });

@@ -61,7 +61,7 @@ export function useAntiCheat({ quizId, studentId, maxViolations = 3, onAutoSubmi
       } else {
         const remaining = maxViolations - currentCount;
         setWarningMessage(
-          `⚠️ Warning ${currentCount} of ${maxViolations} – You switched away from the quiz. You have ${remaining} warning${remaining > 1 ? 's' : ''} remaining before your quiz is auto-submitted.`
+          `Warning ${currentCount} of ${maxViolations}: you switched away from the quiz. You have ${remaining} warning${remaining > 1 ? 's' : ''} remaining before your quiz is auto-submitted.`
         );
       }
     } else {

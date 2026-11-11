@@ -30,7 +30,7 @@ interface StudentDetailData {
   profile_photo_url?: string;
   level_name: string;
   department_name: string;
-  // null = nothing to show yet (displayed as "—" rather than 0)
+  // null = nothing to show yet (displayed as '-' rather than 0)
   gpa: number | null;
   attendance_percentage: number | null;
   courses: CourseInfo[];
@@ -178,15 +178,15 @@ export default function TeacherStudentDetail() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">GPA (your courses)</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{student.gpa != null ? `${student.gpa.toFixed(2)}/5.0` : '—'}</p></CardContent>
+            <CardContent><p className="text-3xl font-bold">{student.gpa != null ? `${student.gpa.toFixed(2)}/5.0` : '-'}</p></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Attendance</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{student.attendance_percentage != null ? `${student.attendance_percentage}%` : '—'}</p></CardContent>
+            <CardContent><p className="text-3xl font-bold">{student.attendance_percentage != null ? `${student.attendance_percentage}%` : '-'}</p></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Quiz Avg</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{student.quiz_avg != null ? `${student.quiz_avg.toFixed(1)}%` : '—'}</p></CardContent>
+            <CardContent><p className="text-3xl font-bold">{student.quiz_avg != null ? `${student.quiz_avg.toFixed(1)}%` : '-'}</p></CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Courses</CardTitle></CardHeader>

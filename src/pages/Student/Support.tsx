@@ -228,7 +228,7 @@ export default function StudentSupport() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="pr-6">
-              {active ? `#${active.ticket_number} — ${active.subject}` : ''}
+              {active ? `#${active.ticket_number}: ${active.subject}` : ''}
             </DialogTitle>
           </DialogHeader>
           {active && (

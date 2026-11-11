@@ -161,15 +161,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     switch (type) {
       case 'approved':
-        subject = `Welcome to ${PORTAL_NAME} – Account Approved 🎉`;
+        subject = `Your ${PORTAL_NAME} account is approved`;
         html = wrapInBrandedTemplate(
-          "Account Approved! 🎉",
+          "Your account is approved",
           "#16a34a",
           `
           <p>Dear <strong>${name}</strong>,</p>
           <p>Congratulations! Your application to the <strong>${PORTAL_NAME}</strong> has been <strong>approved</strong>.</p>
           <div style="background:#f0fdf4; border:1px solid #16a34a; padding:15px; border-radius:8px; margin:20px 0;">
-            <p style="margin:0; color:#166534;">✅ Your account is now active. You can log in and start using all portal features.</p>
+            <p style="margin:0; color:#166534;">Your account is now active. You can log in and start using all portal features.</p>
           </div>
           <p><strong>Next Steps:</strong></p>
           <ul style="color:#444;">
@@ -187,15 +187,15 @@ const handler = async (req: Request): Promise<Response> => {
         break;
 
       case 'rejected':
-        subject = `${PORTAL_NAME} – Application Status Update`;
+        subject = `Update on your ${PORTAL_NAME} application`;
         html = wrapInBrandedTemplate(
-          "Application Not Approved ❌",
+          "Application not approved",
           "#dc2626",
           `
           <p>Dear <strong>${name}</strong>,</p>
           <p>We regret to inform you that your application to the <strong>${PORTAL_NAME}</strong> has not been approved at this time.</p>
           <div style="background:#fef2f2; border:1px solid #dc2626; padding:15px; border-radius:8px; margin:20px 0;">
-            <p style="margin:0; color:#991b1b;">⚠️ Please contact the NUESA administration for more information or to resolve any issues.</p>
+            <p style="margin:0; color:#991b1b;">Please contact the NUESA administration for more information or to resolve any issues.</p>
           </div>
           <p><strong>What you can do:</strong></p>
           <ul style="color:#444;">
@@ -208,15 +208,15 @@ const handler = async (req: Request): Promise<Response> => {
         break;
 
       case 'suspended':
-        subject = `${PORTAL_NAME} – Account Suspended`;
+        subject = `Your ${PORTAL_NAME} account has been suspended`;
         html = wrapInBrandedTemplate(
-          "Account Suspended ⚠️",
+          "Account suspended",
           "#dc2626",
           `
           <p>Dear <strong>${name}</strong>,</p>
           <p>Your <strong>${PORTAL_NAME}</strong> account has been <strong>temporarily suspended</strong>.</p>
           <div style="background:#fef2f2; border:1px solid #dc2626; padding:15px; border-radius:8px; margin:20px 0;">
-            <p style="margin:0; color:#991b1b;">⚠️ Your access to the portal has been restricted. Please contact the NUESA administration immediately.</p>
+            <p style="margin:0; color:#991b1b;">Your access to the portal has been restricted. Please contact the NUESA administration immediately.</p>
           </div>
           <p><strong>Important:</strong></p>
           <ul style="color:#444;">
@@ -229,15 +229,15 @@ const handler = async (req: Request): Promise<Response> => {
         break;
 
       case 'promoted':
-        subject = `${PORTAL_NAME} – Congratulations on Your Promotion! 🎉`;
+        subject = `Congratulations on your promotion`;
         html = wrapInBrandedTemplate(
-          "Role Promotion! 🎉",
+          "You have been promoted",
           "#3b82f6",
           `
           <p>Dear <strong>${name}</strong>,</p>
           <p>We are pleased to inform you that you have been promoted to <strong>${role || 'a new role'}</strong> on the <strong>${PORTAL_NAME}</strong>!</p>
           <div style="background:#eff6ff; border:1px solid #3b82f6; padding:15px; border-radius:8px; margin:20px 0;">
-            <p style="margin:0; color:#1e40af;">🎉 Your new role and permissions are now active.</p>
+            <p style="margin:0; color:#1e40af;">Your new role and permissions are now active.</p>
           </div>
           <p><strong>What this means:</strong></p>
           <ul style="color:#444;">
@@ -255,15 +255,15 @@ const handler = async (req: Request): Promise<Response> => {
         break;
 
       case 'deleted':
-        subject = `${PORTAL_NAME} – Account Deletion Notice`;
+        subject = `Your ${PORTAL_NAME} account has been deleted`;
         html = wrapInBrandedTemplate(
-          "Account Deleted 🗑️",
+          "Account deleted",
           "#dc2626",
           `
           <p>Dear <strong>${name}</strong>,</p>
           <p>This is to inform you that your account has been <strong>permanently deleted</strong> from the <strong>${PORTAL_NAME}</strong>.</p>
           <div style="background:#fef2f2; border:1px solid #dc2626; padding:15px; border-radius:8px; margin:20px 0;">
-            <p style="margin:0; color:#991b1b;">⚠️ All your data and access have been permanently removed from the system.</p>
+            <p style="margin:0; color:#991b1b;">All your data and access have been permanently removed from the system.</p>
           </div>
           <p><strong>What this means:</strong></p>
           <ul style="color:#444;">

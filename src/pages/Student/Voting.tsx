@@ -424,7 +424,7 @@ export default function StudentVoting() {
         positionName={preview?.position?.name}
         onClose={() => setPreview(null)}
         note={preview && myVotes.find(v => v.position_id === preview.position.id)?.candidate_id === preview.candidate.id
-          ? <p className="text-sm font-medium text-green-700">✓ Your vote</p> : null}
+          ? <p className="text-sm font-medium text-green-700">Your vote</p> : null}
         actions={preview && !hasVoted(preview.position.id) && canVote(preview.position) ? (
           <Button className="w-full rounded-xl" size="lg" onClick={() => { const p = preview; setPreview(null); setConfirmVote(p); }}>
             Vote for {preview.candidate.profiles?.full_name?.split(' ')[0]}

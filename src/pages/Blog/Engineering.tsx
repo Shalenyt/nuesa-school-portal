@@ -9,17 +9,20 @@ export function BlogEngineering() {
   const uni = DISCIPLINES.filter((d) => d.atUniAbuja);
   const others = DISCIPLINES.filter((d) => !d.atUniAbuja);
   const Card = ({ d }: { d: (typeof DISCIPLINES)[number] }) => (
-    <Link to={`/engineering/${d.slug}`} className="group flex gap-4 rounded-2xl border bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-      <div className="text-4xl">{d.icon}</div>
-      <div>
-        <p className="text-lg font-bold group-hover:text-primary">{d.name}</p>
+    <Link to={`/engineering/${d.slug}`} className="group flex overflow-hidden rounded-2xl border bg-card transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
+      <div className="w-32 shrink-0 overflow-hidden bg-muted sm:w-40"><img src={d.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /></div>
+      <div className="min-w-0 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-lg font-bold leading-snug group-hover:text-primary">{d.name}</p>
+          {d.logo && <img src={d.logo} alt="" className="h-9 w-9 shrink-0 rounded-lg border bg-white object-contain p-0.5" />}
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">{d.summary}</p>
       </div>
     </Link>
   );
   return (
     <BlogLayout>
-      <section className="border-b bg-gradient-to-b from-primary/10 to-transparent">
+      <section className="border-b bg-muted/40">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
           <h1 className="text-4xl font-extrabold tracking-tight">Engineering disciplines</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">What each branch of engineering does, where its graduates work in Nigeria, and the professional bodies that support it.</p>
@@ -58,18 +61,23 @@ export function BlogDiscipline() {
 
   return (
     <BlogLayout>
-      <section className="border-b bg-gradient-to-br from-emerald-900 to-teal-700 text-white">
-        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-          <Link to="/engineering" className="inline-flex items-center gap-1 text-sm text-emerald-100/80 hover:text-white"><ArrowLeft className="h-4 w-4" /> All disciplines</Link>
-          <div className="mt-6 text-6xl">{d.icon}</div>
-          <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-5xl">{d.name}</h1>
-          <p className="mt-3 max-w-2xl text-lg text-emerald-50/90">{d.summary}</p>
-          {d.atUniAbuja && <span className="mt-4 inline-block rounded-full bg-white/15 px-3 py-1 text-sm font-semibold">Offered at the University of Abuja</span>}
+      <section className="border-b bg-background">
+        <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6">
+          <Link to="/engineering" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" /> All disciplines</Link>
+          <div className="mt-5 flex items-start gap-4">
+            {d.logo && <img src={d.logo} alt="" className="h-16 w-16 shrink-0 rounded-2xl border bg-white object-contain p-1" />}
+            <div>
+              <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">{d.name}</h1>
+              {d.atUniAbuja && <span className="mt-3 inline-block rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">Offered at the University of Abuja</span>}
+            </div>
+          </div>
+          <p className="mt-4 max-w-2xl text-lg text-muted-foreground">{d.summary}</p>
+          <div className="mt-6 aspect-[16/7] overflow-hidden rounded-t-3xl bg-muted"><img src={d.image} alt={d.name} className="h-full w-full object-cover" /></div>
         </div>
       </section>
       <div className="mx-auto max-w-5xl space-y-8 px-4 py-10 sm:px-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <List icon={Wrench} title="What you'll work on" items={d.work} />
+          <List icon={Wrench} title="What you work on" items={d.work} />
           <List icon={Briefcase} title="Where graduates work" items={d.careers} />
           <List icon={Landmark} title="Professional bodies" items={d.bodies} />
         </div>

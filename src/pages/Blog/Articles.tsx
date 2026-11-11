@@ -13,7 +13,7 @@ export default function BlogArticles() {
 
   return (
     <BlogLayout>
-      <section className="border-b bg-gradient-to-b from-primary/10 to-transparent">
+      <section className="border-b bg-muted/40">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
           <h1 className="text-4xl font-extrabold tracking-tight">Articles</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">Guides, chapter news, interviews and opinion from NUESA, University of Abuja.</p>

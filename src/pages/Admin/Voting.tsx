@@ -324,11 +324,11 @@ export default function AdminVoting() {
                 <RadioGroup value={newPosition.closingMode} onValueChange={(v: 'manual' | 'scheduled') => setNewPosition(p => ({ ...p, closingMode: v }))}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="manual" id="manual" />
-                    <Label htmlFor="manual">Manual Close — Admin closes election manually</Label>
+                    <Label htmlFor="manual">Manual close: an admin ends the election</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="scheduled" id="scheduled" />
-                    <Label htmlFor="scheduled">Scheduled End Time — Auto-closes at set time</Label>
+                    <Label htmlFor="scheduled">Scheduled end: closes by itself at the set time</Label>
                   </div>
                 </RadioGroup>
                 {newPosition.closingMode === 'scheduled' && (

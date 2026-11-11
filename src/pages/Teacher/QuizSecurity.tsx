@@ -140,7 +140,7 @@ export default function QuizSecurity() {
                       {studentSummary.map(s => (
                         <TableRow key={s.id} className={s.suspicious ? 'bg-destructive/5' : ''}>
                           <TableCell className="font-medium">{s.profiles?.full_name}</TableCell>
-                          <TableCell>{s.profiles?.student_id || '—'}</TableCell>
+                          <TableCell>{s.profiles?.student_id || '-'}</TableCell>
                           <TableCell>
                             {s.tabSwitches > 0 ? (
                               <Badge variant="destructive">{s.tabSwitches}</Badge>
@@ -161,7 +161,7 @@ export default function QuizSecurity() {
                                 <MapPin className="h-3 w-3" />
                                 {s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}
                               </span>
-                            ) : '—'}
+                            ) : '-'}
                           </TableCell>
                           <TableCell>
                             {s.device_info?.platform ? (
@@ -169,7 +169,7 @@ export default function QuizSecurity() {
                                 <Monitor className="h-3 w-3" />
                                 {s.device_info.platform}
                               </span>
-                            ) : '—'}
+                            ) : '-'}
                           </TableCell>
                           <TableCell>
                             {s.suspicious ? (
@@ -217,7 +217,7 @@ export default function QuizSecurity() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-                            {v.details?.key ? `Key: ${v.details.key}` : v.details?.method || '—'}
+                            {v.details?.key ? `Key: ${v.details.key}` : v.details?.method || '-'}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
