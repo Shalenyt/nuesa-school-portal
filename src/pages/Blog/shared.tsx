@@ -71,6 +71,10 @@ export function nudgeNewsRefresh() {
 
 /* ---------- helpers ---------- */
 
+/** Outside headlines often use long dashes; show them with plain punctuation */
+export const plainText = (t?: string | null) =>
+  (t || '').replace(/\s*[\u2014\u2013]\s*/g, (m) => (m.trim() === m ? '-' : ', ')).replace(/^, |, $/g, '');
+
 export const timeAgo = (iso?: string | null) =>
   iso ? `${formatDistanceToNowStrict(new Date(iso))} ago` : '';
 export const longDate = (iso?: string | null) =>
@@ -202,8 +206,8 @@ export function NewsRow({ item, compact = false }: { item: NewsItem; compact?: b
         <Newspaper className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className={`${compact ? 'line-clamp-2 text-sm' : 'text-[15px]'} font-semibold leading-snug group-hover:text-primary`}>{item.title}</p>
-        {!compact && item.summary && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.summary}</p>}
+        <p className={`${compact ? 'line-clamp-2 text-sm' : 'text-[15px]'} font-semibold leading-snug group-hover:text-primary`}>{plainText(item.title)}</p>
+        {!compact && item.summary && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{plainText(item.summary)}</p>}
         <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
           {item.source && <span className="font-medium">{item.source}</span>}
           <span>{timeAgo(item.published_at)}</span>
