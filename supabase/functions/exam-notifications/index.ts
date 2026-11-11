@@ -93,8 +93,8 @@ serve(async (req: Request) => {
               user_id: uid,
               title: `Exam scheduled: ${course_code}`,
               message: isTeacher
-                ? `You are scheduled to supervise ${course_code} exam on ${dateFormatted} (${hhmm(start_time)}, ${hhmm(end_time)}).${venue ? ` Venue: ${venue}` : ""}`
-                : `You have an upcoming exam for ${course_code} on ${dateFormatted} (${hhmm(start_time)}, ${hhmm(end_time)}).${venue ? ` Venue: ${venue}` : ""}`,
+                ? `You are scheduled to supervise ${course_code} exam on ${dateFormatted} (${hhmm(start_time)} to ${hhmm(end_time)}).${venue ? ` Venue: ${venue}` : ""}`
+                : `You have an upcoming exam for ${course_code} on ${dateFormatted} (${hhmm(start_time)} to ${hhmm(end_time)}).${venue ? ` Venue: ${venue}` : ""}`,
               type: "exam",
               priority: "normal",
               is_read: false,
@@ -163,7 +163,7 @@ serve(async (req: Request) => {
           const notifs = allIds.map((uid) => ({
             user_id: uid,
             title: `Exam reminder: ${exam.course_code}`,
-            message: `Reminder: ${exam.course_code} exam is ${daysUntil} on ${dateFormatted} (${hhmm(exam.start_time)}, ${hhmm(exam.end_time)}).${exam.venue ? ` Venue: ${exam.venue}` : ""}`,
+            message: `Reminder: ${exam.course_code} exam is ${daysUntil} on ${dateFormatted} (${hhmm(exam.start_time)} to ${hhmm(exam.end_time)}).${exam.venue ? ` Venue: ${exam.venue}` : ""}`,
             type: "exam_reminder",
             priority: daysUntil === "tomorrow" ? "urgent" : "normal",
             is_read: false,
