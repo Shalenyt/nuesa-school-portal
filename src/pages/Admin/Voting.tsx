@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { SignedAvatarImage } from '@/components/Shared/UserAvatar';
+import { prefetchImageUrls } from '@/lib/publicImage';
 import { CandidatePreview } from '@/components/Shared/CandidatePreview';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -61,6 +62,7 @@ export default function AdminVoting() {
     ]);
     setPositions(posRes.data || []);
     setCandidates(candRes.data || []);
+    prefetchImageUrls((candRes.data || []).map((c: any) => c.profile_pic || c.profiles?.profile_photo_url));
     setElectionResults(resultsRes.data || []);
     setDepartments(deptRes.data || []);
     await fetchTallies();

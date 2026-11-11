@@ -7,6 +7,27 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useAvatarUrl } from '@/hooks/useAvatarUrl';
 
+/** Shrink a photo to at most 640px on its longest side as a JPEG (phone photos are often 2 to 5 MB) */
+async function shrinkPhoto(file: File): Promise<Blob> {
+  if (file.type === 'image/gif') return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 640 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.85));
+    return blob && blob.size < file.size ? blob : file;
+  } catch {
+    return file;
+  }
+}
+
 interface PhotoUploadProps {
   currentPhotoUrl?: string;
   onPhotoUpdated: (newUrl: string) => void;
@@ -38,14 +59,16 @@ export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProp
         throw new Error('Image too large. Maximum size is 5MB.');
       }
 
-      const safeExt = fileExt.replace(/[^a-z0-9]/gi, '');
+      const photo = await shrinkPhoto(file);
+      const isJpeg = photo !== file || /jpe?g/.test(fileExt);
+      const safeExt = isJpeg ? 'jpg' : fileExt.replace(/[^a-z0-9]/gi, '');
       const fileName = `${profile?.id}.${safeExt}`;
       const filePath = `${profile?.id}/${fileName}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
-        .upload(filePath, file, { upsert: true, contentType: file.type });
+        .upload(filePath, photo, { upsert: true, contentType: photo === file ? file.type : 'image/jpeg', cacheControl: '31536000' });
 
       if (uploadError) {
         throw uploadError;
@@ -55,6 +78,8 @@ export function PhotoUpload({ currentPhotoUrl, onPhotoUpdated }: PhotoUploadProp
       const { data } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(filePath);
+      // A version tag so a new photo never shows the old cached one
+      data.publicUrl = `${data.publicUrl}?v=${Date.now()}`;
 
       // Update profile
       const { error: updateError } = await supabase
