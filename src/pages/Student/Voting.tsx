@@ -19,11 +19,11 @@ import { useAuth } from '@/hooks/useAuth';
 
 // Live results refresh while an election is open (with a little jitter so
 // hundreds of open pages don't all ask at the same second)
-const LIVE_REFRESH_MS = 10_000;
+const LIVE_REFRESH_MS = 4_000;
 
 const isEnded = (pos: any) => !!pos.voting_end_time && new Date(pos.voting_end_time).getTime() <= Date.now();
 
-function CountdownTimer({ endTime }: { endTime: string }) {
+function CountdownTimer({ endTime, prefix = '' }: { endTime: string; prefix?: string }) {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
@@ -43,7 +43,7 @@ function CountdownTimer({ endTime }: { endTime: string }) {
 
   return (
     <Badge variant="outline" className="flex items-center gap-1 text-xs">
-      <Clock className="h-3 w-3" /> {remaining}
+      <Clock className="h-3 w-3" /> {prefix}{remaining}
     </Badge>
   );
 }
@@ -119,6 +119,18 @@ export default function StudentVoting() {
     return () => clearInterval(timer);
   }, [anyOpen, fetchTallies]);
 
+  // Around opening time, check often so the ballot appears the moment it opens
+  const startTimes = positions.filter(p => !p.voting_open && p.election_status !== 'closed' && p.voting_start_time).map(p => p.voting_start_time).join(',');
+  useEffect(() => {
+    if (!startTimes) return;
+    const timer = setInterval(() => {
+      setTick(t => t + 1);
+      const due = startTimes.split(',').some(t => new Date(t).getTime() - 15000 <= Date.now());
+      if (due) fetchAll();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [startTimes, fetchAll]);
+
   // A scheduled election that has run out gets closed (any page can do this;
   // the database only closes elections that are really over)
   useEffect(() => {
@@ -193,6 +205,9 @@ export default function StudentVoting() {
 
   const applicable = positions.filter(p => !myCandidacies.some(c => c.position_id === p.id) && p.election_status !== 'closed' && !p.voting_open);
   const openPositions = positions.filter(p => p.voting_open && p.election_status !== 'closed');
+  // Scheduled elections that have not opened yet
+  const upcoming = positions.filter(p => !p.voting_open && p.election_status !== 'closed' && p.voting_start_time
+    && (!p.voting_end_time || new Date(p.voting_end_time).getTime() > Date.now()));
 
   return (
     <DashboardLayout>
@@ -257,8 +272,22 @@ export default function StudentVoting() {
             {/* Vote Tab */}
             <TabsContent value="vote">
               <div className="space-y-6">
+                {upcoming.map(pos => (
+                  <Card key={`up-${pos.id}`} className="border-primary/40">
+                    <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
+                      <p className="text-lg font-bold">{pos.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Voting opens at {new Date(pos.voting_start_time).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Africa/Lagos' })}
+                        {pos.voting_end_time && <> and closes at {new Date(pos.voting_end_time).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Africa/Lagos' })}</>}
+                      </p>
+                      {new Date(pos.voting_start_time).getTime() > Date.now()
+                        ? <CountdownTimer endTime={pos.voting_start_time} prefix="Opens in " />
+                        : <Badge variant="outline">Opening now, please wait</Badge>}
+                    </CardContent>
+                  </Card>
+                ))}
                 {openPositions.length === 0 ? (
-                  <Card><CardContent className="pt-6 text-center text-muted-foreground">No active elections at the moment.</CardContent></Card>
+                  upcoming.length === 0 && <Card><CardContent className="pt-6 text-center text-muted-foreground">No active elections at the moment.</CardContent></Card>
                 ) : openPositions.map(pos => {
                   const posCandidates = candidates.filter(c => c.position_id === pos.id);
                   const voted = hasVoted(pos.id);
