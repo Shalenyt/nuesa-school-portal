@@ -13,6 +13,7 @@ import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { PasskeyOffer } from "@/components/PasskeyOffer";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 import { HighPriorityNotification } from "@/components/HighPriorityNotification";
+import { WinnerCelebration } from "@/components/WinnerCelebration";
 
 // Auth pages
 import Login from "./pages/Auth/Login";
@@ -246,6 +247,7 @@ const App = () => {
             <PasskeyOffer />
             <SessionTimeoutWarning />
             <HighPriorityNotification />
+            <WinnerCelebration />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

@@ -1,0 +1,4 @@
+-- Applied live on 2026-11-13 (see migration "scheduled_elections"): voting_start_time,
+-- election_notices, _notify_electorate, _election_notice_once, election_tick and the
+-- pg_cron job "election-tick" that runs it every minute. _close_election now sets
+-- related_id on result notifications and has no emoji in its title.
