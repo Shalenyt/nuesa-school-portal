@@ -86,10 +86,11 @@ export default function Apply() {
       return;
     }
 
-    // One account per matric number, written the way it is on the ID card
+    // One account per matric number, written the way it is on the ID card.
+    // UTME students: 22/205CIE/123. Direct entry: 23D/205CHE/194 (letters after the year).
     const matric = formData.studentId.replace(/\s/g, '').toUpperCase();
-    if (formData.role === 'student' && !/^\d{2}\/\d{3}[A-Z]{3}\/\d{3}$/.test(matric)) {
-      stop('Check your matric number', 'Type it exactly as on your ID card, for example 22/205CIE/123.');
+    if (formData.role === 'student' && !/^\d{2}[A-Z]{0,3}\/\d{3}[A-Z]{3}\/\d{3,4}$/.test(matric)) {
+      stop('Check your matric number', 'Type it exactly as on your ID card, for example 22/205CIE/123 or 23D/205CHE/194.');
       return;
     }
 
